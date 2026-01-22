@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Wartungs-Dashboard - Agie</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        .top-bar { height: 8px; width: 100%; background: linear-gradient(90deg, #d50000, #003a6c, #00b5e2); position: fixed; top: 0; left: 0; z-index: 1000; }
+        .bottom-bar { height: 8px; width: 100%; background: linear-gradient(90deg, #00b5e2, #003a6c, #d50000); position: fixed; bottom: 0; left: 0; z-index: 1000; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; margin: 0; padding: 25px; display: flex; flex-direction: column; align-items: center; }
+        .main-layout { display: flex; width: 98%; max-width: 1600px; gap: 20px; margin-top: 15px; }
+        .chart-container { flex: 3; background: white; padding: 20px; border-top: 4px solid #003a6c; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 4px; }
+        .sidebar { flex: 1.8; background: #fff; padding: 15px; height: 82vh; overflow-y: auto; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .control-row { display: flex; align-items: center; padding: 12px; margin-bottom: 5px; border-radius: 5px; gap: 10px; border: 1px solid #eee; }
+        .status-red { background-color: #ffcccc !important; border-left: 5px solid #d50000; }
+        .status-yellow { background-color: #fff3cd !important; border-left: 5px solid #ffc107; }
+        .status-green { background-color: #d4edda !important; border-left: 5px solid #28a745; }
+        .btn { width: 30px; height: 30px; cursor: pointer; border: none; font-weight: bold; color: white; border-radius: 3px; }
+        .btn-plus { background: #00b5e2; }
+        .btn-minus { background: #003a6c; }
+        .btn:disabled { background: #bdc3c7; color: #7f8c8d; cursor: not-allowed; opacity: 0.6; }
+        .btn-undo { background: #7f8c8d; width: 22px; height: 22px; font-size: 14px; line-height: 22px; padding: 0; opacity: 0.6; cursor: pointer; }
+        .btn-wplan { background: #d50000; padding: 0 8px; font-size: 9px; text-transform: uppercase; height: 30px; font-weight: bold; border: none; color: white; border-radius: 3px; cursor: pointer; }
+        .header-actions { display: flex; gap: 10px; margin-bottom: 15px; }
+        .upload-btn, .export-btn { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; color: white; border-radius: 4px; }
+        .upload-btn { background: #003a6c; }
+        .export-btn { background: #28a745; }
+        .rest-val { font-size: 0.75em; color: #333; font-weight: 800; display: block; }
+    </style>
+</head>
+<body>
+    <div class="top-bar"></div>
+    <h2>Stückzahlabhängige Wartung</h2>
+    <div class="header-actions">
+        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Datei laden (data.json)</button>
+        <button class="export-btn" onclick="exportHistory()">Historie Exportieren (CSV)</button>
+    </div>
+    <input type="file" id="fileInput" accept=".json" style="display:none">
+    <div class="main-layout">
+        <div class="chart-container"><canvas id="myChart"></canvas></div>
+        <div class="sidebar">
+            <h3 style="color:#003a6c; font-size: 0.9em; border-bottom: 2px solid #00b5e2; padding-bottom: 5px;">WARTUNGS-PRIORITÄT</h3>
+            <div id="controlsList"></div>
+        </div>
+    </div>
+    <div class="bottom-bar"></div>
+
+    <script>
+        Chart.register(ChartDataLabels);
+        let myChart, rawData = [];
+        const INTERVALL = 16000, RESET_VAL = 216000, PW_UNDO = "87430";
+        const packages = ["Paket 1/2", "Paket 1/3", "Paket 1/2", "Paket 1/4", "Paket 1/2/3", "Paket 1/5", "Paket 1/2", "Paket 1/3", "Paket 1/2", "Paket 1/4", "Paket 1/2/3", "Paket 1/6/7", "Paket 1/2"];
+
+        let extraCycles = JSON.parse(localStorage.getItem('bosch_agie_counters')) || {};
+        let agieOffsets = JSON.parse(localStorage.getItem('bosch_agie_offsets')) || {};
+        let history = JSON.parse(localStorage.getItem('bosch_agie_history')) || [];
+        let triggeredNegatives = JSON.parse(localStorage.getItem('bosch_triggered_negatives')) || {};
+
+        function saveAll() {
+            localStorage.setItem('bosch_agie_counters', JSON.stringify(extraCycles));
+            localStorage.setItem('bosch_agie_offsets', JSON.stringify(agieOffsets));
+            localStorage.setItem('bosch_agie_history', JSON.stringify(history));
+            localStorage.setItem('bosch_triggered_negatives', JSON.stringify(triggeredNegatives));
+        }
+
+        function logEvent(agie, eventType, count, totalStueck) {
+            history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: agie, Ereignis: eventType, Zaehler: count, Gesamtstueck: totalStueck });
+            saveAll();
+        }
+
+        function updateDisplay() {
+            if (rawData.length === 0) return;
+            const processed = rawData.map(item => {
+                // ANPASSUNG AN DEINE JSON-STRUKTUR:
+                const id = item.StationNo; // Statt "Agie"
+                const ist = Number(item.Parts); // Statt "Stückzahl"
+                
+                const korrIst = ist - (agieOffsets[id] || 0);
+                const count = (extraCycles[id] || 0);
+                const diff = (INTERVALL + (count * INTERVALL)) - korrIst;
+
+                if (diff < 0 && !triggeredNegatives[id + "_" + (agieOffsets[id] || 0) + "_" + count]) {
+                    logEvent(id, "Grenzwert überschritten", count, ist);
+                    triggeredNegatives[id + "_" + (agieOffsets[id] || 0) + "_" + count] = true;
+                    saveAll();
+                }
+                return { label: "Agie "+id, id, diff, ist: korrIst, count, rawIst: ist, packageName: packages[count % 13] };
+            });
+
+            processed.sort((a, b) => a.diff - b.diff);
+
+            if (myChart) {
+                myChart.data.labels = processed.map(d => d.label);
+                myChart.data.datasets[0].data = processed.map(d => d.diff);
+                myChart.data.datasets[0].customData = processed;
+                myChart.update();
+            } else { initChart(processed); }
+            renderControls(processed);
+        }
+
+        function renderControls(processedData) {
+            const container = document.getElementById('controlsList');
+            container.innerHTML = "";
+            processedData.forEach(d => {
+                const row = document.createElement('div');
+                row.className = `control-row ${d.diff < 500 ? 'status-red' : (d.diff < 5000 ? 'status-yellow' : 'status-green')}`;
+                row.innerHTML = `
+                    <div class="station-info">
+                        <strong>Agie ${d.id}</strong><br><small>${d.packageName}</small><br>
+                        <span class="rest-val">Rest: ${d.diff.toLocaleString('de-DE')}</span>
+                    </div>
+                    <div class="reset-zone">
+                        <button class="btn btn-undo" onclick="undoReset('${d.id}')" title="Reset Rückgängig">-</button>
+                        <button class="btn-wplan" ${d.ist < RESET_VAL ? 'disabled' : ''} onclick="executeWPlanReset('${d.id}')">WPlan</button>
+                    </div>
+                    <div class="counter-zone">
+                        <button class="btn btn-minus" onclick="confirmChange('${d.id}', -1, ${d.rawIst})">-</button>
+                        <input type="text" class="count-input" value="${d.count}" readonly>
+                        <button class="btn btn-plus" ${d.diff >= 5000 ? 'disabled' : ''} onclick="confirmChange('${d.id}', 1, ${d.rawIst})">+</button>
+                    </div>`;
+                container.appendChild(row);
+            });
+        }
+
+        function confirmChange(id, delta, rawIst) {
+            if (confirm(`Zähler für Agie ${id} wirklich ändern?`)) {
+                extraCycles[id] = Math.max(0, (extraCycles[id] || 0) + delta);
+                logEvent(id, delta > 0 ? "Wartung bestätigt (+1)" : "Korrektur (-1)", extraCycles[id], rawIst);
+                updateDisplay();
+            }
+        }
+
+        function executeWPlanReset(id) {
+            const station = rawData.find(i => i.StationNo == id);
+            if(confirm(`Wartungsplan-Wechsel für Agie ${id}?`)) {
+                agieOffsets[id] = (agieOffsets[id] || 0) + RESET_VAL;
+                extraCycles[id] = 0;
+                logEvent(id, "WPlan Reset (216k)", 0, station ? station.Parts : "N/A");
+                updateDisplay();
+            }
+        }
+
+        function undoReset(id) {
+            if (prompt("Passwort:") === PW_UNDO) {
+                agieOffsets[id] -= RESET_VAL;
+                extraCycles[id] = 13;
+                updateDisplay();
+                alert("Reset rückgängig gemacht.");
+            }
+        }
+
+        function exportHistory() {
+            let csv = "\uFEFFZeitstempel;Agie;Ereignis;Zaehler;Gesamtstueck\n";
+            history.forEach(r => csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Zaehler};${r.Gesamtstueck}\n`);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Wartungs_Historie_${new Date().toLocaleDateString()}.csv`;
+            link.click();
+        }
+
+        function initChart(data) {
+            myChart = new Chart(document.getElementById('myChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.label),
+                    datasets: [{ 
+                        data: data.map(d => d.diff), 
+                        backgroundColor: data.map((_, i) => getColor(i, data.length)),
+                        customData: data 
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: false,
+                        datalabels: { anchor: 'end', align: 'top', rotation: -90, offset: 10, font: { weight: 'bold' }, formatter: v => v.toLocaleString('de-DE') },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const d = ctx.dataset.customData[ctx.dataIndex];
+                                    return [`Wartung: ${d.packageName}`, `Rest: ${d.diff.toLocaleString('de-DE')}`, `Anzeige Ist: ${d.ist.toLocaleString('de-DE')}`];
+                                }
+                            }
+                        }
+                    },
+                    scales: { y: { beginAtZero: false, grace: '25%' } }
+                }
+            });
+        }
+
+        function getColor(i, total) {
+            const cs = [{r:213,g:0,b:0}, {r:0,g:58,b:108}, {r:0,g:181,b:226}];
+            const seg = (i/(total||1))*(cs.length-1), idx = Math.floor(seg), f = seg-idx, n = cs[idx+1]||cs[idx];
+            return `rgb(${Math.round(cs[idx].r+f*(n.r-cs[idx].r))},${Math.round(cs[idx].g+f*(n.g-cs[idx].g))},${Math.round(cs[idx].b+f*(n.b-cs[idx].b))})`;
+        }
+
+        document.getElementById('fileInput').addEventListener('change', e => {
+            const r = new FileReader();
+            r.onload = ev => { rawData = JSON.parse(ev.target.result); updateDisplay(); };
+            r.readAsText(e.target.files[0]);
+        });
+    </script>
+</body>
+</html>
