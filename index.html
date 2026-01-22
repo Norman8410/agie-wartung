@@ -11,10 +11,14 @@
         .top-bar { height: 8px; width: 100%; background: linear-gradient(90deg, #d50000 25%, #003a6c 25%, #003a6c 50%, #00b5e2 50%, #00b5e2 75%, #008a4f 75%); position: fixed; top: 0; left: 0; z-index: 1000; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eff1f2; margin: 0; padding: 25px; padding-top: 40px; display: flex; flex-direction: column; align-items: center; }
         
-        .header { display: flex; align-items: center; width: 98%; max-width: 1600px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .header { display: flex; flex-direction: column; width: 98%; max-width: 1600px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .header-top { display: flex; align-items: center; margin-bottom: 10px; }
         .bosch-brand { color: #d50000; font-weight: 900; font-size: 24px; letter-spacing: -1px; margin-right: 15px; font-family: sans-serif; }
         .bosch-brand span { color: #003a6c; }
         h2 { color: #003a6c; font-weight: 600; margin: 0; font-size: 1.4em; border-left: 2px solid #bfc0c2; padding-left: 15px; }
+
+        .last-change-info { font-size: 0.85em; color: #525f6b; display: flex; gap: 20px; padding-top: 10px; border-top: 1px solid #eff1f2; }
+        .info-tag { font-weight: bold; color: #003a6c; }
 
         .action-bar { margin: 10px 0 20px 0; display: flex; gap: 10px; align-items: center; width: 98%; max-width: 1600px; }
         
@@ -49,8 +53,15 @@
 <body>
     <div class="top-bar"></div>
     <div class="header">
-        <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-        <h2>Wartungs-Dashboard <span id="sync-status">● Verbinde...</span></h2>
+        <div class="header-top">
+            <div class="bosch-brand">BOSCH<span> AGIE</span></div>
+            <h2>Wartungs-Dashboard <span id="sync-status">● Verbinde...</span></h2>
+        </div>
+        <div class="last-change-info">
+            <div><span class="info-tag">Letztes Cloud-Update:</span> <span id="last-cloud-update">---</span></div>
+            <div><span class="info-tag">Letzte Aktion:</span> <span id="last-action-info">---</span></div>
+            <div style="margin-left:auto"><span class="info-tag">Skript-Stand:</span> 22.01.2026 23:35</div>
+        </div>
     </div>
     
     <div class="action-bar">
@@ -91,7 +102,7 @@
         Chart.register(ChartDataLabels);
 
         let myChart, rawData = [];
-        let state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [], triggeredNegatives: {} };
+        let state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [], triggeredNegatives: {}, lastCloudUpdate: "", lastAction: "" };
         const INTERVALL = 16000, RESET_VAL = 216000, LIMIT_FREIGABE = 500, LIMIT_WP_FREIGABE = 215500;
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
@@ -108,11 +119,15 @@
                     agieOffsets: data.agieOffsets || {},
                     history: data.history || [],
                     cloudRawData: data.cloudRawData || [],
-                    triggeredNegatives: data.triggeredNegatives || {}
+                    triggeredNegatives: data.triggeredNegatives || {},
+                    lastCloudUpdate: data.lastCloudUpdate || "---",
+                    lastAction: data.lastAction || "---"
                 };
                 if (state.cloudRawData.length > 0) rawData = state.cloudRawData;
                 document.getElementById('sync-status').innerText = "● System Online";
                 document.getElementById('sync-status').style.color = "#008a4f";
+                document.getElementById('last-cloud-update').innerText = state.lastCloudUpdate;
+                document.getElementById('last-action-info').innerText = state.lastAction;
                 updateDisplay();
             }
         });
@@ -127,6 +142,7 @@
             if (rawData.length === 0) return alert("Zuerst JSON laden!");
             if (confirm("Daten spiegeln?")) {
                 state.cloudRawData = rawData;
+                state.lastCloudUpdate = new Date().toLocaleString('de-DE') + " (KNIME JSON)";
                 await saveToCloud();
             }
         }
@@ -181,7 +197,9 @@
         function changeCount(id, delta, currentKorrIst) {
             if (confirm(`Zähler für Agie ${id} ändern?`)) {
                 state.extraCycles[id] = Math.max(0, (state.extraCycles[id] || 0) + delta);
-                state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: `Zähler ${delta>0?'+1':'-1'}`, Zaehlerstand: state.extraCycles[id], GesamtSeitPlanwechsel: currentKorrIst });
+                const zeit = new Date().toLocaleString('de-DE');
+                state.lastAction = `${zeit}: A${id} Zähler ${delta>0?'+1':'-1'}`;
+                state.history.push({ Zeitstempel: zeit, Agie: id, Ereignis: `Zähler ${delta>0?'+1':'-1'}`, Zaehlerstand: state.extraCycles[id], GesamtSeitPlanwechsel: currentKorrIst });
                 saveToCloud();
             }
         }
@@ -191,7 +209,9 @@
             if (pw === "23091861") {
                 state.agieOffsets[id] = (state.agieOffsets[id] || 0) + RESET_VAL;
                 state.extraCycles[id] = 0;
-                state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: "WP-Reset autorisiert", Zaehlerstand: 0, GesamtSeitPlanwechsel: 0 });
+                const zeit = new Date().toLocaleString('de-DE');
+                state.lastAction = `${zeit}: A${id} WP-Reset`;
+                state.history.push({ Zeitstempel: zeit, Agie: id, Ereignis: "WP-Reset autorisiert", Zaehlerstand: 0, GesamtSeitPlanwechsel: 0 });
                 saveToCloud();
                 alert("Reset erfolgreich durchgeführt.");
             } else if (pw !== null) {
