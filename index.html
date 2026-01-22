@@ -22,7 +22,6 @@
         .content-area { flex: 3; display: flex; flex-direction: column; gap: 20px; }
         .chart-container { background: white; padding: 20px; border-top: 4px solid #003a6c; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 2px; min-height: 550px; }
         
-        /* Iframe für die Anleitung */
         #doc-container { display: none; background: white; padding: 10px; border-top: 4px solid #00b5e2; box-shadow: 0 4px 15px rgba(0,0,0,0.05); height: 600px; }
         iframe { width: 100%; height: 100%; border: none; }
 
@@ -39,25 +38,23 @@
         .btn-minus { background: #003a6c; } 
         .btn-wplan { background: #d50000; font-size: 10px; }
         
-        button.nav-btn, a.nav-link { padding: 10px 18px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: 600; text-decoration: none; color: #003a6c; font-size: 13px; border-radius: 2px; }
-        button.nav-btn:hover, a.nav-link:hover { background: #f0f2f5; }
+        button.nav-btn { padding: 10px 18px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: 600; text-decoration: none; color: #003a6c; font-size: 13px; border-radius: 2px; }
+        button.nav-btn:hover { background: #f0f2f5; }
         #sync-status { font-size: 0.55em; vertical-align: middle; margin-left: 10px; text-transform: uppercase; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="top-bar"></div>
-    
     <div class="header">
         <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-        <h2>Wartungs-Dashboard <span id="sync-status">● System Online</span></h2>
+        <h2>Wartungs-Dashboard <span id="sync-status">● Verbinde...</span></h2>
     </div>
     
     <div class="action-bar">
         <button class="nav-btn" onclick="document.getElementById('fileInput').click()">1. JSON laden</button>
         <button class="nav-btn" style="background: #003a6c; color: white; border: none;" onclick="uploadJsonToCloud()">2. Cloud-Update</button>
         <button class="nav-btn" onclick="exportHistory()">Historie CSV</button>
-        <button class="nav-btn" style="border-color: #00b5e2;" onclick="toggleDoc()">📖 Anleitung ein/aus</button>
-        <a href="https://docs.google.com/document/d/e/2PACX-1vREiAGblkkQ_sCwDL6VOuptaf9KRnBKfPM-q4RpYvaXDz6o121yOt4SIDUyTQiFNjrhb_A4rsKhpaei/pub" target="_blank" class="nav-link">↗ Vollbild</a>
+        <button class="nav-btn" style="border-color: #00b5e2;" onclick="toggleDoc()">📖 Anleitung</button>
     </div>
 
     <input type="file" id="fileInput" accept=".json" style="display:none">
@@ -67,12 +64,8 @@
             <div id="doc-container">
                 <iframe src="https://docs.google.com/document/d/e/2PACX-1vREiAGblkkQ_sCwDL6VOuptaf9KRnBKfPM-q4RpYvaXDz6o121yOt4SIDUyTQiFNjrhb_A4rsKhpaei/pub?embedded=true"></iframe>
             </div>
-            
-            <div class="chart-container">
-                <canvas id="myChart"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="myChart"></canvas></div>
         </div>
-
         <div class="sidebar">
             <h3 style="color:#003a6c; border-bottom: 2px solid #bfc0c2; padding-bottom: 8px; font-size: 1.1em;">Prioritätenliste</h3>
             <div id="controlsList"></div>
@@ -80,178 +73,160 @@
     </div>
 
     <script>
-// --- KONFIGURATION ---
-const firebaseConfig = {
-    apiKey: "AIzaSyD6xGCtU-felOyO_BRsFnVlB4yhC46FgYg",
-    authDomain: "bosch-agie-wartung.firebaseapp.com",
-    databaseURL: "https://bosch-agie-wartung-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "bosch-agie-wartung",
-    storageBucket: "bosch-agie-wartung.firebasestorage.app",
-    messagingSenderId: "211606405555",
-    appId: "1:211606405555:web:cc2475ca47804086a3cbc6"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-Chart.register(ChartDataLabels);
-
-let myChart, rawData = [];
-let state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [] };
-
-// --- SCHWELLENWERTE ---
-const INTERVALL = 16000;         // Paket-Schritt
-const RESET_VAL = 216000;        // Großer Wartungsplan
-const LIMIT_FREIGABE = 500;      // Freigabe für + Button
-const LIMIT_WP_FREIGABE = 215500; // Freigabe für WP Button (Reset-Sperre)
-
-const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
-
-// Anleitung umschalten
-function toggleDoc() {
-    const container = document.getElementById('doc-container');
-    container.style.display = (container.style.display === 'none' || container.style.display === '') ? 'block' : 'none';
-}
-
-// Firebase Echtzeit-Synchronisierung
-db.ref('maintenanceState').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-        state = {
-            extraCycles: data.extraCycles || {},
-            agieOffsets: data.agieOffsets || {},
-            history: data.history || [],
-            cloudRawData: data.cloudRawData || []
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6xGCtU-felOyO_BRsFnVlB4yhC46FgYg",
+            authDomain: "bosch-agie-wartung.firebaseapp.com",
+            databaseURL: "https://bosch-agie-wartung-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "bosch-agie-wartung",
+            storageBucket: "bosch-agie-wartung.firebasestorage.app",
+            messagingSenderId: "211606405555",
+            appId: "1:211606405555:web:cc2475ca47804086a3cbc6"
         };
-        if (state.cloudRawData.length > 0) rawData = state.cloudRawData;
-        document.getElementById('sync-status').innerText = "● System Online";
-        document.getElementById('sync-status').style.color = "#008a4f";
-        updateDisplay();
-    }
-});
 
-async function saveToCloud() {
-    document.getElementById('sync-status').style.color = "#ffcf00";
-    await db.ref('maintenanceState').update(state);
-    document.getElementById('sync-status').style.color = "#008a4f";
-}
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        Chart.register(ChartDataLabels);
 
-async function uploadJsonToCloud() {
-    if (rawData.length === 0) return alert("Zuerst JSON laden!");
-    if (confirm("Daten spiegeln?")) {
-        state.cloudRawData = rawData;
-        await saveToCloud();
-    }
-}
+        let myChart, rawData = [];
+        let state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [] };
+        const INTERVALL = 16000, RESET_VAL = 216000, LIMIT_FREIGABE = 500, LIMIT_WP_FREIGABE = 215500;
+        const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
-function updateDisplay() {
-    if (!rawData || rawData.length === 0) return;
-    const processed = rawData.map(item => {
-        const id = item.StationNo, ist = Number(item.Parts);
-        const korrIst = ist - (state.agieOffsets[id] || 0);
-        const count = (state.extraCycles[id] || 0);
-        const diff = (INTERVALL + (count * INTERVALL)) - korrIst;
-        
-        let status = "status-green", barColor = "#008a4f";
-        if (diff < LIMIT_FREIGABE) { status = "status-red"; barColor = "#d50000"; }
-        else if (diff < 5000) { status = "status-yellow"; barColor = "#ffcf00"; }
-
-        return { label: "A"+id, id, diff, ist: korrIst, count, rawIst: ist, packageName: packages[count % 13], status, barColor };
-    });
-
-    processed.sort((a, b) => a.diff - b.diff);
-    renderChart(processed);
-    renderControls(processed);
-}
-
-function renderControls(data) {
-    const container = document.getElementById('controlsList');
-    container.innerHTML = "";
-    data.forEach(d => {
-        // Logik-Prüfung für die Buttons
-        const isPlusLocked = d.diff > LIMIT_FREIGABE; 
-        const isWpLocked = d.ist < LIMIT_WP_FREIGABE; // Sperre für WP-Reset bis 216k fast erreicht sind
-
-        const row = document.createElement('div');
-        row.className = `control-row ${d.status}`;
-        row.innerHTML = `
-            <div style="flex:1"><span style="color:#003a6c; font-weight:bold">A${d.id}</span><br><small style="color:#525f6b">${d.packageName}</small></div>
-            <div style="flex:1; font-weight:bold; color:#003a6c">${d.diff.toLocaleString('de-DE')}</div>
-            <button class="btn btn-wplan" ${isWpLocked ? 'disabled' : ''} onclick="wPlanReset('${d.id}')">WP</button>
-            <button class="btn btn-minus" onclick="changeCount('${d.id}', -1, ${d.rawIst})">-</button>
-            <span style="width:25px; text-align:center; font-weight:bold; color:#003a6c">${d.count}</span>
-            <button class="btn btn-plus" ${isPlusLocked ? 'disabled' : ''} onclick="changeCount('${d.id}', 1, ${d.rawIst})">+</button>
-        `;
-        container.appendChild(row);
-    });
-}
-
-function changeCount(id, delta, rawIst) {
-    if (confirm(`Zähler für Agie ${id} ändern?`)) {
-        state.extraCycles[id] = Math.max(0, (state.extraCycles[id] || 0) + delta);
-        state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: `Manuell ${delta>0?'+1':'-1'}`, Zaehler: state.extraCycles[id], Gesamtstueck: rawIst });
-        saveToCloud();
-    }
-}
-
-function wPlanReset(id) {
-    if(confirm(`WP-Reset (216.000 Stück erreicht) für Agie ${id} durchführen?`)) {
-        state.agieOffsets[id] = (state.agieOffsets[id] || 0) + RESET_VAL;
-        state.extraCycles[id] = 0;
-        state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: "WP-Reset", Zaehler: 0, Gesamtstueck: "N/A" });
-        saveToCloud();
-    }
-}
-
-function renderChart(data) {
-    const ctx = document.getElementById('myChart').getContext('2d');
-    if (myChart) myChart.destroy();
-    myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: data.map(d => d.label),
-            datasets: [{ 
-                data: data.map(d => d.diff), 
-                backgroundColor: data.map(d => d.barColor),
-                customData: data.map(d => ({ pkg: d.packageName, ist: d.rawIst }))
-            }]
-        },
-        options: { 
-            responsive: true, maintainAspectRatio: false,
-            plugins: { 
-                legend: false,
-                tooltip: {
-                    callbacks: {
-                        label: (ctx) => {
-                            const d = ctx.dataset.customData[ctx.dataIndex];
-                            return [` Rest: ${ctx.raw.toLocaleString('de-DE')}`, ` Paket: ${d.pkg}`, ` Ist: ${d.ist.toLocaleString('de-DE')}`];
-                        }
-                    }
-                },
-                datalabels: { 
-                    anchor: 'end', align: 'top', rotation: -90, offset: 5,
-                    font: { weight: 'bold' }, color: '#003a6c',
-                    formatter: v => v.toLocaleString('de-DE') 
-                } 
-            },
-            scales: { y: { beginAtZero: false, grace: '15%' } }
+        function toggleDoc() {
+            const container = document.getElementById('doc-container');
+            container.style.display = (container.style.display === 'none' || container.style.display === '') ? 'block' : 'none';
         }
-    });
-}
 
-document.getElementById('fileInput').addEventListener('change', e => {
-    const r = new FileReader();
-    r.onload = ev => { rawData = JSON.parse(ev.target.result); updateDisplay(); };
-    r.readAsText(e.target.files[0]);
-});
+        db.ref('maintenanceState').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                state = {
+                    extraCycles: data.extraCycles || {},
+                    agieOffsets: data.agieOffsets || {},
+                    history: data.history || [],
+                    cloudRawData: data.cloudRawData || []
+                };
+                if (state.cloudRawData.length > 0) rawData = state.cloudRawData;
+                document.getElementById('sync-status').innerText = "● System Online";
+                document.getElementById('sync-status').style.color = "#008a4f";
+                updateDisplay();
+            }
+        });
 
-function exportHistory() {
-    let csv = "\uFEFFZeitstempel;Agie;Ereignis;Zaehler;Gesamtstueck\n";
-    state.history.forEach(r => csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Zaehler};${r.Gesamtstueck}\n`);
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    link.download = `Wartung_Historie.csv`;
-    link.click();
-}
+        async function saveToCloud() {
+            document.getElementById('sync-status').style.color = "#ffcf00";
+            await db.ref('maintenanceState').update(state);
+            document.getElementById('sync-status').style.color = "#008a4f";
+        }
+
+        async function uploadJsonToCloud() {
+            if (rawData.length === 0) return alert("Zuerst JSON laden!");
+            if (confirm("Daten spiegeln?")) {
+                state.cloudRawData = rawData;
+                await saveToCloud();
+            }
+        }
+
+        function updateDisplay() {
+            if (!rawData || rawData.length === 0) return;
+            const processed = rawData.map(item => {
+                const id = item.StationNo, ist = Number(item.Parts);
+                const korrIst = ist - (state.agieOffsets[id] || 0);
+                const count = (state.extraCycles[id] || 0);
+                const diff = (INTERVALL + (count * INTERVALL)) - korrIst;
+                let status = "status-green", barColor = "#008a4f";
+                if (diff < LIMIT_FREIGABE) { status = "status-red"; barColor = "#d50000"; }
+                else if (diff < 5000) { status = "status-yellow"; barColor = "#ffcf00"; }
+                return { label: "A"+id, id, diff, ist: korrIst, count, rawIst: ist, packageName: packages[count % 13], status, barColor };
+            });
+            processed.sort((a, b) => a.diff - b.diff);
+            renderChart(processed);
+            renderControls(processed);
+        }
+
+        function renderControls(data) {
+            const container = document.getElementById('controlsList');
+            container.innerHTML = "";
+            data.forEach(d => {
+                const isPlusLocked = d.diff > LIMIT_FREIGABE; 
+                const isWpLocked = d.ist < LIMIT_WP_FREIGABE;
+                const row = document.createElement('div');
+                row.className = `control-row ${d.status}`;
+                row.innerHTML = `
+                    <div style="flex:1"><span style="color:#003a6c; font-weight:bold">A${d.id}</span><br><small style="color:#525f6b">${d.packageName}</small></div>
+                    <div style="flex:1; font-weight:bold; color:#003a6c">${d.diff.toLocaleString('de-DE')}</div>
+                    <button class="btn btn-wplan" ${isWpLocked ? 'disabled' : ''} onclick="wPlanReset('${d.id}')">WP</button>
+                    <button class="btn btn-minus" onclick="changeCount('${d.id}', -1, ${d.rawIst})">-</button>
+                    <span style="width:25px; text-align:center; font-weight:bold; color:#003a6c">${d.count}</span>
+                    <button class="btn btn-plus" ${isPlusLocked ? 'disabled' : ''} onclick="changeCount('${d.id}', 1, ${d.rawIst})">+</button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function changeCount(id, delta, rawIst) {
+            if (confirm(`Zähler für Agie ${id} ändern?`)) {
+                state.extraCycles[id] = Math.max(0, (state.extraCycles[id] || 0) + delta);
+                state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: `Manuell ${delta>0?'+1':'-1'}`, Zaehler: state.extraCycles[id], Gesamtstueck: rawIst });
+                saveToCloud();
+            }
+        }
+
+        function wPlanReset(id) {
+            if(confirm(`WP-Reset (216.000 erreicht) für Agie ${id} durchführen?`)) {
+                state.agieOffsets[id] = (state.agieOffsets[id] || 0) + RESET_VAL;
+                state.extraCycles[id] = 0;
+                state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: "WP-Reset", Zaehler: 0, Gesamtstueck: "N/A" });
+                saveToCloud();
+            }
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.label),
+                    datasets: [{ 
+                        data: data.map(d => d.diff), 
+                        backgroundColor: data.map(d => d.barColor),
+                        customData: data.map(d => ({ pkg: d.packageName, ist: d.rawIst }))
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        legend: false,
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const d = ctx.dataset.customData[ctx.dataIndex];
+                                    return [` Rest: ${ctx.raw.toLocaleString('de-DE')}`, ` Paket: ${d.pkg}`, ` Ist: ${d.ist.toLocaleString('de-DE')}`];
+                                }
+                            }
+                        },
+                        datalabels: { anchor: 'end', align: 'top', rotation: -90, offset: 5, font: { weight: 'bold' }, color: '#003a6c', formatter: v => v.toLocaleString('de-DE') }
+                    },
+                    scales: { y: { beginAtZero: false, grace: '15%' } }
+                }
+            });
+        }
+
+        document.getElementById('fileInput').addEventListener('change', e => {
+            const r = new FileReader();
+            r.onload = ev => { rawData = JSON.parse(ev.target.result); updateDisplay(); };
+            r.readAsText(e.target.files[0]);
+        });
+
+        function exportHistory() {
+            let csv = "\uFEFFZeitstempel;Agie;Ereignis;Zaehler;Gesamtstueck\n";
+            state.history.forEach(r => csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Zaehler};${r.Gesamtstueck}\n`);
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            link.download = `Wartung_Historie.csv`;
+            link.click();
+        }
     </script>
 </body>
 </html>
