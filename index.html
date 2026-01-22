@@ -13,7 +13,6 @@
         .top-bar { height: 8px; width: 100%; background: linear-gradient(90deg, var(--bosch-red) 25%, var(--bosch-blue) 25%, var(--bosch-blue) 50%, var(--bosch-light-blue) 50%, var(--bosch-light-blue) 75%, var(--bosch-green) 75%); position: fixed; top: 0; left: 0; z-index: 3000; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bosch-gray); margin: 0; padding: 20px; padding-top: 50px; display: flex; flex-direction: column; align-items: center; }
         
-        /* Auth Overlay */
         #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bosch-gray); z-index: 2000; display: flex; justify-content: center; align-items: center; }
         .auth-box { background: white; padding: 40px; border-top: 6px solid var(--bosch-red); width: 380px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .auth-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #bfc0c2; }
@@ -74,13 +73,12 @@
     <div class="header">
         <div style="display:flex; justify-content: space-between; align-items: center;">
             <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-            <div><span id="user-display"></span> <button onclick="handleLogout()">Logout</button></div>
+            <div><span id="user-display"></span> <button onclick="handleLogout()" style="margin-left:10px">Logout</button></div>
         </div>
     </div>
 
     <div class="action-bar">
-        <button class="nav-btn" onclick="document.getElementById('fileInput').click()">1. JSON laden</button>
-        <button class="nav-btn" style="background: var(--bosch-blue); color:white" onclick="uploadToCloud()">2. In Cloud speichern</button>
+        <button class="nav-btn" style="background: var(--bosch-blue); color:white" onclick="document.getElementById('fileInput').click()">📥 JSON Laden & Synchronisieren</button>
         <button class="nav-btn" onclick="toggleDoc()">📖 Anleitung</button>
         <button class="nav-btn" onclick="exportHistory()">CSV Export</button>
     </div>
@@ -93,7 +91,7 @@
             </div>
             <div class="chart-container"><canvas id="myChart"></canvas></div>
             <div style="background:white; padding:15px; border-top:4px solid #ccc">
-                <table style="width:100%; font-size:12px; border-collapse:collapse" id="log-table">
+                <table style="width:100%; font-size:12px; border-collapse:collapse">
                     <thead><tr style="text-align:left; border-bottom:1px solid #eee"><th>Zeit</th><th>Agie</th><th>Aktion</th><th>User</th></tr></thead>
                     <tbody id="tracking-body"></tbody>
                 </table>
@@ -127,32 +125,47 @@
             if(i !== "bosch2026") return alert("Code falsch!");
             auth.createUserWithEmailAndPassword(e, p).then(res => res.user.updateProfile({displayName: n})).then(() => location.reload());
         }
-        function handleLogin() { auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-pass').value); }
+        function handleLogin() { auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-pass').value).catch(() => alert("Login-Fehler")); }
         function handleLogout() { auth.signOut().then(() => location.reload()); }
 
         auth.onAuthStateChanged(user => {
             if(user) {
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'flex';
-                document.getElementById('user-display').innerText = user.displayName;
-                db.ref('maintenanceState').on('value', snap => { if(snap.val()) { state = snap.val(); if(state.cloudRawData) rawData = state.cloudRawData; updateUI(); } });
+                document.getElementById('user-display').innerText = "👤 " + user.displayName;
+                db.ref('maintenanceState').on('value', snap => { 
+                    if(snap.val()) { 
+                        state = snap.val(); 
+                        if(state.cloudRawData) rawData = state.cloudRawData; 
+                        updateUI(); 
+                    } 
+                });
             }
         });
 
+        // JSON LADEN UND SOFORT SPEICHERN
         document.getElementById('fileInput').addEventListener('change', e => {
+            const file = e.target.files[0];
+            if(!file) return;
             const reader = new FileReader();
-            reader.onload = ev => { rawData = JSON.parse(ev.target.result); updateUI(); };
-            reader.readAsText(e.target.files[0]);
+            reader.onload = ev => { 
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    rawData = data;
+                    state.cloudRawData = data; // In Status übernehmen
+                    db.ref('maintenanceState').update(state).then(() => {
+                        alert("Daten erfolgreich geladen und in Cloud gespeichert!");
+                        updateUI();
+                    });
+                } catch(err) {
+                    alert("Fehler: Ungültige JSON-Datei.");
+                }
+            };
+            reader.readAsText(file);
         });
 
-        function uploadToCloud() {
-            if(rawData.length === 0) return alert("Zuerst JSON laden!");
-            state.cloudRawData = rawData;
-            db.ref('maintenanceState').update(state).then(() => alert("Cloud synchronisiert!"));
-        }
-
         function updateUI() {
-            if(!rawData.length) return;
+            if(!rawData || rawData.length === 0) return;
             const processed = rawData.map(item => {
                 const id = item.StationNo, ist = Number(item.Parts) - (state.agieOffsets[id] || 0);
                 const count = state.extraCycles[id] || 0, diff = (16000 + (count * 16000)) - ist;
@@ -175,19 +188,21 @@
                     <div style="flex:1"><b>${d.diff.toLocaleString()}</b></div>
                     <button class="btn btn-wplan" ${d.ist < 215500 ? 'disabled' : ''} onclick="wpReset('${d.id}')">WP</button>
                     <button class="btn btn-minus" onclick="change('${d.id}', -1)">-</button>
-                    <span style="width:20px;text-align:center">${d.count}</span>
+                    <span style="width:20px;text-align:center"><b>${d.count}</b></span>
                     <button class="btn btn-plus" ${d.diff > 5000 ? 'disabled' : ''} onclick="change('${d.id}', 1)">+</button>
                 </div>`;
             });
         }
 
         function change(id, delta) {
+            if(!state.extraCycles) state.extraCycles = {};
             state.extraCycles[id] = Math.max(0, (state.extraCycles[id]||0) + delta);
             saveLog(id, `Zähler ${delta>0?'+1':'-1'}`, state.extraCycles[id]);
         }
 
         function wpReset(id) {
-            if(prompt("Admin-Code:") === "23091861") {
+            if(prompt("Admin-Code für WP-Reset (216k):") === "23091861") {
+                if(!state.agieOffsets) state.agieOffsets = {};
                 state.agieOffsets[id] = (state.agieOffsets[id]||0) + 216000;
                 state.extraCycles[id] = 0;
                 saveLog(id, "WP-Reset", 0);
@@ -203,7 +218,7 @@
         function renderLogs() {
             const b = document.getElementById('tracking-body'); b.innerHTML = "";
             (state.history || []).slice(-10).reverse().forEach(l => {
-                b.innerHTML += `<tr><td>${l.Zeitstempel}</td><td>A${l.Agie}</td><td>${l.Ereignis}</td><td>${l.Benutzer}</td></tr>`;
+                b.innerHTML += `<tr style="border-bottom:1px solid #f0f0f0"><td>${l.Zeitstempel}</td><td>A${l.Agie}</td><td>${l.Ereignis}</td><td>${l.Benutzer}</td></tr>`;
             });
         }
 
@@ -215,11 +230,12 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false, datalabels: { anchor:'end', align:'top' } } }
             });
         }
+
         function exportHistory() {
             let csv = "\uFEFFZeit;Agie;Ereignis;User;Stand\n";
             state.history.forEach(r => csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Benutzer};${r.Zaehlerstand}\n`);
             const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-            link.download = "Log.csv"; link.click();
+            link.download = "Wartung_Log_Agie.csv"; link.click();
         }
     </script>
 </body>
