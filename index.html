@@ -126,7 +126,7 @@
                 await saveToCloud();
             }
         }
-
+        // --- ERWEITERTE LOGIK FÜR HISTORIE ---
         function updateDisplay() {
             if (!rawData || rawData.length === 0) return;
             const processed = rawData.map(item => {
@@ -134,16 +134,31 @@
                 const korrIst = ist - (state.agieOffsets[id] || 0);
                 const count = (state.extraCycles[id] || 0);
                 const diff = (INTERVALL + (count * INTERVALL)) - korrIst;
+                
+                // Automatische Meldung wenn Rest < 0 (nur einmal pro Ereignis)
+                if (diff < 0 && !state.triggeredNegatives[id + "_" + count]) {
+                    state.history.push({ 
+                        Zeitstempel: new Date().toLocaleString('de-DE'), 
+                        Agie: id, 
+                        Ereignis: "Grenzwert unterschritten (0)", 
+                        Zaehler: count, 
+                        GesamtSeitWechsel: korrIst 
+                    });
+                    state.triggeredNegatives[id + "_" + count] = true; // Sperre damit es nicht bei jedem Refresh loggt
+                    saveToCloud();
+                }
+        
                 let status = "status-green", barColor = "#008a4f";
                 if (diff < LIMIT_FREIGABE) { status = "status-red"; barColor = "#d50000"; }
                 else if (diff < 5000) { status = "status-yellow"; barColor = "#ffcf00"; }
+        
                 return { label: "A"+id, id, diff, ist: korrIst, count, rawIst: ist, packageName: packages[count % 13], status, barColor };
             });
-            processed.sort((a, b) => a.diff - b.diff);
-            renderChart(processed);
-            renderControls(processed);
-        }
 
+    processed.sort((a, b) => a.diff - b.diff);
+    renderChart(processed);
+    renderControls(processed);
+}
         function renderControls(data) {
             const container = document.getElementById('controlsList');
             container.innerHTML = "";
@@ -230,12 +245,18 @@
             r.readAsText(e.target.files[0]);
         });
 
+        // --- CSV EXPORT MIT NEUEN BEZEICHNUNGEN ---
         function exportHistory() {
-            let csv = "\uFEFFZeitstempel;Agie;Ereignis;Zaehler;Gesamtstueck\n";
-            state.history.forEach(r => csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Zaehler};${r.Gesamtstueck}\n`);
+            // BOM für Excel (Umlaute) und neue Header
+            let csv = "\uFEFFZeitstempel;Agie;Ereignis;Zaehlerstand;Stueckzahl gesamt seit Planwechsel\n";
+            
+            state.history.forEach(r => {
+                csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Zaehler || 0};${r.GesamtSeitWechsel || "N/A"}\n`;
+            });
+        
             const link = document.createElement("a");
-            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-            link.download = `Wartung_Historie.csv`;
+            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+            link.download = `Wartung_Historie_Agie.csv`;
             link.click();
         }
     </script>
