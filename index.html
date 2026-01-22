@@ -2,99 +2,130 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch Secured</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agie Wartung - Bosch Dashboard</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <style>
-        .top-bar { height: 8px; width: 100%; background: linear-gradient(90deg, #d50000 25%, #003a6c 25%, #003a6c 50%, #00b5e2 50%, #00b5e2 75%, #008a4f 75%); position: fixed; top: 0; left: 0; z-index: 1000; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #eff1f2; margin: 0; padding: 20px; padding-top: 50px; display: flex; flex-direction: column; align-items: center; }
-        
-        /* Auth Screens */
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #eff1f2; z-index: 2000; display: flex; justify-content: center; align-items: center; }
-        .auth-box { background: white; padding: 35px; border-top: 6px solid #d50000; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 380px; text-align: center; border-radius: 2px; }
-        .auth-box input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #bfc0c2; box-sizing: border-box; font-size: 14px; }
-        .auth-btn { width: 100%; padding: 12px; background: #003a6c; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; border-radius: 2px; }
-        .auth-btn:hover { background: #005691; }
-        .toggle-link { color: #00b5e2; cursor: pointer; font-size: 0.85em; text-decoration: underline; margin-top: 15px; display: inline-block; }
 
-        /* Dashboard Styles */
-        .header { display: flex; flex-direction: column; width: 98%; max-width: 1600px; background: white; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .bosch-brand { color: #d50000; font-weight: 900; font-size: 24px; letter-spacing: -1px; }
-        .bosch-brand span { color: #003a6c; }
+    <style>
+        /* Bosch Corporate Design Farben & Basis */
+        :root {
+            --bosch-red: #d50000;
+            --bosch-blue: #003a6c;
+            --bosch-light-blue: #00b5e2;
+            --bosch-green: #008a4f;
+            --bosch-gray: #eff1f2;
+            --bosch-text: #525f6b;
+        }
+
+        .top-bar { height: 8px; width: 100%; background: linear-gradient(90deg, var(--bosch-red) 25%, var(--bosch-blue) 25%, var(--bosch-blue) 50%, var(--bosch-light-blue) 50%, var(--bosch-light-blue) 75%, var(--bosch-green) 75%); position: fixed; top: 0; left: 0; z-index: 3000; }
         
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bosch-gray); margin: 0; padding: 20px; padding-top: 50px; display: flex; flex-direction: column; align-items: center; }
+
+        /* Auth Overlay */
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bosch-gray); z-index: 2000; display: flex; justify-content: center; align-items: center; }
+        .auth-box { background: white; padding: 40px; border-top: 6px solid var(--bosch-red); box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 380px; text-align: center; border-radius: 2px; }
+        .auth-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #bfc0c2; box-sizing: border-box; }
+        .auth-btn { width: 100%; padding: 12px; background: var(--bosch-blue); color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 2px; }
+        .auth-btn:hover { background: #005691; }
+        .toggle-link { color: var(--bosch-light-blue); cursor: pointer; font-size: 0.85em; text-decoration: underline; margin-top: 15px; display: inline-block; }
+
+        /* Header */
+        .header { display: flex; flex-direction: column; width: 98%; max-width: 1600px; background: white; padding: 15px; margin-bottom: 15px; border-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .bosch-brand { color: var(--bosch-red); font-weight: 900; font-size: 24px; letter-spacing: -1px; }
+        .bosch-brand span { color: var(--bosch-blue); }
+        
+        /* Layout */
         .main-layout { display: none; width: 98%; max-width: 1600px; gap: 20px; }
-        .chart-container { background: white; padding: 20px; border-top: 4px solid #003a6c; border-radius: 2px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); min-height: 450px; }
-        .sidebar { flex: 1.5; background: white; padding: 15px; border-top: 4px solid #00b5e2; height: 82vh; overflow-y: auto; border-radius: 2px; }
+        .content-area { flex: 3; display: flex; flex-direction: column; gap: 20px; }
+        .chart-container { background: white; padding: 20px; border-top: 4px solid var(--bosch-blue); border-radius: 2px; min-height: 450px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
+        /* Sidebar Controls */
+        .sidebar { flex: 1.5; background: white; padding: 15px; border-top: 4px solid var(--bosch-light-blue); height: 82vh; overflow-y: auto; border-radius: 2px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .control-row { display: flex; align-items: center; padding: 12px; margin-bottom: 8px; border: 1px solid #dee2e6; gap: 10px; border-radius: 2px; }
-        .status-red { border-left: 6px solid #d50000; background: #fce8e8; }
-        .status-yellow { border-left: 6px solid #ffcf00; background: #fff9e6; }
-        .status-green { border-left: 6px solid #008a4f; background: #e6f4ed; }
-        .status-overdue { border-left: 6px solid #b00000; background: #ffdce0; animation: pulse 2s infinite; }
         
+        /* Status Farben */
+        .status-red { border-left: 6px solid var(--bosch-red); background: #fce8e8; }
+        .status-yellow { border-left: 6px solid #ffcf00; background: #fff9e6; }
+        .status-green { border-left: 6px solid var(--bosch-green); background: #e6f4ed; }
+        .status-overdue { border-left: 6px solid #b00000; background: #ffdce0; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+
+        /* Buttons & Tabelle */
         .btn { width: 34px; height: 34px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 2px; }
+        .btn-plus { background: var(--bosch-light-blue); }
+        .btn-minus { background: var(--bosch-blue); }
+        .btn-wplan { background: var(--bosch-red); font-size: 10px; }
         .btn:disabled { background: #bfc0c2 !important; cursor: not-allowed; }
-        .btn-plus { background: #00b5e2; } .btn-minus { background: #003a6c; } .btn-wplan { background: #d50000; font-size: 10px; }
+
+        .tracking-container { background: white; padding: 15px; border-top: 4px solid #bfc0c2; border-radius: 2px; }
+        .tracking-table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        .tracking-table th { text-align: left; color: var(--bosch-text); padding: 8px; border-bottom: 1px solid #eee; }
+        .tracking-table td { padding: 8px; border-bottom: 1px solid #f8f9fa; }
     </style>
 </head>
 <body>
 
+    <div class="top-bar"></div>
+
     <div id="auth-overlay">
         <div class="auth-box" id="login-form">
             <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-            <p style="color: #525f6b;">Wartungs-Dashboard Login</p>
+            <p style="color: var(--bosch-text);">Wartungs-Dashboard Login</p>
             <input type="email" id="login-email" placeholder="E-Mail">
             <input type="password" id="login-pass" placeholder="Passwort">
             <button class="auth-btn" onclick="handleLogin()">Anmelden</button>
-            <span class="toggle-link" onclick="showRegister(true)">Neuen Account anlegen</span>
+            <span class="toggle-link" onclick="showRegister(true)">Neuen Account registrieren</span>
         </div>
 
         <div class="auth-box" id="register-form" style="display:none">
             <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-            <p style="color: #525f6b;">Registrierung</p>
-            <input type="text" id="reg-name" placeholder="Vollständiger Name">
+            <p style="color: var(--bosch-text);">Registrierung</p>
+            <input type="text" id="reg-name" placeholder="Name (z.B. M. Müller)">
             <input type="email" id="reg-email" placeholder="E-Mail">
-            <input type="password" id="reg-pass" placeholder="Passwort wählen (min. 6 Zeichen)">
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
-            <input type="password" id="reg-invite" placeholder="Sicherheitsschlüssel eingeben" style="border: 2px solid #003a6c">
-            <button class="auth-btn" style="background:#00b5e2" onclick="handleRegister()">Account erstellen</button>
+            <input type="password" id="reg-pass" placeholder="Eigenes Passwort (min. 6 Zeichen)">
+            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+            <input type="password" id="reg-invite" placeholder="Sicherheitsschlüssel">
+            <button class="auth-btn" style="background: var(--bosch-light-blue);" onclick="handleRegister()">Account erstellen</button>
             <span class="toggle-link" onclick="showRegister(false)">Zurück zum Login</span>
         </div>
     </div>
 
-    <div class="top-bar"></div>
     <div class="header">
         <div style="display:flex; justify-content: space-between; align-items: center;">
             <div class="bosch-brand">BOSCH<span> AGIE</span></div>
             <div>
-                <span id="user-display" style="font-weight:bold; color:#003a6c; font-size: 14px;"></span>
-                <button onclick="handleLogout()" style="margin-left:15px; cursor:pointer; padding: 5px 10px; border: 1px solid #bfc0c2; background: white;">Logout</button>
+                <span id="user-display" style="font-weight:bold; color:var(--bosch-blue); margin-right: 15px;"></span>
+                <button onclick="handleLogout()" style="cursor:pointer; background:none; border:1px solid #bfc0c2; padding:5px 10px;">Logout</button>
             </div>
         </div>
     </div>
 
     <div class="main-layout" id="dashboard">
-        <div style="flex: 3; display: flex; flex-direction: column; gap: 20px;">
+        <div class="content-area">
             <div class="chart-container"><canvas id="myChart"></canvas></div>
-            <div style="background: white; padding: 15px; border-top: 4px solid #bfc0c2; border-radius: 2px;">
-                <div style="font-weight:bold; color:#003a6c; margin-bottom:10px; font-size: 13px;">🕒 LIVE-TRACKING</div>
-                <table style="width:100%; border-collapse: collapse; font-size: 0.85em;" id="tracking-table">
-                    <thead><tr style="text-align:left; color:#525f6b; border-bottom: 1px solid #eee;"><th>Zeit</th><th>Agie</th><th>Aktion</th><th>Benutzer</th><th>Stand</th></tr></thead>
+            <div class="tracking-container">
+                <div style="font-weight:bold; color:var(--bosch-blue); margin-bottom:10px;">🕒 AKTIVITÄTS-LOG</div>
+                <table class="tracking-table">
+                    <thead><tr><th>Zeit</th><th>Agie</th><th>Aktion</th><th>Benutzer</th><th>Zähler</th></tr></thead>
                     <tbody id="tracking-body"></tbody>
                 </table>
             </div>
         </div>
         <div class="sidebar">
-            <h3 style="color:#003a6c; border-bottom: 2px solid #bfc0c2; padding-bottom: 10px; margin-top: 0;">Prioritäten</h3>
+            <h3 style="color:var(--bosch-blue); border-bottom: 2px solid #bfc0c2; padding-bottom: 10px; margin-top: 0;">Steuerung</h3>
             <div id="controlsList"></div>
+            <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+            <button onclick="exportHistory()" style="width:100%; padding:10px; cursor:pointer;">Historie als CSV laden</button>
         </div>
     </div>
 
     <script>
+        // FIREBASE KONFIGURATION
         const firebaseConfig = {
             apiKey: "AIzaSyD6xGCtU-felOyO_BRsFnVlB4yhC46FgYg",
             authDomain: "bosch-agie-wartung.firebaseapp.com",
@@ -110,7 +141,7 @@
         const db = firebase.database();
         Chart.register(ChartDataLabels);
 
-        // --- AUTH LOGIC ---
+        // --- AUTH LOGIK ---
         function showRegister(show) {
             document.getElementById('login-form').style.display = show ? 'none' : 'block';
             document.getElementById('register-form').style.display = show ? 'block' : 'none';
@@ -122,24 +153,19 @@
             const pass = document.getElementById('reg-pass').value;
             const invite = document.getElementById('reg-invite').value;
 
-            // Der Code wird hier im Skript geprüft, steht aber nicht mehr im HTML-Text
-            if (invite !== "bosch2026") {
-                alert("Ungültiger Sicherheitsschlüssel! Registrierung abgelehnt.");
-                return;
-            }
+            if (invite !== "bosch2026") return alert("Falscher Sicherheitsschlüssel!");
+            if (pass.length < 6) return alert("Passwort zu kurz!");
 
             auth.createUserWithEmailAndPassword(email, pass)
-                .then((userCredential) => {
-                    return userCredential.user.updateProfile({ displayName: name });
-                })
-                .then(() => { location.reload(); })
-                .catch(error => alert("Fehler: " + error.message));
+                .then(cred => cred.user.updateProfile({ displayName: name }))
+                .then(() => location.reload())
+                .catch(err => alert(err.message));
         }
 
         function handleLogin() {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
-            auth.signInWithEmailAndPassword(email, pass).catch(error => alert("Login fehlgeschlagen."));
+            auth.signInWithEmailAndPassword(email, pass).catch(err => alert("Login fehlgeschlagen."));
         }
 
         function handleLogout() { auth.signOut().then(() => location.reload()); }
@@ -149,94 +175,41 @@
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'flex';
                 document.getElementById('user-display').innerText = "👤 " + user.displayName;
-                initDashboard();
+                initApp();
             }
         });
 
-        // --- DASHBOARD LOGIC ---
-        let myChart, rawData = [], state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [] };
-        const INTERVALL = 16000, RESET_VAL = 216000, LIMIT_PLUS = 5000, WP_MIN = 215500;
+        // --- DASHBOARD LOGIK ---
+        let myChart, state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [] };
+        const INTERVALL = 16000, RESET_VAL = 216000;
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
-        function initDashboard() {
-            db.ref('maintenanceState').on('value', (snapshot) => {
+        function initApp() {
+            db.ref('maintenanceState').on('value', snapshot => {
                 const data = snapshot.val();
                 if (data) {
                     state = data;
-                    if (state.cloudRawData) rawData = state.cloudRawData;
                     updateUI();
                 }
             });
         }
 
         function updateUI() {
-            if (!rawData || rawData.length === 0) return;
-            const processed = rawData.map(item => {
+            const raw = state.cloudRawData || [];
+            const processed = raw.map(item => {
                 const id = item.StationNo, ist = Number(item.Parts) - (state.agieOffsets[id] || 0);
                 const count = state.extraCycles[id] || 0;
                 const diff = (INTERVALL + (count * INTERVALL)) - ist;
-                let status = "status-green", color = "#008a4f";
-                if (diff < 0) { status = "status-overdue"; color = "#b00000"; }
-                else if (diff < 500) { status = "status-red"; color = "#d50000"; }
-                else if (diff < 5000) { status = "status-yellow"; color = "#ffcf00"; }
-                return { id, diff, ist, count, status, color, pkg: packages[count % 13] };
+                let s = "status-green", c = "#008a4f";
+                if (diff < 0) { s = "status-overdue"; c = "#b00000"; }
+                else if (diff < 500) { s = "status-red"; c = "#d50000"; }
+                else if (diff < 5000) { s = "status-yellow"; c = "#ffcf00"; }
+                return { id, diff, ist, count, status: s, color: c, pkg: packages[count % 13] };
             }).sort((a,b) => a.diff - b.diff);
 
             renderChart(processed);
             renderControls(processed);
             renderLogs();
-        }
-
-        function renderControls(data) {
-            const container = document.getElementById('controlsList');
-            container.innerHTML = "";
-            data.forEach(d => {
-                container.innerHTML += `
-                    <div class="control-row ${d.status}">
-                        <div style="flex:1"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
-                        <div style="flex:1; font-weight:bold">${d.diff.toLocaleString()}</div>
-                        <button class="btn btn-wplan" ${d.ist < WP_MIN ? 'disabled' : ''} onclick="wpReset('${d.id}')">WP</button>
-                        <button class="btn btn-minus" onclick="changeCount('${d.id}', -1)">-</button>
-                        <span style="width:20px; text-align:center"><b>${d.count}</b></span>
-                        <button class="btn btn-plus" ${d.diff > LIMIT_PLUS ? 'disabled' : ''} onclick="changeCount('${d.id}', 1)">+</button>
-                    </div>`;
-            });
-        }
-
-        function changeCount(id, delta) {
-            if (confirm(`A${id} Zähler ändern?`)) {
-                state.extraCycles[id] = Math.max(0, (state.extraCycles[id] || 0) + delta);
-                saveLog(id, `Zähler ${delta > 0 ? '+1' : '-1'}`, state.extraCycles[id]);
-            }
-        }
-
-        function wpReset(id) {
-            if (prompt("Admin-Code für WP-Reset:") === "23091861") {
-                state.agieOffsets[id] = (state.agieOffsets[id] || 0) + RESET_VAL;
-                state.extraCycles[id] = 0;
-                saveLog(id, "WP-Reset", 0);
-            }
-        }
-
-        function saveLog(id, event, val) {
-            if(!state.history) state.history = [];
-            state.history.push({
-                Zeitstempel: new Date().toLocaleString('de-DE'),
-                Agie: id,
-                Ereignis: event,
-                Benutzer: auth.currentUser.displayName,
-                Zaehlerstand: val
-            });
-            db.ref('maintenanceState').update(state);
-        }
-
-        function renderLogs() {
-            const body = document.getElementById('tracking-body');
-            body.innerHTML = "";
-            const logs = state.history ? [...state.history].reverse().slice(0, 10) : [];
-            logs.forEach(l => {
-                body.innerHTML += `<tr><td>${l.Zeitstempel}</td><td>A${l.Agie}</td><td>${l.Ereignis}</td><td>${l.Benutzer}</td><td>${l.Zaehlerstand || '-'}</td></tr>`;
-            });
         }
 
         function renderChart(data) {
@@ -248,8 +221,66 @@
                     labels: data.map(d => "A"+d.id),
                     datasets: [{ data: data.map(d => d.diff), backgroundColor: data.map(d => d.color) }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false, datalabels: { anchor: 'end', align: 'top', formatter: v => v.toLocaleString() } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false, datalabels: { anchor: 'end', align: 'top' } } }
             });
+        }
+
+        function renderControls(data) {
+            const list = document.getElementById('controlsList');
+            list.innerHTML = "";
+            data.forEach(d => {
+                list.innerHTML += `
+                    <div class="control-row ${d.status}">
+                        <div style="flex:1"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
+                        <div style="flex:1; font-weight:bold">${d.diff.toLocaleString()}</div>
+                        <button class="btn btn-wplan" ${d.ist < 215500 ? 'disabled' : ''} onclick="doReset('${d.id}')">WP</button>
+                        <button class="btn btn-minus" onclick="doChange('${d.id}', -1)">-</button>
+                        <span style="width:20px; text-align:center"><b>${d.count}</b></span>
+                        <button class="btn btn-plus" ${d.diff > 5000 ? 'disabled' : ''} onclick="doChange('${d.id}', 1)">+</button>
+                    </div>`;
+            });
+        }
+
+        function doChange(id, delta) {
+            if (confirm(`A${id} Zähler ändern?`)) {
+                state.extraCycles[id] = Math.max(0, (state.extraCycles[id] || 0) + delta);
+                saveAction(id, `Zähler ${delta > 0 ? '+1' : '-1'}`, state.extraCycles[id]);
+            }
+        }
+
+        function doReset(id) {
+            if (prompt("Admin-Passwort:") === "23091861") {
+                state.agieOffsets[id] = (state.agieOffsets[id] || 0) + RESET_VAL;
+                state.extraCycles[id] = 0;
+                saveAction(id, "WP-Reset", 0);
+            }
+        }
+
+        function saveAction(id, event, val) {
+            if(!state.history) state.history = [];
+            state.history.push({
+                Zeitstempel: new Date().toLocaleString('de-DE'),
+                Agie: id, Ereignis: event, Benutzer: auth.currentUser.displayName, Zaehlerstand: val
+            });
+            db.ref('maintenanceState').update(state);
+        }
+
+        function renderLogs() {
+            const body = document.getElementById('tracking-body');
+            body.innerHTML = "";
+            const logs = state.history ? [...state.history].reverse().slice(0, 10) : [];
+            logs.forEach(l => {
+                body.innerHTML += `<tr><td>${l.Zeitstempel}</td><td>A${l.Agie}</td><td>${l.Ereignis}</td><td>${l.Benutzer}</td><td>${l.Zaehlerstand || 0}</td></tr>`;
+            });
+        }
+
+        function exportHistory() {
+            let csv = "\uFEFFZeit;Agie;Ereignis;Benutzer;Zaehler\n";
+            state.history.forEach(r => csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Benutzer};${r.Zaehlerstand}\n`);
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            link.download = "Wartung_Log.csv";
+            link.click();
         }
     </script>
 </body>
