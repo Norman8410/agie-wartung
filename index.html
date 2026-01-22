@@ -60,7 +60,7 @@
         <div class="last-change-info">
             <div><span class="info-tag">Letztes Cloud-Update:</span> <span id="last-cloud-update">---</span></div>
             <div><span class="info-tag">Letzte Aktion:</span> <span id="last-action-info">---</span></div>
-            <div style="margin-left:auto"><span class="info-tag">Skript-Stand:</span> 22.01.2026 23:35</div>
+            <div style="margin-left:auto"><span class="info-tag">Skript-Stand:</span> 22.01.2026 23:45</div>
         </div>
     </div>
     
@@ -103,7 +103,7 @@
 
         let myChart, rawData = [];
         let state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [], triggeredNegatives: {}, lastCloudUpdate: "", lastAction: "" };
-        const INTERVALL = 16000, RESET_VAL = 216000, LIMIT_FREIGABE = 500, LIMIT_WP_FREIGABE = 215500;
+        const INTERVALL = 16000, RESET_VAL = 216000, LIMIT_PLUS_FREIGABE = 5000, LIMIT_WP_FREIGABE = 215500;
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
         function toggleDoc() {
@@ -163,7 +163,7 @@
 
                 let status = "status-green", barColor = "#008a4f";
                 if (diff < 0) { status = "status-overdue"; barColor = "#b00000"; }
-                else if (diff < LIMIT_FREIGABE) { status = "status-red"; barColor = "#d50000"; }
+                else if (diff < 500) { status = "status-red"; barColor = "#d50000"; }
                 else if (diff < 5000) { status = "status-yellow"; barColor = "#ffcf00"; }
 
                 return { label: "A"+id, id, diff, ist: korrIst, count, rawIst: istRaw, packageName: packages[count % 13], status, barColor };
@@ -178,8 +178,10 @@
             const container = document.getElementById('controlsList');
             container.innerHTML = "";
             data.forEach(d => {
-                const isPlusLocked = d.diff > LIMIT_FREIGABE; 
+                // FREIGABE-LOGIK: + Button aktiv wenn Rest < 5000 ODER wenn Rest bereits im Minus (< 0)
+                const isPlusLocked = (d.diff > LIMIT_PLUS_FREIGABE); 
                 const isWpLocked = d.ist < LIMIT_WP_FREIGABE;
+                
                 const row = document.createElement('div');
                 row.className = `control-row ${d.status}`;
                 row.innerHTML = `
