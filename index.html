@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch Full System</title>
+    <title>Agie Wartung - Bosch System v23.01</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -21,6 +21,9 @@
         .bosch-brand { color: var(--bosch-red); font-weight: 900; font-size: 24px; }
         .bosch-brand span { color: var(--bosch-blue); }
 
+        .info-bar { font-size: 12px; color: #525f6b; margin-top: 10px; display: flex; gap: 20px; border-top: 1px solid #eee; padding-top: 10px; }
+        .info-tag { font-weight: bold; color: var(--bosch-blue); }
+
         .action-bar { width: 98%; max-width: 1600px; display: flex; gap: 10px; margin-bottom: 15px; }
         .nav-btn { padding: 10px 15px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: bold; color: var(--bosch-blue); }
 
@@ -28,17 +31,19 @@
         .content-area { flex: 3; display: flex; flex-direction: column; gap: 20px; }
         .chart-container { background: white; padding: 20px; border-top: 4px solid var(--bosch-blue); min-height: 400px; }
         
-        #doc-container { display: none; height: 500px; background: white; margin-bottom: 20px; border-top: 4px solid var(--bosch-light-blue); }
-        iframe { width: 100%; height: 100%; border: none; }
-
         .sidebar { flex: 1.5; background: white; padding: 15px; border-top: 4px solid var(--bosch-light-blue); height: 80vh; overflow-y: auto; }
         .control-row { display: flex; align-items: center; padding: 10px; margin-bottom: 8px; border: 1px solid #dee2e6; border-left: 6px solid #ccc; gap: 8px; }
         
+        /* Log Tabelle */
+        .log-container { background: white; padding: 15px; border-top: 4px solid #bfc0c2; border-radius: 2px; }
+        .tracking-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+        .tracking-table th { text-align: left; padding: 8px; border-bottom: 2px solid #eee; color: var(--bosch-blue); }
+        .tracking-table td { padding: 8px; border-bottom: 1px solid #f0f0f0; }
+
         .status-red { border-left-color: var(--bosch-red); background: #fce8e8; }
         .status-yellow { border-left-color: #ffcf00; background: #fff9e6; }
         .status-green { border-left-color: var(--bosch-green); background: #e6f4ed; }
-        .status-overdue { border-left-color: #b00000; background: #ffdce0; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .status-overdue { border-left-color: #b00000; background: #ffdce0; }
 
         .btn { width: 32px; height: 32px; cursor: pointer; border: none; color: white; font-weight: bold; }
         .btn-plus { background: var(--bosch-light-blue); }
@@ -75,24 +80,25 @@
             <div class="bosch-brand">BOSCH<span> AGIE</span></div>
             <div><span id="user-display"></span> <button onclick="handleLogout()" style="margin-left:10px">Logout</button></div>
         </div>
+        <div class="info-bar">
+            <div><span class="info-tag">Skript-Version:</span> 23.01.2026 - 00:15</div>
+            <div><span class="info-tag">Status:</span> <span id="cloud-status">Warten auf Login...</span></div>
+        </div>
     </div>
 
     <div class="action-bar">
-        <button class="nav-btn" style="background: var(--bosch-blue); color:white" onclick="document.getElementById('fileInput').click()">📥 JSON Laden & Synchronisieren</button>
-        <button class="nav-btn" onclick="toggleDoc()">📖 Anleitung</button>
-        <button class="nav-btn" onclick="exportHistory()">CSV Export</button>
+        <button class="nav-btn" style="background: var(--bosch-blue); color:white" onclick="document.getElementById('fileInput').click()">📥 JSON Laden</button>
+        <button class="nav-btn" onclick="exportHistory()">CSV Log Export</button>
     </div>
     <input type="file" id="fileInput" style="display:none" accept=".json">
 
     <div class="main-layout" id="dashboard">
         <div class="content-area">
-            <div id="doc-container">
-                <iframe src="https://docs.google.com/document/d/e/2PACX-1vREiAGblkkQ_sCwDL6VOuptaf9KRnBKfPM-q4RpYvaXDz6o121yOt4SIDUyTQiFNjrhb_A4rsKhpaei/pub?embedded=true"></iframe>
-            </div>
             <div class="chart-container"><canvas id="myChart"></canvas></div>
-            <div style="background:white; padding:15px; border-top:4px solid #ccc">
-                <table style="width:100%; font-size:12px; border-collapse:collapse">
-                    <thead><tr style="text-align:left; border-bottom:1px solid #eee"><th>Zeit</th><th>Agie</th><th>Aktion</th><th>User</th></tr></thead>
+            <div class="log-container">
+                <div style="font-weight:bold; color:var(--bosch-blue); margin-bottom:10px;">🕒 ÄNDERUNGS-LOG (Letzte 10 Aktionen)</div>
+                <table class="tracking-table">
+                    <thead><tr><th>Zeitpunkt</th><th>Agie</th><th>Ereignis</th><th>Benutzer</th></tr></thead>
                     <tbody id="tracking-body"></tbody>
                 </table>
             </div>
@@ -118,21 +124,21 @@
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
         function showRegister(s) { document.getElementById('login-form').style.display = s?'none':'block'; document.getElementById('register-form').style.display = s?'block':'none'; }
-        function toggleDoc() { const c = document.getElementById('doc-container'); c.style.display = c.style.display==='none'?'block':'none'; }
-
         function handleRegister() {
             const n = document.getElementById('reg-name').value, e = document.getElementById('reg-email').value, p = document.getElementById('reg-pass').value, i = document.getElementById('reg-invite').value;
-            if(i !== "bosch2026") return alert("Code falsch!");
+            if(i !== "bosch2026") return alert("Sicherheitsschlüssel falsch!");
             auth.createUserWithEmailAndPassword(e, p).then(res => res.user.updateProfile({displayName: n})).then(() => location.reload());
         }
-        function handleLogin() { auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-pass').value).catch(() => alert("Login-Fehler")); }
+        function handleLogin() { auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-pass').value).catch(() => alert("Anmeldung fehlgeschlagen")); }
         function handleLogout() { auth.signOut().then(() => location.reload()); }
 
         auth.onAuthStateChanged(user => {
             if(user) {
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'flex';
-                document.getElementById('user-display').innerText = "👤 " + user.displayName;
+                document.getElementById('user-display').innerText = "Angemeldet: " + user.displayName;
+                document.getElementById('cloud-status').innerText = "Verbunden mit Firebase Cloud";
+                
                 db.ref('maintenanceState').on('value', snap => { 
                     if(snap.val()) { 
                         state = snap.val(); 
@@ -143,28 +149,19 @@
             }
         });
 
-        // JSON LADEN UND SOFORT SPEICHERN
         document.getElementById('fileInput').addEventListener('change', e => {
             const file = e.target.files[0];
-            if(!file) return;
             const reader = new FileReader();
             reader.onload = ev => { 
-                try {
-                    const data = JSON.parse(ev.target.result);
-                    rawData = data;
-                    state.cloudRawData = data; // In Status übernehmen
-                    db.ref('maintenanceState').update(state).then(() => {
-                        alert("Daten erfolgreich geladen und in Cloud gespeichert!");
-                        updateUI();
-                    });
-                } catch(err) {
-                    alert("Fehler: Ungültige JSON-Datei.");
-                }
+                rawData = JSON.parse(ev.target.result);
+                state.cloudRawData = rawData; 
+                db.ref('maintenanceState').update(state).then(() => alert("JSON geladen & Cloud synchronisiert!"));
             };
             reader.readAsText(file);
         });
 
         function updateUI() {
+            renderLogs(); // Log zuerst rendern
             if(!rawData || rawData.length === 0) return;
             const processed = rawData.map(item => {
                 const id = item.StationNo, ist = Number(item.Parts) - (state.agieOffsets[id] || 0);
@@ -173,10 +170,16 @@
                 if(diff < 0) { s = "status-overdue"; c = "#b00000"; } else if(diff < 500) { s = "status-red"; c = "#d50000"; } else if(diff < 5000) { s = "status-yellow"; c = "#ffcf00"; }
                 return { id, diff, ist, count, status: s, color: c, pkg: packages[count % 13] };
             }).sort((a,b) => a.diff - b.diff);
-
             renderChart(processed);
             renderControls(processed);
-            renderLogs();
+        }
+
+        function renderLogs() {
+            const b = document.getElementById('tracking-body'); b.innerHTML = "";
+            const logs = state.history ? [...state.history].reverse().slice(0, 10) : [];
+            logs.forEach(l => {
+                b.innerHTML += `<tr><td><b>${l.Zeitstempel}</b></td><td>A${l.Agie}</td><td>${l.Ereignis}</td><td>${l.Benutzer}</td></tr>`;
+            });
         }
 
         function renderControls(data) {
@@ -201,7 +204,7 @@
         }
 
         function wpReset(id) {
-            if(prompt("Admin-Code für WP-Reset (216k):") === "23091861") {
+            if(prompt("Admin-Code (216k):") === "23091861") {
                 if(!state.agieOffsets) state.agieOffsets = {};
                 state.agieOffsets[id] = (state.agieOffsets[id]||0) + 216000;
                 state.extraCycles[id] = 0;
@@ -211,15 +214,8 @@
 
         function saveLog(id, ev, val) {
             if(!state.history) state.history = [];
-            state.history.push({ Zeitstempel: new Date().toLocaleString(), Agie: id, Ereignis: ev, Benutzer: auth.currentUser.displayName, Zaehlerstand: val });
+            state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: ev, Benutzer: auth.currentUser.displayName, Zaehlerstand: val });
             db.ref('maintenanceState').update(state);
-        }
-
-        function renderLogs() {
-            const b = document.getElementById('tracking-body'); b.innerHTML = "";
-            (state.history || []).slice(-10).reverse().forEach(l => {
-                b.innerHTML += `<tr style="border-bottom:1px solid #f0f0f0"><td>${l.Zeitstempel}</td><td>A${l.Agie}</td><td>${l.Ereignis}</td><td>${l.Benutzer}</td></tr>`;
-            });
         }
 
         function renderChart(data) {
@@ -230,12 +226,11 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false, datalabels: { anchor:'end', align:'top' } } }
             });
         }
-
         function exportHistory() {
             let csv = "\uFEFFZeit;Agie;Ereignis;User;Stand\n";
             state.history.forEach(r => csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Benutzer};${r.Zaehlerstand}\n`);
             const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-            link.download = "Wartung_Log_Agie.csv"; link.click();
+            link.download = "Agie_Wartung_Log.csv"; link.click();
         }
     </script>
 </body>
