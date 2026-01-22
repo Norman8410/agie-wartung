@@ -8,54 +8,71 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
-        /* Bosch Farblinie oben */
-        .top-bar { height: 8px; width: 100%; background: linear-gradient(90deg, #d50000, #003a6c, #00b5e2, #008a4f); position: fixed; top: 0; left: 0; z-index: 1000; }
+        .top-bar { height: 8px; width: 100%; background: linear-gradient(90deg, #d50000 25%, #003a6c 25%, #003a6c 50%, #00b5e2 50%, #00b5e2 75%, #008a4f 75%); position: fixed; top: 0; left: 0; z-index: 1000; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eff1f2; margin: 0; padding: 25px; padding-top: 40px; display: flex; flex-direction: column; align-items: center; }
-        .header { display: flex; align-items: center; margin-bottom: 10px; }
-        .bosch-logo { height: 35px; width: auto; margin-right: 15px; } /* Größe des Logos anpassen */
-        h2 { color: #003a6c; font-weight: 600; margin: 0; }
-        .main-layout { display: flex; width: 98%; max-width: 1600px; gap: 20px; margin-top: 15px; }
-        .chart-container { flex: 3; background: white; padding: 20px; border-top: 4px solid #003a6c; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 2px; min-height: 550px; }
+        
+        .header { display: flex; align-items: center; width: 98%; max-width: 1600px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .bosch-brand { color: #d50000; font-weight: 900; font-size: 24px; letter-spacing: -1px; margin-right: 15px; font-family: sans-serif; }
+        .bosch-brand span { color: #003a6c; }
+        h2 { color: #003a6c; font-weight: 600; margin: 0; font-size: 1.4em; border-left: 2px solid #bfc0c2; padding-left: 15px; }
+
+        .action-bar { margin: 10px 0 20px 0; display: flex; gap: 10px; align-items: center; width: 98%; max-width: 1600px; }
+        
+        .main-layout { display: flex; width: 98%; max-width: 1600px; gap: 20px; }
+        .content-area { flex: 3; display: flex; flex-direction: column; gap: 20px; }
+        .chart-container { background: white; padding: 20px; border-top: 4px solid #003a6c; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 2px; min-height: 550px; }
+        
+        /* Iframe für die Anleitung */
+        #doc-container { display: none; background: white; padding: 10px; border-top: 4px solid #00b5e2; box-shadow: 0 4px 15px rgba(0,0,0,0.05); height: 600px; }
+        iframe { width: 100%; height: 100%; border: none; }
+
         .sidebar { flex: 1.5; background: #fff; padding: 15px; height: 82vh; overflow-y: auto; border-radius: 2px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 4px solid #00b5e2; }
         
-        /* Bosch Ampelsystem */
         .control-row { display: flex; align-items: center; padding: 12px; margin-bottom: 8px; border-radius: 2px; gap: 10px; border: 1px solid #dee2e6; background: #fff; }
         .status-red { border-left: 6px solid #d50000; background-color: #fce8e8; }
         .status-yellow { border-left: 6px solid #ffcf00; background-color: #fff9e6; }
         .status-green { border-left: 6px solid #008a4f; background-color: #e6f4ed; }
         
-        .btn { width: 34px; height: 34px; cursor: pointer; border: none; font-weight: bold; color: white; border-radius: 2px; transition: 0.2s; }
+        .btn { width: 34px; height: 34px; cursor: pointer; border: none; font-weight: bold; color: white; border-radius: 2px; }
         .btn:disabled { background: #bfc0c2 !important; cursor: not-allowed; opacity: 0.5; }
         .btn-plus { background: #00b5e2; } 
-        .btn-plus:hover:not(:disabled) { background: #008cae; }
         .btn-minus { background: #003a6c; } 
         .btn-wplan { background: #d50000; font-size: 10px; }
         
-        .action-bar { margin-bottom: 15px; display: flex; gap: 10px; align-items: center; }
-        #sync-status { font-size: 0.55em; vertical-align: middle; margin-left: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        
         button.nav-btn, a.nav-link { padding: 10px 18px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: 600; text-decoration: none; color: #003a6c; font-size: 13px; border-radius: 2px; }
-        button.nav-btn:hover, a.nav-link:hover { background: #eff1f2; border-color: #003a6c; }
+        button.nav-btn:hover, a.nav-link:hover { background: #f0f2f5; }
+        #sync-status { font-size: 0.55em; vertical-align: middle; margin-left: 10px; text-transform: uppercase; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="top-bar"></div>
     
     <div class="header">
-        <img src="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgNzUgMzAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHBhdGggZmlsbD0iIzAwMzM1OSIgZD0iTTUwLjk1OSAyNS41NjVjLTMuODggMC02Ljk2NS0uNjY3LTkuMjYyLTIuMDgyLTIuMTMyLTEuMzUtMy4xOTktMy40NDMtMy4xOTktNi4yNzcgMC0xLjU1Mi40MzMtMi44NTQgMS4zMDYtMy45MDcuODcyLTEuMDUzIDIuMDg0LTEuNTggMy42MzQtMS41OC44NjUgMCAxLjc0LjI3NyAyLjYyNi44MzNzMS41OTQgMS40MjQgMi4yMyAyLjY2Ny45NTQgMi43MDYuOTU0IDQuMzU1LS4zOTYgMy4xNTItMS4xODcgNC4xNzctMS44NjggMS42NTktMi40MjggMS44NzUtLjY2Ny4yMDgtLjcwOC4yMDhINjIuMTUzYy0uMjktLjE3NS0uNjgtLjUzNC0xLjE3MS0xLjA3Ny0uNDkyLS41NDMtLjc5NS0xLjMxMS0uOTAzLTEuNzU0LS42My0yLjg4Ni0uNjMtNi4wOTktMC05LjYyNmw4LjU5NS0yLjg1NGMwLTEuNjktLjAwOC0yLjg0Ni0uMDI1LTMuNDc0LS4wMDgtLjM4OC0uMDE3LS42NTktLjAyNS0uODM3LS4wMDgtLjE0Mi0uMDE3LS4yNi0uMDItLjM1cS0uMDk2LS40NzUtLjI3Ni0uNzc0LS4yNjctLjQ1NS0uNjg4LS43MTh0LS44Mi0uMzc1Yy0uNDU5LS4wMjUtMS4wNDItLjAyNS0xLjc0NC0uMDI1LTcuNzUgMC0xMi42MjUgNC4xNy0xNC42NTggMTIuNTExLTEuMDkyIDQuNDk3LS4xMjUgOC4xNCAyLjkwOCAxMC45NjcuNTM0LjQ3NSAxLjEyLjgyOSAxLjc1NCAxLjA2My42MzQuMjM0IDEuMzA2LjM1IDEuOTcuMzUuNjggMCAxLjIyLS4wNDIgMS42MDktLjEyNWwuNDUtLjEyNSAyLjAxMi0uNzU4Yy4wMy40MDguMTA0LjcwOC4yMjUuOTAyLjE3Ni4yNjcuNDA5LjU1OC43LjgyNWwxLjEzMy44MzMuNzA5LjQ0Mi41MzQuMjY3LjQ5Mi4wNTguNzk2LjAyNSAzLjYzNC4wMjVsMTYuNDEtLjAzMWMuMjM0LS4wMzMuNTE3LS4wNzUuODQyLS4xMjVsLS4wMi4wMjUgMS43MDgtLjMxNyAxLjMxMi0uNzkxYy4wNzUtLjA5Mi4xNDItLjIxNy4yMDctLjM3NS4wNjctLjE1LjEwOC0uMzA4LjExNy0uNDc1LjA2Ny0uNzg0LS43LTMuNjUzLTIuMzAzLTguNjA1Yy0xLjU0Mi00Ljg2NS0zLjc4NC03LjUyOC02Ljc3NS03Ljk5MmwtMS4xMDgtLjA1OC02LjgxNy4xNjcgMy4wNTguNjc1Yy0uOTU4LS4wNzUtMi4wMjUtLjEwOC0zLjIwOC0uMTA4LS45MDggMC0xLjcyNS4xMDgtMi40NDIuMzIzLS43MTYuMjE3LTEuMzk5LjYwOC0yLjA1OCAxbC0xLjA3NSAxLjAyNS0uNzY3Ljc3NS0uNDU5LjQyNS0uMTUyLjA1OHptLTI1LjA5NiA4LjEzNGMtLjA5Mi01LjA2NSAxLjg1NC04LjAzMyA1Ljg0Ni04LjAzMyAyLjY3NSAwIDQuNjUuODI1IDUuOTE3IDIuNDczIDEuMjY2IDEuNzI0IDEuOTA4IDMuOTk5IDEuOTA4IDYuODA5IDAgMS42MTctLjE0MiAyLjkyNS0uNDI1IDMuOTI0LS4yODQuOTk5LS43MTcgMS42NDktMS4zMDEgMS45NjctLjU5Mi4zMTYtMS4yMy40NzUtMS45MTYuNDc1LS4zMzQgMC0uNjktLjA0Mi0xLjA2My0uMTI1LS4zNzUtLjA4My0uNzQyLS4yMDgtMS4wOTEtLjM3NS0uMzQxLS4xNDItLjY0MS0uMjkxLS44OTItLjQ0M2wtMS4wOTEtLjczMWMtLjgyOS0uNTQyLTEuMjQ2LTEuMTE3LTEuMjQ2LTEuNzI1IDAtLjI4My4xMi0uNDc1LjM2Ny0uNTc1LjI1OS0uMTExLjYyNi0uMTY3IDEuMTAxLS4xNjdINzUuMDA2djEuNjY3bC04LjkwOC4zNWMtLjI3NSAwLS41My0uMDQyLS43NjctLjEyNS0uMjM0LS4wODMtLjQxNy0uMTctLjUyNS0uMjU4LS4xNDEtLjA5Mi0uMjM0LS4xNjctLjI3Ni0uMjI1LS4xMDQtLjExNi0uMTg4LS4yOTEtLjI1LS41MjVzLS4xMDQtLjUyNS0uMTU4LS45NTljLS40MjUtMy42MTctLjQyNS01Ljg3NSAwLTYuNzY3bDEuNTY3LS44OTJjLS4zOTItLjA4NC0uOTAzLS4xMjYtMS41MzMtLjEyNi0xLjczNCAwLTMuMTI1LjU0MS00LjE3NSAxLjYzMy0xLjA0MiAxLjA5Mi0xLjU2MiAyLjUxNy0xLjU2MiA0LjI3NSAwIC43Ni4xMTcgMS40MzMuMzUzIDEuOTkxLjIzNC41NTkuNTQxLjk1My45MiAxLjE4Ny4zODQuMjM0Ljg0Ni4zNTQgMS4zODYuMzU0LjM1OCAwIC42MDgtLjA2Ny43NS0uMjUyLjI3NS0uMjUxLjI4My0uMjc1LjI4My0uNzA4di01LjMzNGMwLS41MjUtLjI1OS0uNzg0LS43NzUt.3MzMtLjU4NC40NS0xLjI0Mi42NzUtMS45NzUuNjc1LS42ODMgMC0xLjMwNy0uMTU4LTEuODczLS40NzUtLjU2Ni0uMzE3LS44NS0uNzYzLS44NS0xLjMxNiAwLS41NjcuNDI1LS44NSAxLjI3NS0uODVsOC4wOTktLjAyNS0uMjgzLTEuMzgzYy0uMzQxLTEuNzA4LS45My0zLjY2Ny0xLjc2Ni01LjgyNS0uODM0LTIuMTU4LTEuNjUzLTMuNDctMi40NTgtMy45NDItLjg0Mi0uNDc0LTEuNjktLjcyNC0yLjUzMy0uNzUtLjY2Ni0uMDE3LTEuMDMxLjAxNy0xLjA5MS4wODRsLTEuMTcuOTkzLS4yOTEuMzkydC0uMTI1LjQyNWMtLjAxNy40MDguMDk2LjcwOC4zNDEuODk1di4wMDFsLjQ0Mi41MzMgMS40MDguOTc1Yy42OTIuNDg0IDEuMjgyLjgyOCAxLjc3NSAxLjAzMy40OTMuMjA4LjgyNi4zMTYgLjk5Mi4zMjNsMS4zMy4wMjVjLS4xNjctLjMyNS0uMzcxLS42NjctLjYzNy0xLS4yNTktLjMyNS0uNTA5LS42Mi0uNzUtLjg3NnptLTI0LjA4My0zLjk1YzEuNDU4IDAgMi44MTYuMjcxIDQuMDg0LjgyLjUxNy41NjcgLjc3NSAxLjIzNC43NzUgMi4wMDkgMCAuNzcxLS4yMDggMS4zNzUtLjYyNSAxLjgyNS0uNDI1LjQ1LS45OTIuNjczLTEuNzkxLjY3My0uNDM0IDAtLjg2Ny0uMTIxLTEuMzA2LS4zNjMtLjQyNi0uMjQzLS44Ljc0Ni0xLjEzNCAxLjQ4LS4zNTguNjc1LS41MzggMS4zNS0uNTM4IDEuOTgyIDAgLjM2Ny4wOTIuNjgzLjI3Ni45NDlsLjI2Ny40MTcgMS4wMTcgMS4zMjdjLjcyNS45OTIgMS4zNSAxLjcyNSAxLjg3NSAyLjE5Mi41MTcuNDUzLjg5Mi43NDYgMS4xMjUuODY1LjI5Mi4xNDMuNTE3LjI0My42Ny4zLjE1OC4wNjcuMzY2LjEwNC42MjUuMTA0Ljg1OSAwIDEuODIxLS4yODQgMi44NzUtLjg1bC41MzMtLjgxNWMtLjMxNi0uNzgtLjQ3NS0xLjU5OS0uNDc1LTIuNDU4IDAtLjY0Mi4xNDEtMS4yMjUuNDIzLTEuNzU0LjI5Mi0uNTQxLjY0Ni0uOTU4IDEuMDU4LTEuMjUxLjQwOS0uMjg0Ljc2Ny0uNDE3IDEuMDc1LS40MTcuODMzIDAgMS42MTYuNDE2IDIuMzQ5IDEuMjVoLS4yMTdsLTUuMDk5LjkxNmMtLjA0Mi4wMDgtLjE0Mi4wMjUtLjMyNi4wNS0uMTA0LjAxNy0uMjM0LjAzNC0uMzQyLjA1bC0uMTI1LjAyNWMtLjI0My4wNS0uNDU5LjA3Ni0uNjUyLjA3Ni0uNzc1IDAtMS4xNjctLjI2Ny0xLjE2Ny0uOCAwLS40NTguMjMzLS42ODMuNzAzLS42ODNsOS4yNS4yOTFjLS40NTgtLjY3NS0xLjAyNS0xLjA4NC0xLjczNC0xLjIyNS0uNjkzLS4xMzMtMS41MjUtLjIxNy0yLjUwOS0uMjQyLS45ODQtLjA1OC0xLjc3OS0uMTA0LTIuMzg0LS4xMzNsLS41NDItLjAzMWMtLjI3Ni0uMDA4LS41NTktLjAxNy0uODQyLS4wMjVsLS44MTctLjAwOC03Ljg5Mi0uMDA4Yy0yLjYzNCAwLTQuMzgzLjU5Mi01LjIzMyAxLjc2Ny0uOTk5IDEuMTU4LTEuNDk5IDIuODY1LTEuNDk5IDUuMDUgMCAtLjYyNS4wNTktMS4wOTEuMTc1LTEuMzk5LjExNy0uMy4yOTItLjUxNy41MjUtLjYzMy4yOTItLjE1OS42LS4yMzQgLjk0OS0uMjM0LjMzMyAwIC41NTguMDg0LjY3NS4yNS4xMjUgLjE2Ni4yNS40NzUuMzcuOTI1LjA5MS4zNDEuMTM0LjYzNC4xNTggLjg5MnMuMDMzLjU0Mi4wMzMuNzU5Yy0uMTE2LS4wMDgtLjQ0MS0uMDk2LS45NzUtLjI2Ny0uMjcxLS4wOTItLjU3MS0uMjA4LS44OTItLjM1bC0uODQtLjM3NWMtLjQ1LS4yMDgtLjg0MS0uMzktMS4xNzUtLjUzNC0uMzM0LS4xNDItLjU5Mi0uMjMyLS43NzUtLjI3Ni0uMTU4LS4wNDItLjIxNy0uMDQyLS4xNzYtLjAxNnptMTMuNzM1LTguNzY5Yy44NDIgMCAxLjUyNS4xMjYgMi4wNTEuMzUzLjUyNS4yMTcgLjk1OC41MjYgMS4zMDEuOTI1bDEuMTMzIDEuNTY1Yy40MzMuNTc1LjcyNSAxLjA0Mi44NzUgMS40LjE0Mi4zNDEuMjY3LjY1OS4zNzUgLjk1LjA5Mi4yMzMuMTU4LjQ2Ni4yLjcwOC4wMzQuMTc1LjA1OS4zMTcuMDc2LjQxNy4wMjUuMTA4LjAzMy4xNTguMDI1LjE0Mi0uMDc1IDMuMTI1LTIuNzU5IDQuNjc1LTguMTE3IDQuNjc1LTcuMjg0IDAtMTEuOTY3LTMuMDM0LTExLjkwOC05LjE1eiIvPgo8L3N2Zz4=" class="bosch-logo" alt="Bosch Logo">
-        <h2>Stückzahlabhängige Wartung <span id="sync-status">● Verbinde...</span></h2>
+        <div class="bosch-brand">BOSCH<span> AGIE</span></div>
+        <h2>Wartungs-Dashboard <span id="sync-status">● System Online</span></h2>
     </div>
     
     <div class="action-bar">
         <button class="nav-btn" onclick="document.getElementById('fileInput').click()">1. JSON laden</button>
-        <button class="nav-btn" style="background: #003a6c; color: white; border: none;" onclick="uploadJsonToCloud()">2. Cloud-Update (Spiegeln)</button>
+        <button class="nav-btn" style="background: #003a6c; color: white; border: none;" onclick="uploadJsonToCloud()">2. Cloud-Update</button>
         <button class="nav-btn" onclick="exportHistory()">Historie CSV</button>
-        <a href="https://docs.google.com/document/d/e/2PACX-1vREiAGblkkQ_sCwDL6VOuptaf9KRnBKfPM-q4RpYvaXDz6o121yOt4SIDUyTQiFNjrhb_A4rsKhpaei/pub" target="_blank" class="nav-link">📖 Anleitung</a>
+        <button class="nav-btn" style="border-color: #00b5e2;" onclick="toggleDoc()">📖 Anleitung ein/aus</button>
+        <a href="https://docs.google.com/document/d/e/2PACX-1vREiAGblkkQ_sCwDL6VOuptaf9KRnBKfPM-q4RpYvaXDz6o121yOt4SIDUyTQiFNjrhb_A4rsKhpaei/pub" target="_blank" class="nav-link">↗ Vollbild</a>
     </div>
+
     <input type="file" id="fileInput" accept=".json" style="display:none">
 
     <div class="main-layout">
-        <div class="chart-container"><canvas id="myChart"></canvas></div>
+        <div class="content-area">
+            <div id="doc-container">
+                <iframe src="https://docs.google.com/document/d/e/2PACX-1vREiAGblkkQ_sCwDL6VOuptaf9KRnBKfPM-q4RpYvaXDz6o121yOt4SIDUyTQiFNjrhb_A4rsKhpaei/pub?embedded=true"></iframe>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="myChart"></canvas>
+            </div>
+        </div>
+
         <div class="sidebar">
             <h3 style="color:#003a6c; border-bottom: 2px solid #bfc0c2; padding-bottom: 8px; font-size: 1.1em;">Prioritätenliste</h3>
             <div id="controlsList"></div>
@@ -63,6 +80,7 @@
     </div>
 
     <script>
+        // Konfiguration und Initialisierung
         const firebaseConfig = {
             apiKey: "AIzaSyD6xGCtU-felOyO_BRsFnVlB4yhC46FgYg",
             authDomain: "bosch-agie-wartung.firebaseapp.com",
@@ -78,10 +96,17 @@
         Chart.register(ChartDataLabels);
 
         let myChart, rawData = [];
-        let state = { extraCycles: {}, agieOffsets: {}, history: [], triggeredNegatives: {}, cloudRawData: [] };
+        let state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [] };
         const INTERVALL = 16000, RESET_VAL = 216000, LIMIT_FREIGABE = 500;
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
+        // Anleitung umschalten
+        function toggleDoc() {
+            const container = document.getElementById('doc-container');
+            container.style.display = (container.style.display === 'none' || container.style.display === '') ? 'block' : 'none';
+        }
+
+        // Firebase Sync
         db.ref('maintenanceState').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -89,7 +114,6 @@
                     extraCycles: data.extraCycles || {},
                     agieOffsets: data.agieOffsets || {},
                     history: data.history || [],
-                    triggeredNegatives: data.triggeredNegatives || {},
                     cloudRawData: data.cloudRawData || []
                 };
                 if (state.cloudRawData.length > 0) rawData = state.cloudRawData;
@@ -107,10 +131,9 @@
 
         async function uploadJsonToCloud() {
             if (rawData.length === 0) return alert("Zuerst JSON laden!");
-            if (confirm("Möchtest du die aktuellen Maschinendaten spiegeln?")) {
+            if (confirm("Daten spiegeln?")) {
                 state.cloudRawData = rawData;
                 await saveToCloud();
-                alert("Daten erfolgreich in die Cloud gespiegelt.");
             }
         }
 
@@ -122,9 +145,9 @@
                 const count = (state.extraCycles[id] || 0);
                 const diff = (INTERVALL + (count * INTERVALL)) - korrIst;
                 
-                let status = "status-green", barColor = "#008a4f"; // Bosch Grün
-                if (diff < LIMIT_FREIGABE) { status = "status-red"; barColor = "#d50000"; } // Bosch Rot
-                else if (diff < 5000) { status = "status-yellow"; barColor = "#ffcf00"; } // Bosch Gelb
+                let status = "status-green", barColor = "#008a4f";
+                if (diff < LIMIT_FREIGABE) { status = "status-red"; barColor = "#d50000"; }
+                else if (diff < 5000) { status = "status-yellow"; barColor = "#ffcf00"; }
 
                 return { label: "A"+id, id, diff, ist: korrIst, count, rawIst: ist, packageName: packages[count % 13], status, barColor };
             });
@@ -144,7 +167,7 @@
                 row.innerHTML = `
                     <div style="flex:1"><span style="color:#003a6c; font-weight:bold">A${d.id}</span><br><small style="color:#525f6b">${d.packageName}</small></div>
                     <div style="flex:1; font-weight:bold; color:#003a6c">${d.diff.toLocaleString('de-DE')}</div>
-                    <button class="btn btn-wplan" ${isLocked ? 'disabled' : ''} onclick="wPlanReset('${d.id}')" title="Wartungsplan Reset">WP</button>
+                    <button class="btn btn-wplan" ${isLocked ? 'disabled' : ''} onclick="wPlanReset('${d.id}')">WP</button>
                     <button class="btn btn-minus" onclick="changeCount('${d.id}', -1, ${d.rawIst})">-</button>
                     <span style="width:25px; text-align:center; font-weight:bold; color:#003a6c">${d.count}</span>
                     <button class="btn btn-plus" ${isLocked ? 'disabled' : ''} onclick="changeCount('${d.id}', 1, ${d.rawIst})">+</button>
@@ -154,19 +177,15 @@
         }
 
         function changeCount(id, delta, rawIst) {
-            if (confirm(`Zähler für Agie ${id} wirklich ändern?`)) {
+            if (confirm(`Zähler für Agie ${id} ändern?`)) {
                 state.extraCycles[id] = Math.max(0, (state.extraCycles[id] || 0) + delta);
-                state.history.push({ 
-                    Zeitstempel: new Date().toLocaleString('de-DE'), 
-                    Agie: id, Ereignis: `Manuell ${delta>0?'+1':'-1'}`, 
-                    Zaehler: state.extraCycles[id], Gesamtstueck: rawIst 
-                });
+                state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: `Manuell ${delta>0?'+1':'-1'}`, Zaehler: state.extraCycles[id], Gesamtstueck: rawIst });
                 saveToCloud();
             }
         }
 
         function wPlanReset(id) {
-            if(confirm(`Großer Wartungsplan-Reset (216.000) für Agie ${id} durchführen?`)) {
+            if(confirm(`WP-Reset für Agie ${id}?`)) {
                 state.agieOffsets[id] = (state.agieOffsets[id] || 0) + RESET_VAL;
                 state.extraCycles[id] = 0;
                 state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: "WP-Reset", Zaehler: 0, Gesamtstueck: "N/A" });
@@ -182,10 +201,8 @@
                 data: {
                     labels: data.map(d => d.label),
                     datasets: [{ 
-                        label: 'Rest bis Wartung',
                         data: data.map(d => d.diff), 
                         backgroundColor: data.map(d => d.barColor),
-                        borderColor: '#003a6c', borderWidth: 0,
                         customData: data.map(d => ({ pkg: d.packageName, ist: d.rawIst }))
                     }]
                 },
@@ -194,33 +211,20 @@
                     plugins: { 
                         legend: false,
                         tooltip: {
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            titleColor: '#003a6c',
-                            bodyColor: '#003a6c',
-                            borderColor: '#bfc0c2',
-                            borderWidth: 1,
                             callbacks: {
-                                label: function(context) {
-                                    const d = context.dataset.customData[context.dataIndex];
-                                    return [
-                                        ` Rest: ${context.raw.toLocaleString('de-DE')} Stück`,
-                                        ` Paket: ${d.pkg}`,
-                                        ` Gesamt Ist: ${d.ist.toLocaleString('de-DE')}`
-                                    ];
+                                label: (ctx) => {
+                                    const d = ctx.dataset.customData[ctx.dataIndex];
+                                    return [` Rest: ${ctx.raw.toLocaleString('de-DE')}`, ` Paket: ${d.pkg}`, ` Ist: ${d.ist.toLocaleString('de-DE')}`];
                                 }
                             }
                         },
                         datalabels: { 
                             anchor: 'end', align: 'top', rotation: -90, offset: 5,
-                            font: { weight: 'bold', size: 11 },
-                            color: '#003a6c',
+                            font: { weight: 'bold' }, color: '#003a6c',
                             formatter: v => v.toLocaleString('de-DE') 
                         } 
                     },
-                    scales: { 
-                        y: { beginAtZero: false, grace: '15%', grid: { color: '#dee2e6' } },
-                        x: { grid: { display: false } }
-                    }
+                    scales: { y: { beginAtZero: false, grace: '15%' } }
                 }
             });
         }
@@ -236,7 +240,7 @@
             state.history.forEach(r => csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Zaehler};${r.Gesamtstueck}\n`);
             const link = document.createElement("a");
             link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-            link.download = `Bosch_Agie_Historie.csv`;
+            link.download = `Wartung_Historie.csv`;
             link.click();
         }
     </script>
