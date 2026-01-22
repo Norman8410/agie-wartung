@@ -187,11 +187,15 @@
         }
 
         function wPlanReset(id) {
-            if(confirm(`WP-Reset (216.000 erreicht) für Agie ${id} durchführen?`)) {
+            const pw = prompt(`WP-Reset (216.000 erreicht) für Agie ${id} autorisieren.\nBitte Passwort eingeben:`);
+            if (pw === "23091861") {
                 state.agieOffsets[id] = (state.agieOffsets[id] || 0) + RESET_VAL;
                 state.extraCycles[id] = 0;
-                state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: "WP-Reset", Zaehlerstand: 0, GesamtSeitPlanwechsel: 0 });
+                state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: "WP-Reset autorisiert", Zaehlerstand: 0, GesamtSeitPlanwechsel: 0 });
                 saveToCloud();
+                alert("Reset erfolgreich durchgeführt.");
+            } else if (pw !== null) {
+                alert("Falsches Passwort! Reset abgebrochen.");
             }
         }
 
