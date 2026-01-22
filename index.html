@@ -10,34 +10,26 @@
     <style>
         .top-bar { height: 8px; width: 100%; background: linear-gradient(90deg, #d50000 25%, #003a6c 25%, #003a6c 50%, #00b5e2 50%, #00b5e2 75%, #008a4f 75%); position: fixed; top: 0; left: 0; z-index: 1000; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eff1f2; margin: 0; padding: 25px; padding-top: 40px; display: flex; flex-direction: column; align-items: center; }
-        
         .header { display: flex; align-items: center; width: 98%; max-width: 1600px; margin-bottom: 15px; background: white; padding: 15px; border-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .bosch-brand { color: #d50000; font-weight: 900; font-size: 24px; letter-spacing: -1px; margin-right: 15px; font-family: sans-serif; }
         .bosch-brand span { color: #003a6c; }
         h2 { color: #003a6c; font-weight: 600; margin: 0; font-size: 1.4em; border-left: 2px solid #bfc0c2; padding-left: 15px; }
-
         .action-bar { margin: 10px 0 20px 0; display: flex; gap: 10px; align-items: center; width: 98%; max-width: 1600px; }
-        
         .main-layout { display: flex; width: 98%; max-width: 1600px; gap: 20px; }
         .content-area { flex: 3; display: flex; flex-direction: column; gap: 20px; }
         .chart-container { background: white; padding: 20px; border-top: 4px solid #003a6c; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 2px; min-height: 550px; }
-        
         #doc-container { display: none; background: white; padding: 10px; border-top: 4px solid #00b5e2; box-shadow: 0 4px 15px rgba(0,0,0,0.05); height: 600px; }
         iframe { width: 100%; height: 100%; border: none; }
-
         .sidebar { flex: 1.5; background: #fff; padding: 15px; height: 82vh; overflow-y: auto; border-radius: 2px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 4px solid #00b5e2; }
-        
         .control-row { display: flex; align-items: center; padding: 12px; margin-bottom: 8px; border-radius: 2px; gap: 10px; border: 1px solid #dee2e6; background: #fff; }
         .status-red { border-left: 6px solid #d50000; background-color: #fce8e8; }
         .status-yellow { border-left: 6px solid #ffcf00; background-color: #fff9e6; }
         .status-green { border-left: 6px solid #008a4f; background-color: #e6f4ed; }
-        
         .btn { width: 34px; height: 34px; cursor: pointer; border: none; font-weight: bold; color: white; border-radius: 2px; }
         .btn:disabled { background: #bfc0c2 !important; cursor: not-allowed; opacity: 0.5; }
         .btn-plus { background: #00b5e2; } 
         .btn-minus { background: #003a6c; } 
         .btn-wplan { background: #d50000; font-size: 10px; }
-        
         button.nav-btn { padding: 10px 18px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: 600; text-decoration: none; color: #003a6c; font-size: 13px; border-radius: 2px; }
         button.nav-btn:hover { background: #f0f2f5; }
         #sync-status { font-size: 0.55em; vertical-align: middle; margin-left: 10px; text-transform: uppercase; font-weight: bold; }
@@ -49,16 +41,13 @@
         <div class="bosch-brand">BOSCH<span> AGIE</span></div>
         <h2>Wartungs-Dashboard <span id="sync-status">● Verbinde...</span></h2>
     </div>
-    
     <div class="action-bar">
         <button class="nav-btn" onclick="document.getElementById('fileInput').click()">1. JSON laden</button>
         <button class="nav-btn" style="background: #003a6c; color: white; border: none;" onclick="uploadJsonToCloud()">2. Cloud-Update</button>
         <button class="nav-btn" onclick="exportHistory()">Historie CSV</button>
         <button class="nav-btn" style="border-color: #00b5e2;" onclick="toggleDoc()">📖 Anleitung</button>
     </div>
-
     <input type="file" id="fileInput" accept=".json" style="display:none">
-
     <div class="main-layout">
         <div class="content-area">
             <div id="doc-container">
@@ -88,7 +77,8 @@
         Chart.register(ChartDataLabels);
 
         let myChart, rawData = [];
-        let state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [] };
+        // HINWEIS: triggeredNegatives muss hier initialisiert werden!
+        let state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [], triggeredNegatives: {} };
         const INTERVALL = 16000, RESET_VAL = 216000, LIMIT_FREIGABE = 500, LIMIT_WP_FREIGABE = 215500;
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
@@ -104,7 +94,8 @@
                     extraCycles: data.extraCycles || {},
                     agieOffsets: data.agieOffsets || {},
                     history: data.history || [],
-                    cloudRawData: data.cloudRawData || []
+                    cloudRawData: data.cloudRawData || [],
+                    triggeredNegatives: data.triggeredNegatives || {}
                 };
                 if (state.cloudRawData.length > 0) rawData = state.cloudRawData;
                 document.getElementById('sync-status').innerText = "● System Online";
@@ -126,39 +117,39 @@
                 await saveToCloud();
             }
         }
-        // --- ERWEITERTE LOGIK FÜR HISTORIE ---
+
         function updateDisplay() {
             if (!rawData || rawData.length === 0) return;
             const processed = rawData.map(item => {
-                const id = item.StationNo, ist = Number(item.Parts);
-                const korrIst = ist - (state.agieOffsets[id] || 0);
+                const id = item.StationNo, istRaw = Number(item.Parts);
+                const korrIst = istRaw - (state.agieOffsets[id] || 0);
                 const count = (state.extraCycles[id] || 0);
                 const diff = (INTERVALL + (count * INTERVALL)) - korrIst;
                 
-                // Automatische Meldung wenn Rest < 0 (nur einmal pro Ereignis)
+                // Automatischer Log bei Unterschreiten der 0
                 if (diff < 0 && !state.triggeredNegatives[id + "_" + count]) {
                     state.history.push({ 
                         Zeitstempel: new Date().toLocaleString('de-DE'), 
                         Agie: id, 
                         Ereignis: "Grenzwert unterschritten (0)", 
-                        Zaehler: count, 
-                        GesamtSeitWechsel: korrIst 
+                        Zaehlerstand: count, 
+                        GesamtSeitPlanwechsel: korrIst 
                     });
-                    state.triggeredNegatives[id + "_" + count] = true; // Sperre damit es nicht bei jedem Refresh loggt
+                    state.triggeredNegatives[id + "_" + count] = true;
                     saveToCloud();
                 }
-        
+
                 let status = "status-green", barColor = "#008a4f";
                 if (diff < LIMIT_FREIGABE) { status = "status-red"; barColor = "#d50000"; }
                 else if (diff < 5000) { status = "status-yellow"; barColor = "#ffcf00"; }
-        
-                return { label: "A"+id, id, diff, ist: korrIst, count, rawIst: ist, packageName: packages[count % 13], status, barColor };
+                return { label: "A"+id, id, diff, ist: korrIst, count, rawIst: istRaw, packageName: packages[count % 13], status, barColor };
             });
 
-    processed.sort((a, b) => a.diff - b.diff);
-    renderChart(processed);
-    renderControls(processed);
-}
+            processed.sort((a, b) => a.diff - b.diff);
+            renderChart(processed);
+            renderControls(processed);
+        }
+
         function renderControls(data) {
             const container = document.getElementById('controlsList');
             container.innerHTML = "";
@@ -171,18 +162,24 @@
                     <div style="flex:1"><span style="color:#003a6c; font-weight:bold">A${d.id}</span><br><small style="color:#525f6b">${d.packageName}</small></div>
                     <div style="flex:1; font-weight:bold; color:#003a6c">${d.diff.toLocaleString('de-DE')}</div>
                     <button class="btn btn-wplan" ${isWpLocked ? 'disabled' : ''} onclick="wPlanReset('${d.id}')">WP</button>
-                    <button class="btn btn-minus" onclick="changeCount('${d.id}', -1, ${d.rawIst})">-</button>
+                    <button class="btn btn-minus" onclick="changeCount('${d.id}', -1, ${d.ist})">-</button>
                     <span style="width:25px; text-align:center; font-weight:bold; color:#003a6c">${d.count}</span>
-                    <button class="btn btn-plus" ${isPlusLocked ? 'disabled' : ''} onclick="changeCount('${d.id}', 1, ${d.rawIst})">+</button>
+                    <button class="btn btn-plus" ${isPlusLocked ? 'disabled' : ''} onclick="changeCount('${d.id}', 1, ${d.ist})">+</button>
                 `;
                 container.appendChild(row);
             });
         }
 
-        function changeCount(id, delta, rawIst) {
+        function changeCount(id, delta, currentKorrIst) {
             if (confirm(`Zähler für Agie ${id} ändern?`)) {
                 state.extraCycles[id] = Math.max(0, (state.extraCycles[id] || 0) + delta);
-                state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: `Manuell ${delta>0?'+1':'-1'}`, Zaehler: state.extraCycles[id], Gesamtstueck: rawIst });
+                state.history.push({ 
+                    Zeitstempel: new Date().toLocaleString('de-DE'), 
+                    Agie: id, 
+                    Ereignis: `Zähler ${delta>0?'+1':'-1'}`, 
+                    Zaehlerstand: state.extraCycles[id], 
+                    GesamtSeitPlanwechsel: currentKorrIst 
+                });
                 saveToCloud();
             }
         }
@@ -191,7 +188,13 @@
             if(confirm(`WP-Reset (216.000 erreicht) für Agie ${id} durchführen?`)) {
                 state.agieOffsets[id] = (state.agieOffsets[id] || 0) + RESET_VAL;
                 state.extraCycles[id] = 0;
-                state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: "WP-Reset", Zaehler: 0, Gesamtstueck: "N/A" });
+                state.history.push({ 
+                    Zeitstempel: new Date().toLocaleString('de-DE'), 
+                    Agie: id, 
+                    Ereignis: "WP-Reset", 
+                    Zaehlerstand: 0, 
+                    GesamtSeitPlanwechsel: 0 
+                });
                 saveToCloud();
             }
         }
@@ -206,7 +209,7 @@
                     datasets: [{ 
                         data: data.map(d => d.diff), 
                         backgroundColor: data.map(d => d.barColor),
-                        customData: data.map(d => ({ pkg: d.packageName, ist: d.ist })) // Nutzt korrigiertes Ist
+                        customData: data.map(d => ({ pkg: d.packageName, ist: d.ist }))
                     }]
                 },
                 options: { 
@@ -225,35 +228,31 @@
                                 }
                             }
                         },
-                        datalabels: { 
-                            anchor: 'end', 
-                            align: 'top', 
-                            rotation: -90, 
-                            offset: 5, 
-                            font: { weight: 'bold' }, 
-                            color: '#003a6c', 
-                            formatter: v => v.toLocaleString('de-DE') 
-                        }
+                        datalabels: { anchor: 'end', align: 'top', rotation: -90, offset: 5, font: { weight: 'bold' }, color: '#003a6c', formatter: v => v.toLocaleString('de-DE') }
                     },
                     scales: { y: { beginAtZero: false, grace: '15%' } }
                 }
             });
         }
+
         document.getElementById('fileInput').addEventListener('change', e => {
             const r = new FileReader();
-            r.onload = ev => { rawData = JSON.parse(ev.target.result); updateDisplay(); };
+            r.onload = ev => { 
+                try {
+                    rawData = JSON.parse(ev.target.result); 
+                    updateDisplay(); 
+                } catch(err) {
+                    alert("Fehler beim Lesen der JSON-Datei.");
+                }
+            };
             r.readAsText(e.target.files[0]);
         });
 
-        // --- CSV EXPORT MIT NEUEN BEZEICHNUNGEN ---
         function exportHistory() {
-            // BOM für Excel (Umlaute) und neue Header
             let csv = "\uFEFFZeitstempel;Agie;Ereignis;Zaehlerstand;Stueckzahl gesamt seit Planwechsel\n";
-            
             state.history.forEach(r => {
-                csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Zaehler || 0};${r.GesamtSeitWechsel || "N/A"}\n`;
+                csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Zaehlerstand || 0};${r.GesamtSeitPlanwechsel || 0}\n`;
             });
-        
             const link = document.createElement("a");
             link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
             link.download = `Wartung_Historie_Agie.csv`;
