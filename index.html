@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V7.4</title>
+    <title>Agie Wartung - Bosch V7.5</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     
     <style>
+        /* --- CSS STYLES (Unverändert zu V7.4) --- */
         :root { 
             --bosch-red: #d50000; --bosch-blue: #003a6c; --bosch-light-blue: #00b5e2; 
             --bosch-green: #008a4f; --bosch-gray: #eff1f2; 
@@ -93,7 +94,7 @@
         <div class="bosch-brand">BOSCH<span> AGIE</span></div>
         <div style="text-align: right;">
             <span id="user-display" style="font-weight:bold; color:var(--bosch-blue)"></span><br>
-            <small style="color:#666">Version 7.4 | Terminologie Update</small>
+            <small style="color:#666">Version 7.5 | Vertikale Labels</small>
             <button onclick="handleLogout()" style="margin-left:15px; border:none; background:none; text-decoration:underline; cursor:pointer; color:#666">Logout</button>
         </div>
     </div>
@@ -122,6 +123,7 @@
     </div>
 
     <script>
+        // --- FIREBASE SETUP (Unverändert) ---
         const firebaseConfig = {
             apiKey: "AIzaSyD6xGCtU-felOyO_BRsFnVlB4yhC46FgYg",
             authDomain: "bosch-agie-wartung.firebaseapp.com",
@@ -138,6 +140,7 @@
         let myChart, rawData = [], state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [] };
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
+        // --- AUTH FUNCTIONS (Unverändert) ---
         function handleLogin() { auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-pass').value).catch(e => alert(e.message)); }
         function showRegister(s) { document.getElementById('login-form').style.display = s?'none':'block'; document.getElementById('register-form').style.display = s?'block':'none'; }
         function handleRegister() {
@@ -165,6 +168,7 @@
             }
         });
 
+        // --- FILE UPLOAD (Unverändert) ---
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = this.files[0];
             if(!file) return;
@@ -179,6 +183,7 @@
             reader.readAsText(file);
         });
 
+        // --- CORE LOGIC (Unverändert) ---
         function updateUI() {
             if(!rawData || !Array.isArray(rawData)) return;
             const processed = rawData.map(item => {
@@ -250,6 +255,7 @@
             }
         }
 
+        // --- CHART RENDERING (Geändert) ---
         function renderChart(data) {
             const ctx = document.getElementById('myChart').getContext('2d');
             if(myChart) myChart.destroy();
@@ -266,11 +272,17 @@
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 30, bottom: 10 } },
+                    // Mehr Platz oben für vertikale Labels schaffen (top: 45)
+                    layout: { padding: { top: 45, bottom: 10 } },
                     scales: { y: { beginAtZero: true } },
                     plugins: { 
                         legend: { display: false }, 
-                        datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold', size: 11 } },
+                        datalabels: { 
+                            anchor: 'end', 
+                            align: 'top', 
+                            rotation: -90, // Um 90 Grad gedreht (vertikal nach oben)
+                            font: { weight: 900, size: 12 } // Extra fett (900) und etwas größer
+                        },
                         tooltip: {
                             callbacks: {
                                 title: function(context) { return 'Station: ' + context[0].label; },
