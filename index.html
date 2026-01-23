@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch FINAL V7</title>
+    <title>Agie Wartung - Bosch V7.1</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -23,19 +23,15 @@
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             background: var(--bosch-gray); 
             margin: 0; padding: 0; 
-            height: 100vh; /* Erzwingt Vollbild-Höhe */
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; /* Verhindert doppelte Scrollbalken */
+            height: 100vh; 
+            display: flex; flex-direction: column; overflow: hidden; 
         }
 
-        /* Top Bar (Bosch Farben) */
         .top-bar { 
             height: 8px; flex-shrink: 0; width: 100%; 
             background: linear-gradient(90deg, var(--bosch-red) 25%, var(--bosch-blue) 25%, var(--bosch-blue) 50%, var(--bosch-light-blue) 50%, var(--bosch-light-blue) 75%, var(--bosch-green) 75%); 
         }
 
-        /* Header Bereich */
         .header { 
             background: white; padding: 12px 30px; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
@@ -51,10 +47,8 @@
         }
         .nav-btn { 
             padding: 8px 16px; cursor: pointer; border: 1px solid #bfc0c2; 
-            background: white; font-weight: bold; color: var(--bosch-blue); 
-            border-radius: 2px;
+            background: white; font-weight: bold; color: var(--bosch-blue); border-radius: 2px;
         }
-        .nav-btn:hover { background: #f0f0f0; }
 
         /* Login Screen */
         #auth-overlay { 
@@ -66,75 +60,69 @@
             background: white; padding: 40px; border-top: 6px solid var(--bosch-red); 
             width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
         }
-        .auth-box input { 
-            width: 100%; padding: 10px; margin: 8px 0; 
-            border: 1px solid #bfc0c2; box-sizing: border-box; 
-        }
+        .auth-box input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #bfc0c2; box-sizing: border-box; }
 
-        /* Haupt-Layout (Grid) */
+        /* Haupt-Layout */
         .main-layout { 
-            display: none; /* Erst nach Login sichtbar */
-            flex: 1; /* Füllt den Rest der Höhe */
-            padding: 10px 30px 20px 30px; 
-            gap: 20px; 
-            box-sizing: border-box; 
-            overflow: hidden; /* Wichtig für interne Scrollbars */
+            display: none; flex: 1; padding: 10px 30px 20px 30px; 
+            gap: 20px; box-sizing: border-box; overflow: hidden; 
         }
         
-        .content-area { 
-            flex: 3; display: flex; flex-direction: column; gap: 15px; 
-            min-width: 0; overflow: hidden;
-        }
+        .content-area { flex: 3; display: flex; flex-direction: column; gap: 15px; min-width: 0; overflow: hidden; }
         
-        /* Linke Seite: Diagramm & Log */
         .chart-container { 
             background: white; padding: 15px; border-top: 4px solid var(--bosch-blue); 
-            flex: 1.5; min-height: 250px; position: relative;
+            flex: 2; min-height: 250px; position: relative;
         }
+        
+        /* LOG BEREICH NEU */
         .log-container { 
             background: white; padding: 0; border-top: 4px solid #ccc; 
-            flex: 1; overflow-y: auto; position: relative;
+            flex: 1.5; display: flex; flex-direction: column; overflow: hidden;
         }
+        
+        /* Das Highlight-Feld für die letzte Änderung */
+        .last-activity-box {
+            background: #eef7fa; padding: 15px;
+            border-bottom: 1px solid #ddd;
+            color: var(--bosch-blue);
+        }
+        .last-activity-title { font-size: 11px; text-transform: uppercase; color: #666; font-weight: bold; margin-bottom: 5px; }
+        .last-activity-content { font-size: 16px; font-weight: bold; }
 
-        /* Rechte Seite: Liste */
+        .log-table-wrapper { overflow-y: auto; flex: 1; }
+
+        /* Sidebar */
         .sidebar { 
             flex: 1.2; background: white; padding: 0; 
             border-top: 4px solid var(--bosch-light-blue); 
             overflow-y: auto; max-width: 500px; 
         }
 
-        /* Listen-Elemente */
         .control-row { 
             display: flex; align-items: center; padding: 10px 15px; 
             border-bottom: 1px solid #dee2e6; border-left: 8px solid #ccc; 
             gap: 10px; background: white;
         }
         
-        /* Status Farben */
         .status-red { border-left-color: var(--bosch-red); background: #fff5f5; }
         .status-yellow { border-left-color: #ffcf00; background: #fffef0; }
         .status-green { border-left-color: var(--bosch-green); background: #f0fdf4; }
         .status-overdue { border-left-color: #b00000; background: #ffe0e0; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
-        /* Buttons */
         .btn { 
             width: 38px; height: 38px; cursor: pointer; border: none; 
             color: white; font-weight: bold; border-radius: 3px; 
-            display: flex; align-items: center; justify-content: center;
         }
         .btn:disabled { opacity: 0.15; cursor: not-allowed; filter: grayscale(100%); }
         .btn-plus { background: var(--bosch-light-blue); font-size: 18px; }
         .btn-minus { background: var(--bosch-blue); font-size: 18px; }
         .btn-wplan { background: var(--bosch-red); font-size: 11px; width: 42px; }
 
-        /* Tabelle Styles */
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { 
-            text-align: left; padding: 8px 15px; background: #f8f9fa; 
-            position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #ddd; 
-        }
-        td { padding: 8px 15px; border-bottom: 1px solid #f0f0f0; color: #333; }
+        th { text-align: left; padding: 8px 15px; background: #f8f9fa; position: sticky; top: 0; border-bottom: 1px solid #ddd; }
+        td { padding: 6px 15px; border-bottom: 1px solid #f0f0f0; color: #555; }
         
         .sidebar-header {
             position: sticky; top: 0; background: white; z-index: 10;
@@ -148,21 +136,21 @@
     <div id="auth-overlay">
         <div class="auth-box" id="login-form">
             <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-            <p>Wartungs-Dashboard Login</p>
+            <p>Login</p>
             <input type="email" id="login-email" placeholder="E-Mail">
             <input type="password" id="login-pass" placeholder="Passwort">
             <button class="nav-btn" style="width:100%; background:var(--bosch-blue); color:white; margin-top:10px" onclick="handleLogin()">Anmelden</button>
-            <p onclick="showRegister(true)" style="cursor:pointer; text-decoration:underline; font-size:12px; margin-top:20px; color:#666">Neuen Benutzer registrieren</p>
+            <p onclick="showRegister(true)" style="cursor:pointer; text-decoration:underline; font-size:12px; margin-top:20px; color:#666">Registrieren</p>
         </div>
         <div class="auth-box" id="register-form" style="display:none">
             <div class="bosch-brand">BOSCH<span> AGIE</span></div>
             <p>Registrierung</p>
-            <input type="text" id="reg-name" placeholder="Anzeigename (z.B. Max M.)">
+            <input type="text" id="reg-name" placeholder="Name">
             <input type="email" id="reg-email" placeholder="E-Mail">
             <input type="password" id="reg-pass" placeholder="Passwort">
-            <input type="password" id="reg-invite" placeholder="Sicherheitsschlüssel">
-            <button class="nav-btn" style="width:100%; background:var(--bosch-light-blue); color:white; margin-top:10px" onclick="handleRegister()">Account erstellen</button>
-            <p onclick="showRegister(false)" style="cursor:pointer; text-decoration:underline; font-size:12px; margin-top:20px">Zurück zum Login</p>
+            <input type="password" id="reg-invite" placeholder="Code">
+            <button class="nav-btn" style="width:100%; background:var(--bosch-light-blue); color:white; margin-top:10px" onclick="handleRegister()">Erstellen</button>
+            <p onclick="showRegister(false)" style="cursor:pointer; text-decoration:underline; font-size:12px; margin-top:20px">Zurück</p>
         </div>
     </div>
 
@@ -172,7 +160,7 @@
         <div class="bosch-brand">BOSCH<span> AGIE</span></div>
         <div style="text-align: right;">
             <span id="user-display" style="font-weight:bold; color:var(--bosch-blue)"></span><br>
-            <small style="color:#666">Version 7.0 | Final</small>
+            <small style="color:#666">Version 7.1 | History Fix</small>
             <button onclick="handleLogout()" style="margin-left:15px; border:none; background:none; text-decoration:underline; cursor:pointer; color:#666">Logout</button>
         </div>
     </div>
@@ -181,7 +169,6 @@
         <button class="nav-btn" style="background: var(--bosch-blue); color:white" onclick="document.getElementById('fileInput').click()">📥 JSON Laden</button>
         <button class="nav-btn" onclick="exportHistory()">📊 CSV Protokoll</button>
     </div>
-    
     <input type="file" id="fileInput" style="display:none" accept=".json">
 
     <div class="main-layout" id="dashboard">
@@ -189,11 +176,18 @@
             <div class="chart-container">
                 <canvas id="myChart"></canvas>
             </div>
+            
             <div class="log-container">
-                <table>
-                    <thead><tr><th>Zeit</th><th>Agie</th><th>Ereignis</th><th>Benutzer</th><th>Stand</th></tr></thead>
-                    <tbody id="tracking-body"></tbody>
-                </table>
+                <div class="last-activity-box" id="last-activity">
+                    <div class="last-activity-title">LETZTE AKTIVITÄT</div>
+                    <div class="last-activity-content">Noch keine Daten...</div>
+                </div>
+                <div class="log-table-wrapper">
+                    <table>
+                        <thead><tr><th>Zeit</th><th>Agie</th><th>Aktion</th><th>User</th></tr></thead>
+                        <tbody id="tracking-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -204,7 +198,6 @@
     </div>
 
     <script>
-        // --- 1. FIREBASE KONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyD6xGCtU-felOyO_BRsFnVlB4yhC46FgYg",
             authDomain: "bosch-agie-wartung.firebaseapp.com",
@@ -218,54 +211,31 @@
         const auth = firebase.auth(), db = firebase.database();
         Chart.register(ChartDataLabels);
 
-        // --- 2. VARIABLEN ---
         let myChart;
         let rawData = [];
         let state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [] };
-        // Wartungs-Pakete Logik
+        
+        // Vollständige Paket-Liste für Quickinfo
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
-        // --- 3. AUTHENTIFIZIERUNG ---
-        function showRegister(s) { 
-            document.getElementById('login-form').style.display = s?'none':'block'; 
-            document.getElementById('register-form').style.display = s?'block':'none'; 
-        }
+        function showRegister(s) { document.getElementById('login-form').style.display = s?'none':'block'; document.getElementById('register-form').style.display = s?'block':'none'; }
         function handleRegister() {
-            const n = document.getElementById('reg-name').value;
-            const e = document.getElementById('reg-email').value;
-            const p = document.getElementById('reg-pass').value;
-            const i = document.getElementById('reg-invite').value;
-            
-            if(i !== "bosch2026") return alert("Der Sicherheitsschlüssel ist falsch!");
-            if(!n || !e || !p) return alert("Bitte alle Felder ausfüllen.");
+            const n = document.getElementById('reg-name').value, e = document.getElementById('reg-email').value, p = document.getElementById('reg-pass').value, i = document.getElementById('reg-invite').value;
+            if(i !== "bosch2026") return alert("Code falsch!");
+            auth.createUserWithEmailAndPassword(e, p).then(res => res.user.updateProfile({displayName: n})).then(() => location.reload()).catch(e => alert(e.message));
+        }
+        function handleLogin() { auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-pass').value).catch(e => alert(e.message)); }
+        function handleLogout() { auth.signOut().then(() => location.reload()); }
 
-            auth.createUserWithEmailAndPassword(e, p)
-                .then(res => res.user.updateProfile({displayName: n}))
-                .then(() => location.reload())
-                .catch(err => alert("Fehler: " + err.message));
-        }
-        function handleLogin() { 
-            const e = document.getElementById('login-email').value;
-            const p = document.getElementById('login-pass').value;
-            auth.signInWithEmailAndPassword(e, p).catch(err => alert("Login fehlgeschlagen: " + err.message)); 
-        }
-        function handleLogout() { 
-            auth.signOut().then(() => location.reload()); 
-        }
-
-        // Listener für Login-Status
         auth.onAuthStateChanged(user => {
             if(user) {
                 document.getElementById('auth-overlay').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'flex';
                 document.getElementById('user-display').innerText = "👤 " + user.displayName;
-                
-                // Echtzeit-Daten laden
                 db.ref('maintenanceState').on('value', snap => { 
                     const val = snap.val();
                     if(val) { 
                         state = val;
-                        // Initialisierung leerer Objekte gegen Abstürze
                         if(!state.extraCycles) state.extraCycles = {};
                         if(!state.agieOffsets) state.agieOffsets = {};
                         if(state.cloudRawData) rawData = state.cloudRawData; 
@@ -275,61 +245,35 @@
             }
         });
 
-        // --- 4. DATEI UPLOAD (CHROMEBOOK FIX) ---
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = this.files[0];
-            if(!file) return; // Abbruch wenn Dialog abgebrochen wurde
-            
+            if(!file) return;
             const reader = new FileReader();
             reader.onload = function(ev) { 
                 try {
                     const data = JSON.parse(ev.target.result);
-                    if(!Array.isArray(data)) throw new Error("Keine Liste");
-                    
                     state.cloudRawData = data;
-                    // Sofort in Cloud speichern
-                    db.ref('maintenanceState').update(state)
-                        .then(() => alert("✅ Daten erfolgreich synchronisiert!"))
-                        .catch(err => alert("Cloud Fehler: " + err.message));
-                } catch(err) { 
-                    alert("❌ Fehler: Die JSON Datei ist ungültig."); 
-                }
+                    db.ref('maintenanceState').update(state).then(() => alert("✅ Synchronisiert!"));
+                } catch(err) { alert("❌ JSON Fehler!"); }
             };
             reader.readAsText(file);
         });
 
-        // --- 5. HAUPTLOGIK & BERECHNUNG ---
         function updateUI() {
             if(!rawData || !Array.isArray(rawData)) return;
-
             const processed = rawData.map(item => {
                 if(!item || !item.StationNo) return null;
-                
                 const id = item.StationNo;
-                // Berechnung: Ist = JSON-Wert - Reset-Offset
                 const ist = Number(item.Parts || 0) - (state.agieOffsets[id] || 0);
-                
-                // Zyklen: Wie oft wurde "Wartung" gedrückt
                 const count = state.extraCycles[id] || 0;
+                const diff = (16000 + (count * 16000)) - ist;
                 
-                // Ziel: 16000 + (Anzahl Zyklen * 16000)
-                const target = 16000 + (count * 16000);
-                
-                // Differenz: Wie viele Hübe noch übrig?
-                const diff = target - ist;
-                
-                // Status Farben
                 let s = "status-green", c = "#008a4f";
                 if(diff < 0) { s = "status-overdue"; c = "#b00000"; } 
                 else if(diff < 500) { s = "status-red"; c = "#d50000"; } 
                 else if(diff < 5000) { s = "status-yellow"; c = "#ffcf00"; }
                 
-                // Paket Name (Sicherheits-Check gegen Abstürze)
-                let pkgName = "P1";
-                if(packages.length > 0) {
-                    pkgName = packages[Math.abs(count) % packages.length];
-                }
-
+                let pkgName = packages[Math.abs(count) % packages.length] || "P1";
                 return { id, diff, ist, count, status: s, color: c, pkg: pkgName };
             }).filter(x => x !== null).sort((a,b) => a.diff - b.diff);
 
@@ -338,146 +282,103 @@
             renderLogs();
         }
 
-        // --- 6. RENDERING DER LISTE (MIT SPERREN) ---
         function renderControls(data) {
             const list = document.getElementById('controlsList');
-            list.innerHTML = ""; // Liste leeren
-            
+            list.innerHTML = "";
             data.forEach(d => {
-                // REGEL 1: WP-Reset erst erlaubt, wenn Maschine > 215.500 Hübe hat
                 const canReset = d.ist >= 215500;
-                
-                // REGEL 2: Plus-Button erst erlaubt, wenn Differenz < 5.000 (Wartung fällig)
                 const canPlus = d.diff <= 5000;
                 
+                // Quickinfo (Paket) wird jetzt besser dargestellt
                 list.innerHTML += `
                 <div class="control-row ${d.status}">
-                    <div style="flex:1">
+                    <div style="flex:1; min-width:80px">
                         <span style="font-size:16px; font-weight:900">A${d.id}</span>
-                        <br><span style="font-size:11px; color:#666">${d.pkg}</span>
+                        <div style="font-size:12px; color:#555; margin-top:2px; font-weight:bold; white-space:nowrap">${d.pkg}</div>
                     </div>
                     
                     <div style="flex:1; font-weight:bold; font-size:18px; color:#333">
                         ${d.diff.toLocaleString()}
                     </div>
                     
-                    <button class="btn btn-wplan" 
-                        ${canReset ? '' : 'disabled title="Erst ab 215.500 Hüben möglich"'} 
-                        onclick="wpReset('${d.id}')">WP</button>
-                    
+                    <button class="btn btn-wplan" ${canReset ? '' : 'disabled title="Gesperrt bis 215.500 Hübe"'} onclick="wpReset('${d.id}')">WP</button>
                     <button class="btn btn-minus" onclick="change('${d.id}', -1)">-</button>
-                    
                     <span style="width:30px; text-align:center; font-weight:bold">${d.count}</span>
-                    
-                    <button class="btn btn-plus" 
-                        ${canPlus ? '' : 'disabled title="Erst unter 5.000 Rest-Hüben möglich"'} 
-                        onclick="change('${d.id}', 1)">+</button>
+                    <button class="btn btn-plus" ${canPlus ? '' : 'disabled title="Gesperrt bis < 5000 Rest"'} onclick="change('${d.id}', 1)">+</button>
                 </div>`;
             });
         }
 
-        // --- 7. AKTIONEN ---
         function change(id, delta) {
-            // Zähler aktualisieren (darf nicht unter 0 fallen)
             state.extraCycles[id] = Math.max(0, (state.extraCycles[id]||0) + delta);
-            
-            // Speichern und Loggen
-            saveLog(id, `Zyklus ${delta>0?'+1':'-1'}`, state.extraCycles[id]);
+            saveLog(id, `Zähler ${delta>0?'+1':'-1'}`, state.extraCycles[id]);
         }
 
         function wpReset(id) {
-            const code = prompt("Bitte Admin-Code eingeben für 216k Reset:");
-            if(code === null) return; // Abbruch gedrückt
-
+            const code = prompt("Admin-Code (216k Reset):");
             if(code === "23091861") {
                 state.agieOffsets[id] = (state.agieOffsets[id]||0) + 216000;
-                state.extraCycles[id] = 0; // Zyklen zurück auf 0
-                saveLog(id, "WP-RESET (216k)", 0);
-                alert("Reset erfolgreich durchgeführt!");
-            } else {
-                alert("Falscher Code!");
+                state.extraCycles[id] = 0;
+                saveLog(id, "WP-RESET", 0);
             }
         }
 
         function saveLog(id, ev, val) {
             if(!state.history) state.history = [];
-            
-            // Log Eintrag erstellen
-            const entry = { 
+            state.history.push({ 
                 Zeitstempel: new Date().toLocaleString('de-DE'), 
-                Agie: id, 
-                Ereignis: ev, 
-                Benutzer: auth.currentUser.displayName || "Unbekannt", 
-                Zaehlerstand: val 
-            };
-            
-            state.history.push(entry);
-            // Sofort an Cloud senden
+                Agie: id, Ereignis: ev, Benutzer: auth.currentUser.displayName, Zaehlerstand: val 
+            });
             db.ref('maintenanceState').update(state);
         }
 
-        // --- 8. LOG ANZEIGE ---
         function renderLogs() {
-            const b = document.getElementById('tracking-body'); 
-            b.innerHTML = "";
-            // Letzte 30 Einträge anzeigen, neueste oben
-            const logs = (state.history || []).slice(-30).reverse();
+            // 1. Letzte Änderung prominent anzeigen
+            const history = state.history || [];
+            const lastBox = document.getElementById('last-activity');
             
-            logs.forEach(l => {
-                b.innerHTML += `<tr>
-                    <td style="white-space:nowrap">${l.Zeitstempel}</td>
-                    <td><b>A${l.Agie}</b></td>
-                    <td>${l.Ereignis}</td>
-                    <td>${l.Benutzer}</td>
-                    <td>${l.Zaehlerstand}</td>
-                </tr>`;
+            if(history.length > 0) {
+                const latest = history[history.length - 1];
+                lastBox.innerHTML = `
+                    <div class="last-activity-title">LETZTE AKTIVITÄT (${latest.Zeitstempel})</div>
+                    <div class="last-activity-content">
+                        <span style="color:var(--bosch-red)">A${latest.Agie}</span>: 
+                        ${latest.Ereignis} 
+                        <span style="font-weight:normal; font-size:14px; color:#666">durch ${latest.Benutzer}</span>
+                    </div>`;
+            } else {
+                lastBox.innerHTML = `<div class="last-activity-content" style="color:#999">Keine Daten vorhanden</div>`;
+            }
+
+            // 2. Tabelle füllen (umgekehrt sortiert)
+            const b = document.getElementById('tracking-body'); b.innerHTML = "";
+            history.slice().reverse().forEach(l => {
+                b.innerHTML += `<tr><td>${l.Zeitstempel}</td><td>A${l.Agie}</td><td>${l.Ereignis}</td><td>${l.Benutzer}</td></tr>`;
             });
         }
 
-        // --- 9. DIAGRAMM ---
         function renderChart(data) {
             const ctx = document.getElementById('myChart').getContext('2d');
             if(myChart) myChart.destroy();
-            
             myChart = new Chart(ctx, {
                 type: 'bar',
-                data: { 
-                    labels: data.map(d=>"A"+d.id), 
-                    datasets:[{
-                        data: data.map(d=>d.diff), 
-                        backgroundColor: data.map(d=>d.color),
-                        borderRadius: 4
-                    }] 
-                },
+                data: { labels: data.map(d=>"A"+d.id), datasets:[{data: data.map(d=>d.diff), backgroundColor: data.map(d=>d.color), borderRadius:4}] },
                 options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     layout: { padding: { top: 25 } },
-                    scales: { y: { beginAtZero: true, grid: { color: '#f0f0f0' } } },
-                    plugins: { 
-                        legend: { display: false }, 
-                        datalabels: { 
-                            anchor: 'end', align: 'top', 
-                            font: { weight: 'bold' },
-                            formatter: Math.round // Keine Nachkommastellen
-                        } 
-                    } 
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' } } } 
                 }
             });
         }
 
-        // --- 10. EXPORT FUNKTION ---
         function exportHistory() {
-            let csv = "\uFEFFZeit;Agie;Ereignis;Benutzer;Stand\n";
-            (state.history||[]).forEach(r => {
-                csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Benutzer};${r.Zaehlerstand}\n`;
-            });
+            let csv = "\uFEFFZeit;Agie;Ereignis;User;Stand\n";
+            (state.history||[]).forEach(r => csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Benutzer};${r.Zaehlerstand}\n`);
             const link = document.createElement("a");
-            link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
-            link.download = "Agie_Wartung_Log_" + new Date().toISOString().slice(0,10) + ".csv";
-            document.body.appendChild(link);
+            link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+            link.download = "Agie_Log.csv";
             link.click();
-            document.body.removeChild(link);
         }
     </script>
 </body>
