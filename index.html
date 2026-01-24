@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V7.7</title>
+    <title>Agie Wartung - Bosch V7.8</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -35,15 +35,15 @@
         .action-bar { padding: 10px 30px; display: flex; gap: 15px; align-items: center; flex-shrink: 0; }
         .nav-btn { padding: 8px 16px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: bold; color: var(--bosch-blue); border-radius: 2px; }
 
-        /* MODAL / OVERLAY STYLES */
+        /* MODAL / HELP WINDOW */
         .modal-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.7); z-index: 3000; display: none; 
             justify-content: center; align-items: center; 
         }
         .modal-content { 
-            background: white; padding: 30px; max-width: 600px; width: 90%; 
-            max-height: 80vh; overflow-y: auto; border-top: 10px solid var(--bosch-red); 
+            background: white; padding: 30px; max-width: 650px; width: 90%; 
+            max-height: 85vh; overflow-y: auto; border-top: 10px solid var(--bosch-red); 
             position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
         }
         .close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; font-weight: bold; color: #666; }
@@ -84,34 +84,36 @@
     <div id="helpModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-modal" onclick="toggleHelp(false)">&times;</span>
-            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px;">Bedienungsanleitung</h2>
+            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px;">🛠 Bedienungsanleitung: Bosch Agie Wartungs-Dashboard</h2>
             
-            <h3 style="color:var(--bosch-red);">1. Daten laden</h3>
-            <p>Klicke auf <b>📥 JSON Laden</b> und wähle die aktuelle Export-Datei der Maschinen aus. Das System aktualisiert sofort alle Werte.</p>
+            <p>Dieses Tool dient der Überwachung und Dokumentation der Wartungszyklen aller Agie-Stationen.</p>
 
-            <h3 style="color:var(--bosch-red);">2. Diagramm & Infos</h3>
-            <p>Die Balken zeigen die <b>Rest-Stückzahl</b> bis zur nächsten Wartung an. <br>
-            Fahre mit der Maus über einen Balken für Details:
-            <ul>
-                <li>Aktuell anstehendes <b>Wartungspaket</b>.</li>
-                <li>Genaue Rest-Stückzahl.</li>
-                <li>Produzierte Stück seit dem letzten WP-Reset.</li>
+            <h3 style="color:var(--bosch-red);">1. Daten-Import & Login</h3>
+            <p><b>Login:</b> Melde dich mit deiner E-Mail an. Neue Nutzer benötigen den Registrierungscode.</p>
+            <p><b>JSON Laden:</b> Nach dem Start musst du die aktuelle Export-Datei der Maschinen laden. Das Dashboard berechnet daraufhin sofort alle Rest-Stückzahlen.</p>
+
+            <h3 style="color:var(--bosch-red);">2. Das Diagramm (Visuelle Übersicht)</h3>
+            <p><b>Farben:</b></p>
+            <ul style="list-style: none; padding-left: 10px;">
+                <li>🟢 <b>Grün:</b> Alles ok (> 5.000 Stück Rest).</li>
+                <li>🟡 <b>Gelb:</b> Wartung rückt näher (< 5.000 Stück Rest).</li>
+                <li>🔴 <b>Rot:</b> Wartung dringend erforderlich (< 500 Stück Rest).</li>
+                <li>🚨 <b>Blinkend:</b> Wartungsintervall überschritten (Negativer Wert).</li>
             </ul>
-            </p>
+            <p><b>Tooltip:</b> Fahre mit der Maus über einen Balken, um das anstehende Paket (z.B. P1/2/3), die genaue Rest-Stückzahl und die Stückzahl seit dem letzten Wartungsplan-Wechsel zu sehen.</p>
 
-            <h3 style="color:var(--bosch-red);">3. Wartung buchen (+)</h3>
-            <p>Der Button <b>+</b> erhöht das Intervall um 16.000 Stück. Er ist erst aktiv, wenn die Rest-Stückzahl <b>unter 5.000</b> fällt.</p>
-
-            <h3 style="color:var(--bosch-red);">4. Wartungsplan Reset (WP)</h3>
-            <p>Der große Reset setzt alle Zähler auf Null (nach ca. 216.000 Stück). 
+            <h3 style="color:var(--bosch-red);">3. Wartungs-Steuerung (Sidebar rechts)</h3>
+            <p><b>Button + :</b> Erhöht den Wartungszyklus um 16.000 Stück. Dieser Button wird erst aktiv, wenn die Rest-Stückzahl unter 5.000 sinkt.</p>
+            <p><b>Button - :</b> Korrigiert den Zähler nach unten (bei Fehleingaben).</p>
+            <p><b>Button WP (Wartungsplan):</b> Setzt die Maschine komplett zurück (entspricht einem großen Service nach ca. 216.000 Stück).</p>
             <ul>
-                <li>Bedingung: Mind. <b>215.500 Stück</b> Laufleistung.</li>
-                <li>Admin-Code erforderlich.</li>
+                <li><b>Voraussetzung:</b> Die Maschine muss mindestens 215.500 Stück gelaufen sein.</li>
+                <li><b>Admin-Code:</b> Für den Reset ist der Code erforderlich.</li>
             </ul>
-            </p>
 
-            <h3 style="color:var(--bosch-red);">5. Export</h3>
-            <p>Nutze <b>📊 CSV Protokoll</b> für die Dokumentation aller Änderungen (Audits/Archiv).</p>
+            <h3 style="color:var(--bosch-red);">4. Dokumentation & Export</h3>
+            <p><b>Letzte Änderung:</b> Der Balken ganz unten zeigt sofort an, wer zuletzt welche Änderung vorgenommen hat.</p>
+            <p><b>CSV Protokoll:</b> Klicke oben auf "📊 CSV Protokoll", um die gesamte Historie für Audits oder zur Archivierung als Excel-lesbare Datei zu speichern.</p>
             
             <button class="nav-btn" style="width:100%; margin-top:20px; background:var(--bosch-blue); color:white" onclick="toggleHelp(false)">Verstanden</button>
         </div>
@@ -142,7 +144,7 @@
         <div class="bosch-brand">BOSCH<span> AGIE</span></div>
         <div style="text-align: right;">
             <span id="user-display" style="font-weight:bold; color:var(--bosch-blue)"></span><br>
-            <small style="color:#666">Version 7.7 | Built-in Help</small>
+            <small style="color:#666">Version 7.8 | Finaler Hilfetext</small>
             <button onclick="handleLogout()" style="margin-left:15px; border:none; background:none; text-decoration:underline; cursor:pointer; color:#666">Logout</button>
         </div>
     </div>
@@ -187,12 +189,8 @@
         let myChart, rawData = [], state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [] };
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
-        // HILFE FUNKTION
-        function toggleHelp(show) {
-            document.getElementById('helpModal').style.display = show ? 'flex' : 'none';
-        }
+        function toggleHelp(show) { document.getElementById('helpModal').style.display = show ? 'flex' : 'none'; }
 
-        // --- AUTH & DATA LOGIC (Unverändert) ---
         function handleLogin() { auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-pass').value).catch(e => alert(e.message)); }
         function showRegister(s) { document.getElementById('login-form').style.display = s?'none':'block'; document.getElementById('register-form').style.display = s?'block':'none'; }
         function handleRegister() {
