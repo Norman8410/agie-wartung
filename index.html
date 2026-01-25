@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V8.4</title>
+    <title>Agie Wartung - Bosch V8.3</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -15,11 +15,20 @@
             --bosch-green: #008a4f; --bosch-gray: #eff1f2; 
         }
         
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bosch-gray); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; background: var(--bosch-gray); 
+            margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; 
+        }
 
-        .top-bar { height: 8px; flex-shrink: 0; width: 100%; background: linear-gradient(90deg, var(--bosch-red) 25%, var(--bosch-blue) 25%, var(--bosch-blue) 50%, var(--bosch-light-blue) 50%, var(--bosch-light-blue) 75%, var(--bosch-green) 75%); }
+        .top-bar { 
+            height: 8px; flex-shrink: 0; width: 100%; 
+            background: linear-gradient(90deg, var(--bosch-red) 25%, var(--bosch-blue) 25%, var(--bosch-blue) 50%, var(--bosch-light-blue) 50%, var(--bosch-light-blue) 75%, var(--bosch-green) 75%); 
+        }
 
-        .header { background: white; padding: 12px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .header { 
+            background: white; padding: 12px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+        }
         .bosch-brand { color: var(--bosch-red); font-weight: 900; font-size: 24px; }
         .bosch-brand span { color: var(--bosch-blue); }
 
@@ -28,8 +37,17 @@
         .btn-login-trigger { border-color: var(--bosch-red); color: var(--bosch-red); }
         .btn-login-active { background: var(--bosch-green) !important; color: white !important; border: none; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; max-width: 650px; width: 90%; max-height: 85vh; border-top: 10px solid var(--bosch-red); position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.3); overflow-y: auto; }
+        /* MODALS */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.7); z-index: 3000; display: none; 
+            justify-content: center; align-items: center; 
+        }
+        .modal-content { 
+            background: white; padding: 30px; max-width: 600px; width: 90%; 
+            max-height: 85vh; border-top: 10px solid var(--bosch-red); position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
         .close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #666; font-weight: bold; }
 
         .auth-box { background: white; padding: 30px; border-top: 6px solid var(--bosch-red); width: 320px; text-align: center; }
@@ -37,11 +55,16 @@
 
         .main-layout { display: flex; flex: 1; padding: 10px 30px 20px 30px; gap: 20px; box-sizing: border-box; overflow: hidden; }
         .content-area { flex: 3; display: flex; flex-direction: column; gap: 15px; min-width: 0; overflow: hidden; }
+        
         .chart-container { background: white; padding: 15px; border-top: 4px solid var(--bosch-blue); flex: 5; min-height: 0; position: relative; }
+        
         .last-activity-box { background: white; padding: 15px; border-top: 4px solid #ccc; color: var(--bosch-blue); flex-shrink: 0; }
+        .last-activity-title { font-size: 10px; text-transform: uppercase; color: #666; font-weight: bold; margin-bottom: 3px; }
+        .last-activity-content { font-size: 15px; font-weight: bold; }
+
         .sidebar { flex: 1.2; background: white; padding: 0; border-top: 4px solid var(--bosch-light-blue); overflow-y: auto; max-width: 500px; }
         .control-row { display: flex; align-items: center; padding: 10px 15px; border-bottom: 1px solid #dee2e6; border-left: 8px solid #ccc; gap: 10px; }
-
+        
         .status-red { border-left-color: var(--bosch-red); background: #fff5f5; }
         .status-yellow { border-left-color: #ffcf00; background: #fffef0; }
         .status-green { border-left-color: var(--bosch-green); background: #f0fdf4; }
@@ -54,10 +77,11 @@
         .btn-minus { background: var(--bosch-blue); font-size: 18px; }
         .btn-wplan { background: var(--bosch-red); font-size: 11px; width: 42px; }
 
+        .sidebar-header { position: sticky; top: 0; background: white; z-index: 10; padding: 15px; border-bottom: 1px solid #eee; margin: 0; color: var(--bosch-blue); }
         .version-tag { font-size: 12px; color: #888; font-weight: bold; }
-        .help-section { margin-bottom: 15px; }
-        .help-section h4 { margin: 0 0 5px 0; color: var(--bosch-blue); border-left: 3px solid var(--bosch-red); padding-left: 8px; }
-        .help-section p { margin: 0; font-size: 14px; line-height: 1.4; color: #333; }
+        
+        ul.help-list { padding-left: 20px; line-height: 1.6; }
+        ul.help-list li { margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -65,35 +89,16 @@
     <div id="helpModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-modal" onclick="toggleHelp(false)">&times;</span>
-            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px;">🛠 Bedienungsanleitung & Info</h2>
-            
-            <div class="help-section">
-                <h4>📋 Digitaler Wartungsplan</h4>
-                <p>Dieses System ersetzt ab sofort den händisch geschriebenen Wartungsplan. Alle durchgeführten Wartungen müssen hier digital erfasst werden.</p>
-            </div>
-
-            <div class="help-section">
-                <h4>👁 Öffentlicher Modus & Login</h4>
-                <p>Das Dashboard ist im Lesemodus für alle einsehbar. Um Änderungen (Wartungen buchen) vorzunehmen, ist ein Login erforderlich.</p>
-            </div>
-
-            <div class="help-section">
-                <h4>🔄 Datenaktualität</h4>
-                <p>Die Stückzahlen der Maschinen werden 1-mal täglich über den JSON-Import aktualisiert.</p>
-            </div>
-
-            <div class="help-section">
-                <h4>⚠️ Sicherheit & Zähler</h4>
-                <p><b>Button (+):</b> Bucht einen Zyklus (+16.000). Erst aktiv bei Rest < 5.000.<br>
-                   <b>Button (WP):</b> Setzt den Plan (216.000) komplett zurück (nur nach großem Service).</p>
-            </div>
-
-            <div class="help-section">
-                <h4>🛡 Datenschutz & Protokoll</h4>
-                <p>Zur Qualitätssicherung wird jede Änderung mit dem <b>Namen des angemeldeten Benutzers</b> und einem Zeitstempel im Log gespeichert. Diese Daten sind nur für berechtigte Personen einsehbar.</p>
-            </div>
-
-            <button class="nav-btn" style="width:100%; margin-top:10px; background:var(--bosch-blue); color:white" onclick="toggleHelp(false)">Verstanden & Schließen</button>
+            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px;">🛠 Bedienungsanleitung Agie-Wartung</h2>
+            <ul class="help-list">
+                <li><b>Öffentlicher Modus:</b> Das Dashboard ist für alle Mitarbeiter einsehbar. Balken zeigen die Rest-Stückzahlen bis zur nächsten Wartung.</li>
+                <li><b>🔑 Bearbeiten:</b> Um Wartungen zu buchen oder Korrekturen vorzunehmen, klicke oben auf "Anmelden". Nach dem Login werden die Buttons freigeschaltet.</li>
+                <li><b>Button (+):</b> Bucht einen neuen Wartungszyklus (+16.000 Stück). Nur aktiv, wenn die Rest-Stückzahl unter 5.000 liegt.</li>
+                <li><b>Button (WP):</b> Setzt den kompletten Wartungsplan (216.000 Stück) zurück. Nur nach einem großen Service möglich.</li>
+                <li><b>📥 JSON Laden:</b> Importiert die aktuellen Maschinendaten. Nur im angemeldeten Zustand möglich.</li>
+                <li><b>Sicherheit:</b> Jede Änderung wird mit Zeitstempel und deinem Namen im Protokoll gespeichert.</li>
+            </ul>
+            <button class="nav-btn" style="width:100%; margin-top:20px; background:var(--bosch-blue); color:white" onclick="toggleHelp(false)">Verstanden</button>
         </div>
     </div>
 
@@ -101,7 +106,7 @@
         <div class="auth-box" id="login-form">
             <span class="close-modal" onclick="toggleAuthModal(false)">&times;</span>
             <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-            <p>Anmelden</p>
+            <p>Anmelden zum Bearbeiten</p>
             <input type="email" id="login-email" placeholder="E-Mail">
             <input type="password" id="login-pass" placeholder="Passwort">
             <button class="nav-btn" style="width:100%; background:var(--bosch-blue); color:white; margin-top:10px" onclick="handleLogin()">Anmelden</button>
@@ -110,10 +115,10 @@
         <div id="register-form" class="auth-box" style="display:none">
             <span class="close-modal" onclick="toggleAuthModal(false)">&times;</span>
             <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-            <input type="text" id="reg-name" placeholder="Vollständiger Name">
+            <input type="text" id="reg-name" placeholder="Name">
             <input type="email" id="reg-email" placeholder="E-Mail">
             <input type="password" id="reg-pass" placeholder="Passwort">
-            <input type="password" id="reg-invite" placeholder="Code (bosch2026)">
+            <input type="password" id="reg-invite" placeholder="Invite Code (bosch2026)">
             <button class="nav-btn" style="width:100%; background:var(--bosch-light-blue); color:white; margin-top:10px" onclick="handleRegister()">Account erstellen</button>
             <p onclick="showRegister(false)" style="cursor:pointer; text-decoration:underline; font-size:12px; margin-top:20px">Zurück</p>
         </div>
@@ -125,18 +130,18 @@
         <div style="text-align: right;">
             <div id="user-info" style="display: none;">
                 <span id="user-display" style="font-weight:bold; color:var(--bosch-blue)"></span><br>
-                <span class="version-tag">V 8.4 | Bearbeiter</span><br>
+                <span class="version-tag">V 8.3 | Schreibrechte</span><br>
                 <small onclick="handleLogout()" style="text-decoration:underline; cursor:pointer; color:#666">Abmelden</small>
             </div>
             <div id="guest-info">
-                👁 Lesemodus<br>
-                <span class="version-tag">V 8.4 | Agie Terminal</span>
+                👁 Nur Lesen (Public)<br>
+                <span class="version-tag">V 8.3 | Bosch Terminal</span>
             </div>
         </div>
     </div>
 
     <div class="action-bar">
-        <button id="auth-trigger" class="nav-btn btn-login-trigger" onclick="toggleAuthModal(true)">🔑 Anmelden</button>
+        <button id="auth-trigger" class="nav-btn btn-login-trigger" onclick="toggleAuthModal(true)">🔑 Anmelden zum Bearbeiten</button>
         <button class="nav-btn" style="background: var(--bosch-blue); color:white" onclick="triggerJsonLoad()">📥 JSON Laden</button>
         <button class="nav-btn" onclick="exportHistory()">📊 CSV Protokoll</button>
         <button class="nav-btn" onclick="toggleHelp(true)">ℹ️ Hilfe</button>
@@ -147,11 +152,12 @@
         <div class="content-area">
             <div class="chart-container"><canvas id="myChart"></canvas></div>
             <div class="last-activity-box" id="last-activity">
-                <div class="last-activity-content">Daten werden geladen...</div>
+                <div class="last-activity-title">LETZTE ÄNDERUNG</div>
+                <div class="last-activity-content">Synchronisierung läuft...</div>
             </div>
         </div>
         <div class="sidebar">
-            <h3 style="padding:15px; margin:0; border-bottom:1px solid #eee; color:var(--bosch-blue);">Maschinen</h3>
+            <h3 class="sidebar-header">Maschinen Übersicht</h3>
             <div id="controlsList"></div>
         </div>
     </div>
@@ -177,9 +183,6 @@
         function toggleHelp(show) { document.getElementById('helpModal').style.display = show ? 'flex' : 'none'; }
         function showRegister(s) { document.getElementById('login-form').style.display = s?'none':'block'; document.getElementById('register-form').style.display = s?'block':'none'; }
         
-        // Auto-Popup beim ersten Laden
-        window.onload = () => { setTimeout(() => toggleHelp(true), 800); };
-
         function handleLogin() { 
             auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-pass').value)
             .then(() => toggleAuthModal(false))
@@ -198,10 +201,10 @@
             document.getElementById('guest-info').style.display = isLogged ? 'none' : 'block';
             const trigger = document.getElementById('auth-trigger');
             if(isLogged) {
-                trigger.innerText = "🔓 Angemeldet"; trigger.classList.add('btn-login-active');
+                trigger.innerText = "🔓 Bearbeitung aktiv"; trigger.classList.add('btn-login-active');
                 document.getElementById('user-display').innerText = "👤 " + user.displayName;
             } else {
-                trigger.innerText = "🔑 Anmelden"; trigger.classList.remove('btn-login-active');
+                trigger.innerText = "🔑 Anmelden zum Bearbeiten"; trigger.classList.remove('btn-login-active');
             }
             db.ref('maintenanceState').on('value', snap => { 
                 const val = snap.val();
@@ -216,8 +219,8 @@
             reader.onload = function(ev) { 
                 try {
                     state.cloudRawData = JSON.parse(ev.target.result);
-                    db.ref('maintenanceState').update(state).then(() => alert("✅ Synchronisiert!"));
-                } catch(err) { alert("Formatfehler!"); }
+                    db.ref('maintenanceState').update(state).then(() => alert("✅ Daten synchronisiert!"));
+                } catch(err) { alert("Fehler beim Lesen!"); }
             };
             reader.readAsText(file);
         });
@@ -257,14 +260,14 @@
 
         function change(id, delta) {
             if(!auth.currentUser) return;
-            if(delta > 0 && !confirm(`Wartung (+16.000) für A${id} buchen?`)) return;
+            if(delta > 0 && !confirm(`Neuen Wartungszyklus (+16.000) für A${id} buchen?`)) return;
             state.extraCycles[id] = Math.max(0, (state.extraCycles[id]||0) + delta);
             saveLog(id, `Zähler ${delta>0?'+1':'-1'}`, state.extraCycles[id]);
         }
 
         function wpReset(id) {
             if(!auth.currentUser) return;
-            if(confirm(`⚠️ Großen WP-RESET für A${id} buchen?`)) {
+            if(confirm(`⚠️ Agie A${id} Wartungsplan (216.000 Stück) komplett zurücksetzen?`)) {
                 state.agieOffsets[id] = (state.agieOffsets[id]||0) + 216000;
                 state.extraCycles[id] = 0;
                 saveLog(id, "WP-RESET", 0);
@@ -282,8 +285,8 @@
             if(h.length > 0) {
                 const l = h[h.length - 1];
                 document.getElementById('last-activity').innerHTML = `
-                    <div style="font-size:10px; color:#666;">LETZTE ÄNDERUNG: ${l.Zeitstempel}</div>
-                    <div style="font-weight:bold;">A${l.Agie}: ${l.Ereignis} durch ${l.Benutzer}</div>`;
+                    <div class="last-activity-title">LETZTE ÄNDERUNG (${l.Zeitstempel})</div>
+                    <div class="last-activity-content"><span style="color:var(--bosch-red)">Agie A${l.Agie}</span>: ${l.Ereignis} durch ${l.Benutzer}</div>`;
             }
         }
 
