@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V8.9 (Stable Hybrid)</title>
+    <title>Agie Wartung - Bosch V9.1</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -12,106 +12,147 @@
     <style>
         :root { 
             --bosch-red: #d50000; --bosch-blue: #003a6c; --bosch-light-blue: #00b5e2; 
-            --bosch-green: #008a4f; --bosch-gray: #eff1f2; 
+            --bosch-green: #008a4f; --bosch-gray: #eff1f2; --text-dark: #333;
         }
         
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bosch-gray); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .top-bar { height: 8px; flex-shrink: 0; width: 100%; background: linear-gradient(90deg, var(--bosch-red) 25%, var(--bosch-blue) 25%, var(--bosch-blue) 50%, var(--bosch-light-blue) 50%, var(--bosch-light-blue) 75%, var(--bosch-green) 75%); }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bosch-gray); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; user-select: none; }
+        
+        /* HEADER & BAR */
+        .top-bar { height: 8px; width: 100%; background: linear-gradient(90deg, var(--bosch-red) 25%, var(--bosch-blue) 25%, var(--bosch-blue) 50%, var(--bosch-light-blue) 50%, var(--bosch-light-blue) 75%, var(--bosch-green) 75%); flex-shrink: 0; }
         .header { background: white; padding: 12px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        .bosch-brand { color: var(--bosch-red); font-weight: 900; font-size: 24px; }
+        .bosch-brand { color: var(--bosch-red); font-weight: 900; font-size: 24px; letter-spacing: -0.5px; }
         .bosch-brand span { color: var(--bosch-blue); }
+        .status-badge { font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: #eee; color: #666; display: flex; align-items: center; gap: 5px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
+        .online { background: var(--bosch-green); } .offline { background: var(--bosch-red); }
 
-        .action-bar { padding: 10px 30px; display: flex; gap: 15px; align-items: center; flex-shrink: 0; }
-        .nav-btn { padding: 8px 16px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: bold; color: var(--bosch-blue); border-radius: 2px; transition: 0.2s; }
-        .nav-btn:hover { background: #f8f9fa; }
-        .btn-login-active { background: var(--bosch-green) !important; color: white !important; border: none; }
+        /* ACTION BAR */
+        .action-bar { padding: 10px 30px; display: flex; gap: 12px; align-items: center; flex-shrink: 0; background: var(--bosch-gray); }
+        .nav-btn { padding: 8px 16px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: 700; color: var(--bosch-blue); border-radius: 2px; transition: all 0.2s; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .nav-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 5px rgba(0,0,0,0.1); }
+        .btn-primary { background: var(--bosch-blue); color: white; border-color: var(--bosch-blue); }
+        .btn-active { background: var(--bosch-green) !important; color: white !important; border-color: var(--bosch-green) !important; }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; max-width: 650px; width: 90%; max-height: 85vh; border-top: 10px solid var(--bosch-red); position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.3); overflow-y: auto; }
-        .auth-box { background: white; padding: 30px; border-top: 6px solid var(--bosch-red); width: 320px; text-align: center; position: relative; }
-        .auth-box input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #bfc0c2; box-sizing: border-box; }
-        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #666; font-weight: bold; }
-
+        /* MAIN LAYOUT */
         .main-layout { display: flex; flex: 1; padding: 10px 30px 20px 30px; gap: 20px; box-sizing: border-box; overflow: hidden; }
         .content-area { flex: 3; display: flex; flex-direction: column; gap: 15px; min-width: 0; overflow: hidden; }
-        .chart-container { background: white; padding: 15px; border-top: 4px solid var(--bosch-blue); flex: 5; min-height: 0; position: relative; }
-        .sidebar { flex: 1.2; background: white; padding: 0; border-top: 4px solid var(--bosch-light-blue); overflow-y: auto; max-width: 500px; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
-        .control-row { display: flex; align-items: center; padding: 10px 15px; border-bottom: 1px solid #dee2e6; border-left: 8px solid #ccc; gap: 10px; }
-
+        .sidebar { flex: 1.2; background: white; border-top: 4px solid var(--bosch-light-blue); overflow-y: auto; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        
+        /* CHART */
+        .chart-container { background: white; padding: 15px; border-top: 4px solid var(--bosch-blue); flex: 1; min-height: 0; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        /* ACTIVITY LOG */
+        .activity-bar { background: white; padding: 10px 15px; border-left: 4px solid #ccc; font-size: 13px; color: #555; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-shrink: 0; }
+        
+        /* CONTROLS LIST */
+        .control-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; border-left: 6px solid #ccc; gap: 10px; transition: background 0.2s; }
+        .control-row:hover { background: #fafafa; }
         .status-red { border-left-color: var(--bosch-red); background: #fff5f5; }
         .status-yellow { border-left-color: #ffcf00; background: #fffef0; }
         .status-green { border-left-color: var(--bosch-green); background: #f0fdf4; }
         .status-overdue { border-left-color: #b00000; background: #ffe0e0; }
 
-        .btn { width: 38px; height: 38px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
-        .btn:disabled { opacity: 0.15 !important; cursor: not-allowed !important; filter: grayscale(1); }
-        .btn-plus { background: var(--bosch-light-blue); font-size: 20px; }
-        .btn-minus { background: var(--bosch-blue); font-size: 20px; }
-        .btn-wplan { background: var(--bosch-red); font-size: 11px; width: 42px; }
+        .btn-icon { width: 36px; height: 36px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 4px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn-icon:disabled { opacity: 0.2; cursor: not-allowed; box-shadow: none; background: #ccc !important; }
+        .btn-plus { background: var(--bosch-light-blue); }
+        .btn-minus { background: var(--bosch-blue); }
+        .btn-wp { background: var(--bosch-red); font-size: 11px; width: 40px; }
 
-        .version-tag { font-size: 12px; color: #888; font-weight: bold; }
+        /* MODALS & TOASTS */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        .modal-content { background: white; padding: 30px; max-width: 600px; width: 90%; border-top: 8px solid var(--bosch-red); box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 4000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: #333; color: white; padding: 12px 20px; border-radius: 4px; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; gap: 10px; border-left: 4px solid var(--bosch-green); }
+        .toast.show { opacity: 1; }
+        .toast.error { border-left-color: var(--bosch-red); }
+
         .help-section { margin-bottom: 15px; text-align: left; }
         .help-section h4 { margin: 0 0 5px 0; color: var(--bosch-blue); border-left: 3px solid var(--bosch-red); padding-left: 8px; }
+        .help-section p { margin: 0; font-size: 14px; line-height: 1.4; color: #333; }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #666; font-weight: bold; }
     </style>
 </head>
 <body>
 
+    <div id="toastContainer" class="toast-container"></div>
+
+    <div id="authModal" class="modal-overlay">
+        <div class="modal-content" style="max-width:350px; text-align:center">
+            <h2 style="color:var(--bosch-blue); margin-top:0">Anmeldung</h2>
+            <input type="email" id="email" placeholder="E-Mail" style="width:100%; padding:10px; margin:5px 0; box-sizing:border-box; border:1px solid #ddd">
+            <input type="password" id="pass" placeholder="Passwort" style="width:100%; padding:10px; margin:5px 0; box-sizing:border-box; border:1px solid #ddd">
+            <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:15px" onclick="performLogin()">Einloggen</button>
+            <p onclick="document.getElementById('authModal').style.display='none'" style="cursor:pointer; color:#777; font-size:12px; margin-top:15px">Abbrechen</p>
+        </div>
+    </div>
+
     <div id="helpModal" class="modal-overlay">
         <div class="modal-content">
-            <span class="close-modal" onclick="toggleHelp(false)">&times;</span>
-            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px;">🛠 Bedienungsanleitung V8.9</h2>
+            <span class="close-modal" onclick="document.getElementById('helpModal').style.display='none'">&times;</span>
+            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px;">🛠 Bedienungsanleitung & Info</h2>
             <div class="help-section">
                 <h4>📋 Digitaler Wartungsplan</h4>
                 <p>Nach einer Validierungsphase soll dieses System den händischen Plan an der Maschine dauerhaft ersetzen.</p>
             </div>
             <div class="help-section">
+                <h4>👁 Öffentlicher Modus & Login</h4>
+                <p>Das Dashboard ist im Lesemodus für alle einsehbar. Um Änderungen vorzunehmen, ist ein Login erforderlich.</p>
+            </div>
+            <div class="help-section">
                 <h4>🔄 Datenaktualität</h4>
-                <p>Stückzahlen werden 1-mal täglich über JSON importiert.</p>
+                <p>Die Stückzahlen der Maschinen werden 1-mal täglich über den JSON-Import aktualisiert.</p>
+            </div>
+            <div class="help-section">
+                <h4>⚠️ Sicherheit & Zähler</h4>
+                <p><b>Button (+):</b> Bucht einen Zyklus (+16.000).<br><b>Button (WP):</b> Setzt den Plan (216.000) komplett zurück.</p>
             </div>
             <div class="help-section">
                 <h4>🛡 Datenschutz</h4>
                 <p>Jede Änderung wird mit Benutzername und Zeitstempel protokolliert.</p>
             </div>
-            <button class="nav-btn" style="width:100%; background:var(--bosch-blue); color:white" onclick="toggleHelp(false)">Verstanden</button>
-        </div>
-    </div>
-
-    <div id="authModal" class="modal-overlay">
-        <div class="auth-box">
-            <span class="close-modal" onclick="toggleAuthModal(false)">&times;</span>
-            <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-            <p>Anmelden für Änderungen</p>
-            <input type="email" id="login-email" placeholder="E-Mail">
-            <input type="password" id="login-pass" placeholder="Passwort">
-            <button class="nav-btn" style="width:100%; background:var(--bosch-blue); color:white; margin-top:10px" onclick="handleLogin()">Anmelden</button>
+            <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:10px" onclick="document.getElementById('helpModal').style.display='none'">Verstanden</button>
         </div>
     </div>
 
     <div class="top-bar"></div>
     <div class="header">
         <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-        <div id="status-display" class="version-tag">Verbinde zur Cloud...</div>
+        <div class="status-badge">
+            <div id="connDot" class="status-dot offline"></div>
+            <span id="connText">Verbinde...</span>
+        </div>
     </div>
 
     <div class="action-bar">
-        <button id="auth-trigger" class="nav-btn" onclick="toggleAuthModal(true)">🔑 Anmelden</button>
-        <button class="nav-btn" style="background: var(--bosch-blue); color:white" onclick="triggerJsonLoad()">📥 JSON Laden</button>
-        <button class="nav-btn" onclick="toggleHelp(true)">ℹ️ Hilfe</button>
+        <button id="btnLogin" class="nav-btn" onclick="document.getElementById('authModal').style.display='flex'">🔑 Anmelden</button>
+        <button class="nav-btn btn-primary" onclick="triggerImport()">📥 JSON Import</button>
+        <button class="nav-btn" onclick="exportCSV()">📊 Export</button>
+        <button class="nav-btn" onclick="document.getElementById('helpModal').style.display='flex'">ℹ️ Hilfe</button>
     </div>
     <input type="file" id="fileInput" style="display:none" accept=".json">
 
     <div class="main-layout">
         <div class="content-area">
-            <div class="chart-container"><canvas id="myChart"></canvas></div>
-            <div id="last-activity" class="version-tag" style="padding:10px; background:white; border:1px solid #ddd; min-height: 20px;">Lade Historie...</div>
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+            <div class="activity-bar">
+                <span id="lastActionText">Keine Aktivitäten verzeichnet.</span>
+                <span id="userStatus" style="font-weight:bold; color:var(--bosch-blue)">Gast-Modus</span>
+            </div>
         </div>
         <div class="sidebar">
-            <h3 style="padding:15px; margin:0; border-bottom:1px solid #eee; color:var(--bosch-blue);">Maschinen Übersicht</h3>
-            <div id="controlsList"></div>
+            <div style="padding:15px; background:#f8f9fa; border-bottom:1px solid #ddd; font-weight:bold; color:var(--bosch-blue)">
+                Maschinen Liste
+            </div>
+            <div id="listContainer"></div>
         </div>
     </div>
 
     <script>
+        // --- CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyD6xGCtU-felOyO_BRsFnVlB4yhC46FgYg",
             authDomain: "bosch-agie-wartung.firebaseapp.com",
@@ -121,142 +162,267 @@
             messagingSenderId: "211606405555",
             appId: "1:211606405555:web:cc2475ca47804086a3cbc6"
         };
+        
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth(), db = firebase.database();
+        const auth = firebase.auth();
+        const db = firebase.database();
         Chart.register(ChartDataLabels);
 
-        let myChart, state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [] };
+        let localState = { cloudRawData: [], extraCycles: {}, agieOffsets: {}, history: [] };
+        let chartInstance = null;
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
-        function toggleAuthModal(show) { document.getElementById('authModal').style.display = show ? 'flex' : 'none'; }
-        function toggleHelp(show) { document.getElementById('helpModal').style.display = show ? 'flex' : 'none'; }
-        
-        function handleLogin() { 
-            auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-pass').value)
-            .then(() => { toggleAuthModal(false); })
-            .catch(e => alert("Fehler: " + e.message)); 
-        }
+        // --- CONNECTION & DATA ---
+        db.ref('.info/connected').on('value', snap => {
+            const connected = snap.val();
+            document.getElementById('connDot').className = connected ? 'status-dot online' : 'status-dot offline';
+            document.getElementById('connText').innerText = connected ? 'Online V9.1' : 'Offline';
+        });
 
-        // DATABASE LISTENER (V8.2 Logic)
         db.ref('maintenanceState').on('value', snap => {
             const val = snap.val();
-            if(val) {
-                state = val;
-                updateUI();
+            if (val) {
+                localState.cloudRawData = val.cloudRawData || [];
+                localState.extraCycles = val.extraCycles || {};
+                localState.agieOffsets = val.agieOffsets || {};
+                localState.history = val.history ? Object.values(val.history) : []; 
+                refreshUI();
             }
         });
 
         auth.onAuthStateChanged(user => {
-            const isLogged = !!user;
-            const trigger = document.getElementById('auth-trigger');
-            if(isLogged) {
-                trigger.innerText = "🔓 " + user.displayName; trigger.classList.add('btn-login-active');
+            const btn = document.getElementById('btnLogin');
+            const stat = document.getElementById('userStatus');
+            if (user) {
+                btn.innerHTML = "🔓 " + (user.displayName || "User");
+                btn.classList.add('btn-active');
+                btn.onclick = () => { if(confirm("Abmelden?")) auth.signOut(); };
+                stat.innerText = "Angemeldet als: " + user.displayName;
+            } else {
+                btn.innerHTML = "🔑 Anmelden";
+                btn.classList.remove('btn-active');
+                btn.onclick = () => document.getElementById('authModal').style.display = 'flex';
+                stat.innerText = "👁 Nur Lesemodus";
             }
-            document.getElementById('status-display').innerText = isLogged ? "V 8.9 | Validierungsphase (Bearbeiter)" : "V 8.9 | Validierungsphase (Lesemodus)";
-            updateUI(); // Refresh buttons on login state change
+            refreshUI();
         });
 
-        function triggerJsonLoad() { if(!auth.currentUser) return alert("Bitte erst anmelden!"); document.getElementById('fileInput').click(); }
-        
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = this.files[0]; if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(ev) { 
-                try {
-                    const data = JSON.parse(ev.target.result);
-                    state.cloudRawData = data;
-                    db.ref('maintenanceState').update(state).then(() => alert("✅ Cloud-Daten aktualisiert!"));
-                } catch(err) { alert("Formatfehler in der JSON Datei!"); }
-            };
-            reader.readAsText(file);
-        });
+        // --- LOGIC ---
+        function calculateMetrics() {
+            if (!localState.cloudRawData || localState.cloudRawData.length === 0) return [];
 
-        function updateUI() {
-            const isLogged = !!auth.currentUser;
-            const raw = state.cloudRawData || [];
-            
-            const processed = raw.map(item => {
+            return localState.cloudRawData.map(item => {
                 const id = item.StationNo;
-                const ist = Number(item.Parts || 0) - (state.agieOffsets[id] || 0);
-                const count = state.extraCycles[id] || 0;
-                const diff = (16000 + (count * 16000)) - ist;
-                let s = "status-green", c = "#008a4f";
-                if(diff < 0) { s = "status-overdue"; c = "#b00000"; } 
-                else if(diff < 500) { s = "status-red"; c = "#d50000"; } 
-                else if(diff < 5000) { s = "status-yellow"; c = "#ffcf00"; }
-                return { id, diff, ist, count, status: s, color: c, pkg: packages[Math.abs(count)%packages.length] || "P1" };
-            }).sort((a,b) => a.diff - b.diff);
+                if (!id) return null;
 
-            renderChart(processed);
-            renderControls(processed, isLogged);
-            
-            if(state.history && state.history.length > 0) {
-                const l = state.history[state.history.length-1];
-                document.getElementById('last-activity').innerText = `Letzte Änderung: A${l.Agie} durch ${l.Benutzer} am ${l.Zeitstempel}`;
+                const rawParts = parseInt(item.Parts) || 0;
+                const offset = localState.agieOffsets[id] || 0;
+                const ist = rawParts - offset;
+                const cycles = localState.extraCycles[id] || 0;
+                const target = 16000 + (cycles * 16000);
+                const diff = target - ist;
+
+                let statusClass = "status-green";
+                let color = "#008a4f"; 
+
+                if (diff < 0) { statusClass = "status-overdue"; color = "#b00000"; } 
+                else if (diff < 500) { statusClass = "status-red"; color = "#d50000"; } 
+                else if (diff < 5000) { statusClass = "status-yellow"; color = "#ffcf00"; }
+
+                const pkgName = packages[Math.abs(cycles) % packages.length];
+                return { id, diff, ist, cycles, statusClass, color, pkgName, rawParts };
+            }).filter(x => x !== null).sort((a, b) => a.diff - b.diff);
+        }
+
+        // --- RENDERING ---
+        function refreshUI() {
+            const data = calculateMetrics();
+            renderChart(data);
+            renderList(data);
+
+            if (localState.history.length > 0) {
+                const last = localState.history.sort((a,b) => new Date(b.ISO) - new Date(a.ISO))[0];
+                if(last) document.getElementById('lastActionText').innerHTML = `Letzte Änderung: <b>A${last.Agie}</b> (${last.Ereignis}) von ${last.Benutzer} um ${last.Zeit}`;
             }
         }
 
-        function renderControls(data, isLogged) {
-            const list = document.getElementById('controlsList'); list.innerHTML = "";
+        function renderList(data) {
+            const container = document.getElementById('listContainer');
+            const isLogged = !!auth.currentUser;
+            
+            if (data.length === 0) {
+                container.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Keine Daten. Bitte JSON importieren.</div>';
+                return;
+            }
+
+            let html = '';
             data.forEach(d => {
+                const canPlus = isLogged && d.diff <= 5000;
                 const canReset = isLogged && d.ist >= 215500;
-                list.innerHTML += `
-                <div class="control-row ${d.status}">
-                    <div style="flex:1"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
-                    <div style="flex:1; font-weight:bold; font-size:16px">${d.diff.toLocaleString()}</div>
-                    <button class="btn btn-wplan" ${canReset ? '' : 'disabled'} onclick="wpReset('${d.id}')">WP</button>
-                    <button class="btn btn-minus" ${isLogged ? '' : 'disabled'} onclick="change('${d.id}', -1)">-</button>
-                    <span style="width:20px; text-align:center; font-weight:bold">${d.count}</span>
-                    <button class="btn btn-plus" ${isLogged && d.diff <= 5000 ? '' : 'disabled'} onclick="change('${d.id}', 1)">+</button>
+                const disabledAttr = isLogged ? '' : 'disabled';
+
+                html += `
+                <div class="control-row ${d.statusClass}">
+                    <div style="flex:1">
+                        <div style="font-weight:900; font-size:16px; color:#333">A${d.id}</div>
+                        <div style="font-size:11px; color:#666; font-weight:bold">${d.pkgName}</div>
+                    </div>
+                    <div style="flex:1; font-weight:bold; font-size:18px; color:#333; text-align:right; padding-right:15px">
+                        ${d.diff.toLocaleString()}
+                    </div>
+                    <button class="btn-icon btn-wp" ${canReset ? '' : 'disabled'} onclick="performAction('${d.id}', 'RESET')" title="WP Reset">WP</button>
+                    <button class="btn-icon btn-minus" ${disabledAttr} onclick="performAction('${d.id}', 'MINUS')" title="-">-</button>
+                    <div style="width:25px; text-align:center; font-weight:bold; font-size:14px">${d.cycles}</div>
+                    <button class="btn-icon btn-plus" ${canPlus ? '' : 'disabled'} onclick="performAction('${d.id}', 'PLUS')" title="+">+</button>
                 </div>`;
             });
-        }
-
-        function change(id, delta) {
-            if(!auth.currentUser) return;
-            state.extraCycles[id] = Math.max(0, (state.extraCycles[id]||0) + delta);
-            saveLog(id, delta > 0 ? "Wartung +" : "Korrektur -");
-        }
-
-        function wpReset(id) {
-            if(!auth.currentUser || !confirm(`Großen WP-RESET für A${id} durchführen?`)) return;
-            state.agieOffsets[id] = (state.agieOffsets[id]||0) + 216000;
-            state.extraCycles[id] = 0;
-            saveLog(id, "WP-RESET");
-        }
-
-        function saveLog(id, ev) {
-            if(!state.history) state.history = [];
-            state.history.push({ 
-                Zeitstempel: new Date().toLocaleString('de-DE'), 
-                Agie: id, 
-                Ereignis: ev, 
-                Benutzer: auth.currentUser.displayName 
-            });
-            db.ref('maintenanceState').update(state);
+            container.innerHTML = html;
         }
 
         function renderChart(data) {
-            const ctx = document.getElementById('myChart').getContext('2d');
-            if(myChart) myChart.destroy();
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: { 
-                    labels: data.map(d=>"A"+d.id), 
-                    datasets:[{ data: data.map(d=>d.diff), backgroundColor: data.map(d=>d.color), borderRadius: 3 }] 
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false }, 
-                        datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' }, rotation: -90 } 
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            const labels = data.map(d => "A" + d.id);
+            const values = data.map(d => d.diff);
+            const colors = data.map(d => d.color);
+            const pkgNames = data.map(d => d.pkgName); // Für Tooltip
+
+            if (chartInstance) {
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets[0].data = values;
+                chartInstance.data.datasets[0].backgroundColor = colors;
+                chartInstance.data.datasets[0].pkgInfo = pkgNames; // Update pkg info
+                chartInstance.update('none'); 
+            } else {
+                chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: colors,
+                            borderRadius: 4,
+                            barPercentage: 0.7,
+                            pkgInfo: pkgNames // Benutzerdefiniertes Feld
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 500 },
+                        plugins: {
+                            legend: { display: false },
+                            datalabels: {
+                                anchor: 'end', align: 'top',
+                                color: '#333', font: { weight: 'bold' },
+                                rotation: -90, // HIER: 90 Grad gedreht (wie V8.6)
+                                formatter: (val) => val.toLocaleString() // HIER: Volle Zahl (wie V8.6)
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        // HIER: Alter Tooltip Stil (wie V8.6)
+                                        const pkg = context.dataset.pkgInfo[context.dataIndex];
+                                        return [
+                                            'Paket: ' + pkg, 
+                                            'Rest: ' + context.parsed.y.toLocaleString()
+                                        ];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                            x: { grid: { display: false } }
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
-        // Auto-Popup beim ersten Laden
-        window.onload = () => { setTimeout(() => toggleHelp(true), 1000); };
+        // --- ACTIONS ---
+        function performAction(id, type) {
+            if (!auth.currentUser) return showToast("Bitte anmelden!", "error");
+            if (type === 'PLUS' && !confirm(`Wartung (+16.000) für A${id} buchen?`)) return;
+            if (type === 'RESET' && !confirm(`⚠️ WP-RESET (216.000) für A${id}?`)) return;
+
+            const user = auth.currentUser.displayName;
+            const updates = {};
+            
+            if (type === 'PLUS' || type === 'MINUS') {
+                const delta = type === 'PLUS' ? 1 : -1;
+                const newCount = Math.max(0, (localState.extraCycles[id] || 0) + delta);
+                updates[`maintenanceState/extraCycles/${id}`] = newCount;
+                pushHistory(id, `Zähler ${delta>0?'+1':'-1'}`, user, updates);
+            } 
+            else if (type === 'RESET') {
+                const currentOffset = localState.agieOffsets[id] || 0;
+                updates[`maintenanceState/agieOffsets/${id}`] = currentOffset + 216000;
+                updates[`maintenanceState/extraCycles/${id}`] = 0;
+                pushHistory(id, "WP-RESET", user, updates);
+            }
+        }
+
+        function pushHistory(id, event, user, updatesObj) {
+            const newHistoryKey = db.ref('maintenanceState/history').push().key;
+            updatesObj[`maintenanceState/history/${newHistoryKey}`] = {
+                Agie: id, Ereignis: event, Benutzer: user, Zeit: new Date().toLocaleString('de-DE'), ISO: new Date().toISOString()
+            };
+            db.ref().update(updatesObj)
+                .then(() => showToast("✅ Gespeichert"))
+                .catch(err => showToast("Fehler: " + err.message, "error"));
+        }
+
+        // --- UTILS ---
+        function triggerImport() {
+            if (!auth.currentUser) return showToast("Anmeldung erforderlich", "error");
+            document.getElementById('fileInput').click();
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    const json = JSON.parse(ev.target.result);
+                    if (!Array.isArray(json) || json.length === 0 || !json[0].StationNo) throw new Error("Formatfehler");
+                    db.ref('maintenanceState/cloudRawData').set(json)
+                        .then(() => showToast("✅ Import OK"))
+                        .catch(err => showToast("Upload Fehler", "error"));
+                } catch (err) { showToast("❌ Fehler: " + err.message, "error"); }
+            };
+            reader.readAsText(file);
+            this.value = '';
+        });
+
+        function performLogin() {
+            auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value)
+                .then(() => { document.getElementById('authModal').style.display = 'none'; showToast("Angemeldet"); })
+                .catch(err => alert("Fehler: " + err.message));
+        }
+
+        function showToast(msg, type = "success") {
+            const container = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            el.className = `toast ${type === 'error' ? 'error' : ''}`;
+            el.innerHTML = msg;
+            container.appendChild(el);
+            setTimeout(() => el.classList.add('show'), 10);
+            setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3000);
+        }
+
+        function exportCSV() {
+            if(!localState.history.length) return showToast("Keine Daten", "error");
+            let csv = "\uFEFFDatum;Zeit;Maschine;Ereignis;Benutzer\n";
+            localState.history.forEach(r => csv += `${r.Zeit};${r.Agie};${r.Ereignis};${r.Benutzer}\n`);
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+            link.download = `Wartung_Export.csv`;
+            link.click();
+        }
+
+        // AUTO POPUP (Wie V8.6)
+        window.onload = () => setTimeout(() => document.getElementById('helpModal').style.display='flex', 800);
     </script>
 </body>
 </html>
