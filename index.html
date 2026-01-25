@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V9.4</title>
+    <title>Agie Wartung - Bosch V9.7 Cloud-Secure</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -39,7 +39,6 @@
         .activity-bar { background: white; padding: 10px 15px; border-left: 4px solid #ccc; font-size: 13px; color: #555; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-shrink: 0; }
         
         .control-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; border-left: 6px solid #ccc; gap: 10px; transition: background 0.2s; }
-        .control-row:hover { background: #fafafa; }
         .status-red { border-left-color: var(--bosch-red); background: #fff5f5; }
         .status-yellow { border-left-color: #ffcf00; background: #fffef0; }
         .status-green { border-left-color: var(--bosch-green); background: #f0fdf4; }
@@ -87,23 +86,15 @@
             <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px;">🛠 Bedienungsanleitung & Info</h2>
             <div class="help-section">
                 <h4>📋 Digitaler Wartungsplan</h4>
-                <p>Nach einer Validierungsphase soll dieses System den händischen Plan an der Maschine dauerhaft ersetzen.</p>
-            </div>
-            <div class="help-section">
-                <h4>👁 Öffentlicher Modus & Login</h4>
-                <p>Das Dashboard ist im Lesemodus für alle einsehbar. Um Änderungen vorzunehmen, ist ein Login erforderlich.</p>
-            </div>
-            <div class="help-section">
-                <h4>🔄 Datenaktualität</h4>
-                <p>Die Stückzahlen der Maschinen werden 1-mal täglich über den JSON-Import aktualisiert.</p>
+                <p>Ersetzt den händischen Plan. Alle Daten werden revisionssicher protokolliert.</p>
             </div>
             <div class="help-section">
                 <h4>⚠️ Sicherheit & Zähler</h4>
-                <p><b>Button (+):</b> Bucht einen Zyklus (+16.000).<br><b>Button (WP):</b> Setzt den Plan (216.000) komplett zurück.</p>
+                <p><b>Button (+):</b> Bucht einen Zyklus (+16.000).<br><b>Button (WP):</b> Vollständiger Wartungsplan-Reset (Passwortgeschützt).</p>
             </div>
             <div class="help-section">
                 <h4>🛡 Datenschutz</h4>
-                <p>Jede Änderung wird mit Benutzername und Zeitstempel protokolliert.</p>
+                <p>Nutzernamen werden zur Wahrung der Privatsphäre auf dem Dashboard nicht öffentlich angezeigt.</p>
             </div>
             <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:10px" onclick="document.getElementById('helpModal').style.display='none'">Verstanden</button>
         </div>
@@ -165,7 +156,7 @@
         db.ref('.info/connected').on('value', snap => {
             const connected = snap.val();
             document.getElementById('connDot').className = connected ? 'status-dot online' : 'status-dot offline';
-            document.getElementById('connText').innerText = connected ? 'Online V9.4' : 'Offline';
+            document.getElementById('connText').innerText = connected ? 'Online V9.7' : 'Offline';
         });
 
         db.ref('maintenanceState').on('value', snap => {
@@ -196,16 +187,6 @@
             refreshUI();
         });
 
-        function refreshUI() {
-            const data = calculateMetrics();
-            renderChart(data);
-            renderList(data);
-            if (localState.history.length > 0) {
-                const last = localState.history.sort((a,b) => new Date(b.ISO) - new Date(a.ISO))[0];
-                if(last) document.getElementById('lastActionText').innerHTML = `Letzte Änderung: <b>A${last.Agie}</b> (${last.Ereignis}) am ${last.Zeit.split(',')[0]}`;
-            }
-        }
-
         function calculateMetrics() {
             if (!localState.cloudRawData || localState.cloudRawData.length === 0) return [];
             return localState.cloudRawData.map(item => {
@@ -227,11 +208,21 @@
             }).filter(x => x !== null).sort((a, b) => a.diff - b.diff);
         }
 
+        function refreshUI() {
+            const data = calculateMetrics();
+            renderChart(data);
+            renderList(data);
+            if (localState.history.length > 0) {
+                const last = localState.history.sort((a,b) => new Date(b.ISO) - new Date(a.ISO))[0];
+                if(last) document.getElementById('lastActionText').innerHTML = `Letzte Änderung: <b>A${last.Agie}</b> (${last.Ereignis}) am ${last.Zeit.split(',')[0]}`;
+            }
+        }
+
         function renderList(data) {
             const container = document.getElementById('listContainer');
             const isLogged = !!auth.currentUser;
             if (data.length === 0) {
-                container.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Keine Daten vorhanden.</div>';
+                container.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Warte auf Daten...</div>';
                 return;
             }
             let html = '';
@@ -313,23 +304,38 @@
             }
         }
 
-        function performAction(id, type) {
+        async function performAction(id, type) {
             if (!auth.currentUser) return showToast("Bitte anmelden!", "error");
-            if (type === 'PLUS' && !confirm(`Wartung (+16.000) für A${id} buchen?`)) return;
-            if (type === 'RESET' && !confirm(`⚠️ WP-RESET (216.000) für A${id}?`)) return;
-
+            
             const user = auth.currentUser.displayName || auth.currentUser.email;
             const updates = {};
+
             if (type === 'PLUS' || type === 'MINUS') {
+                if (type === 'PLUS' && !confirm(`Wartung (+16.000) für A${id} buchen?`)) return;
                 const delta = type === 'PLUS' ? 1 : -1;
                 const newCount = Math.max(0, (localState.extraCycles[id] || 0) + delta);
                 updates[`maintenanceState/extraCycles/${id}`] = newCount;
                 pushHistory(id, `Zähler ${delta>0?'+1':'-1'}`, user, updates);
             } else if (type === 'RESET') {
-                const currentOffset = localState.agieOffsets[id] || 0;
-                updates[`maintenanceState/agieOffsets/${id}`] = currentOffset + 216000;
-                updates[`maintenanceState/extraCycles/${id}`] = 0;
-                pushHistory(id, "WP-RESET", user, updates);
+                // NEU: WP-Reset Schutz mit Cloud-Passwort
+                const inputPass = prompt(`⚠️ WP-RESET (216.000) für A${id}. Admin-Passwort erforderlich:`);
+                if (!inputPass) return;
+
+                try {
+                    const snapshot = await db.ref('adminConfig/wpResetPassword').once('value');
+                    const cloudWPPass = snapshot.val();
+
+                    if (inputPass === cloudWPPass) {
+                        const currentOffset = localState.agieOffsets[id] || 0;
+                        updates[`maintenanceState/agieOffsets/${id}`] = currentOffset + 216000;
+                        updates[`maintenanceState/extraCycles/${id}`] = 0;
+                        pushHistory(id, "WP-RESET", user, updates);
+                    } else {
+                        showToast("❌ Passwort falsch!", "error");
+                    }
+                } catch (err) {
+                    showToast("Sicherheitsfehler", "error");
+                }
             }
         }
 
@@ -342,8 +348,50 @@
                 .catch(err => showToast("Fehler: " + err.message, "error"));
         }
 
+        async function performRegister() {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('pass').value;
+            if (!e || !p) return showToast("Daten unvollständig", "error");
+            const inputCode = prompt("Einladungscode eingeben:");
+            if (!inputCode) return;
+            try {
+                const snap = await db.ref('adminConfig/inviteCode').once('value');
+                if (inputCode === snap.val()) {
+                    const name = prompt("Name für Logbuch:");
+                    if(!name) return;
+                    const cred = await auth.createUserWithEmailAndPassword(e, p);
+                    await cred.user.updateProfile({ displayName: name });
+                    document.getElementById('authModal').style.display = 'none';
+                    showToast("Konto erstellt");
+                } else { showToast("Code falsch!", "error"); }
+            } catch (err) { showToast(err.message, "error"); }
+        }
+
+        function performLogin() {
+            auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value)
+                .then(() => { document.getElementById('authModal').style.display = 'none'; showToast("Angemeldet"); })
+                .catch(err => alert("Fehler: " + err.message));
+        }
+
+        async function exportCSV() {
+            if(!localState.history.length) return showToast("Keine Daten", "error");
+            const inputPass = prompt("Admin-Passwort für Export:");
+            if (!inputPass) return;
+            try {
+                const snap = await db.ref('adminConfig/exportPassword').once('value');
+                if (inputPass === snap.val()) {
+                    let csv = "\uFEFFDatum;Zeit;Maschine;Ereignis;Benutzer\n";
+                    localState.history.forEach(r => csv += `${r.Zeit};${r.Agie};${r.Ereignis};${r.Benutzer}\n`);
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+                    link.download = `Wartung_Export.csv`;
+                    link.click();
+                } else { showToast("Passwort falsch!", "error"); }
+            } catch (err) { showToast("Zugriff verweigert", "error"); }
+        }
+
         function triggerImport() {
-            if (!auth.currentUser) return showToast("Anmeldung erforderlich", "error");
+            if (!auth.currentUser) return showToast("Bitte anmelden", "error");
             document.getElementById('fileInput').click();
         }
 
@@ -354,34 +402,11 @@
             reader.onload = function(ev) {
                 try {
                     const json = JSON.parse(ev.target.result);
-                    if (!Array.isArray(json) || !json[0].StationNo) throw new Error("Formatfehler");
-                    db.ref('maintenanceState/cloudRawData').set(json).then(() => showToast("✅ Import OK"));
-                } catch (err) { showToast("❌ Fehler: " + err.message, "error"); }
+                    db.ref('maintenanceState/cloudRawData').set(json).then(() => showToast("Import OK"));
+                } catch (err) { showToast("Fehlerhafte Datei", "error"); }
             };
             reader.readAsText(file);
-            this.value = '';
         });
-
-        function performLogin() {
-            auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value)
-                .then(() => { document.getElementById('authModal').style.display = 'none'; showToast("Angemeldet"); })
-                .catch(err => alert("Fehler: " + err.message));
-        }
-
-        function performRegister() {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('pass').value;
-            const name = prompt("Bitte gib deinen Namen für das Logbuch ein:");
-            if(!name) return;
-            auth.createUserWithEmailAndPassword(e, p)
-                .then(cred => {
-                    cred.user.updateProfile({ displayName: name }).then(() => {
-                        document.getElementById('authModal').style.display = 'none';
-                        showToast("Konto erstellt");
-                    });
-                })
-                .catch(err => alert("Fehler: " + err.message));
-        }
 
         function showToast(msg, type = "success") {
             const container = document.getElementById('toastContainer');
@@ -391,25 +416,6 @@
             container.appendChild(el);
             setTimeout(() => el.classList.add('show'), 10);
             setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, 3000);
-        }
-
-        function exportCSV() {
-            if(!localState.history.length) return showToast("Keine Daten", "error");
-            
-            // Neues sicheres Admin-Passwort
-            const adminPass = prompt("Admin-Passwort für Export erforderlich:");
-            if (adminPass !== "B#7q!z9$L2v&M*P4xN@1") { 
-                showToast("Zugriff verweigert!", "error");
-                return;
-            }
-
-            let csv = "\uFEFFDatum;Zeit;Maschine;Ereignis;Benutzer\n";
-            localState.history.forEach(r => csv += `${r.Zeit};${r.Agie};${r.Ereignis};${r.Benutzer}\n`);
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
-            link.download = `Wartung_Export_Vertraulich.csv`;
-            link.click();
-            showToast("Export gestartet");
         }
 
         window.onload = () => setTimeout(() => document.getElementById('helpModal').style.display='flex', 800);
