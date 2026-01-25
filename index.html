@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V9.8.4 Countdown-Timer</title>
+    <title>Agie Wartung - Bosch V9.8.4.1 Timer & Help Fix</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -27,7 +27,6 @@
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
         .online { background: var(--bosch-green); } .offline { background: var(--bosch-red); }
 
-        /* Countdown Timer Style */
         .logout-timer { font-size: 12px; font-weight: 600; color: #666; display: none; background: #fff; padding: 4px 10px; border-radius: 15px; border: 1px solid #ddd; }
         .timer-warning { color: var(--bosch-red) !important; font-weight: 900 !important; animation: blink 1s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -90,19 +89,36 @@
     <div id="helpModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-modal" onclick="document.getElementById('helpModal').style.display='none'">&times;</span>
-            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px; margin-top:0;">🛠 Handbuch & System-Logik (V9.8.4)</h2>
+            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px; margin-top:0;">🛠 Handbuch & System-Logik (V9.8.3)</h2>
+            
             <div class="help-section">
                 <h4>📋 Digitaler Wartungsplan</h4>
-                <p>Dieses Tool visualisiert die Wartungsintervalle der Agie-Maschinen. Ein grüner Balken zeigt ausreichend Puffer, gelb mahnt zur Vorbereitung und rot signalisiert eine fällige Wartung.</p>
+                <p>Dieses Tool visualisiert die Wartungsintervalle der Agie-Maschinen. Ein grüner Balken zeigt ausreichend Puffer, gelb mahnt zur Vorbereitung und rot signalisiert eine fällige Wartung. Dunkelrot bedeutet: Wartung überfällig.</p>
             </div>
+
             <div class="help-section">
                 <h4>🔄 Zähler & Wartungs-Intervalle</h4>
-                <p><b>Button (+):</b> Bestätigt Standardwartung (+16.000).<br><b>Button (WP):</b> Vollständiger Wartungsplan-Reset (216.000 Stück). Erfordert Admin-Passwort.</p>
+                <p><b>Button (+):</b> Bestätigt die Durchführung einer Standardwartung. Der Zielwert wird um +16.000 Stück erhöht.<br>
+                <b>Button (-):</b> Korrigiert eine Fehlbuchung (-16.000).<br>
+                <b>Button (WP):</b> Vollständiger Wartungsplan-Reset (216.000 Stück). Erfordert ein spezielles Admin-Passwort aus der Cloud.</p>
             </div>
+
             <div class="help-section">
                 <h4>🔐 Cloud-Sicherheit & Automatik</h4>
-                <p><b>Auto-Logout:</b> Sitzung endet automatisch nach <b>20 Sekunden Inaktivität</b>. Ein Timer neben dem Anmelde-Button zeigt die verbleibende Zeit.</p>
+                <p><b>Auto-Logout:</b> Um unbefugte Änderungen an offenen Terminals zu verhindern, wird jeder Benutzer nach <b>20 Sekunden Inaktivität</b> automatisch abgemeldet.<br>
+                <b>Einladungscode:</b> Zur Registrierung neuer Konten wird ein gültiger Einladungscode benötigt. Dieser wird zentral durch die Administratoren vergeben.</p>
             </div>
+
+            <div class="help-section">
+                <h4>📊 Daten & Export</h4>
+                <p>Die Basis-Stückzahlen werden täglich per <b>JSON-Import</b> aktualisiert. Alle manuellen Buchungen (+/-) werden in Echtzeit in der Cloud gespeichert. Über den <b>Export-Button</b> (passwortgeschützt) kann das vollständige Aktivitäts-Logbuch als CSV für Excel heruntergeladen werden.</p>
+            </div>
+
+            <div class="help-section" style="background: #f9f9f9; padding: 10px; border-radius: 4px;">
+                <h4>🛡 Datenschutzhinweis</h4>
+                <p>Namen von Mitarbeitern werden nur im internen Logbuch zur Nachvollziehbarkeit gespeichert, jedoch niemals öffentlich auf dem Dashboard angezeigt.</p>
+            </div>
+
             <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:10px" onclick="document.getElementById('helpModal').style.display='none'">Verstanden & Schließen</button>
         </div>
     </div>
@@ -167,7 +183,6 @@
 
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
-        // --- COUNTDOWN LOGIK ---
         function resetLogoutTimer() {
             if (logoutTimer) clearTimeout(logoutTimer);
             if (countdownInterval) clearInterval(countdownInterval);
@@ -194,12 +209,8 @@
             const el = document.getElementById('secondsLeft');
             const box = document.getElementById('logoutDisplay');
             el.innerText = remainingSeconds;
-            
-            if (remainingSeconds <= 5) {
-                box.classList.add('timer-warning');
-            } else {
-                box.classList.remove('timer-warning');
-            }
+            if (remainingSeconds <= 5) box.classList.add('timer-warning');
+            else box.classList.remove('timer-warning');
         }
 
         ['mousedown', 'mousemove', 'keypress', 'touchstart'].forEach(evt => {
@@ -209,7 +220,7 @@
         db.ref('.info/connected').on('value', snap => {
             const connected = snap.val();
             document.getElementById('connDot').className = connected ? 'status-dot online' : 'status-dot offline';
-            document.getElementById('connText').innerText = connected ? 'Online V9.8.4' : 'Offline';
+            document.getElementById('connText').innerText = connected ? 'Online V9.8.4.1' : 'Offline';
         });
 
         db.ref('maintenanceState').on('value', snap => {
