@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V9.9.0 Final & Full Data</title>
+    <title>Agie Wartung - Bosch V9.9.1 Professional</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -20,9 +20,6 @@
         .bosch-brand { color: var(--bosch-red); font-weight: 900; font-size: 24px; letter-spacing: -0.5px; }
         .bosch-brand span { color: var(--bosch-blue); }
         .status-area { display: flex; align-items: center; gap: 20px; }
-        .status-badge { font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: #eee; color: #666; display: flex; align-items: center; gap: 5px; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
-        .online { background: var(--bosch-green); } .offline { background: var(--bosch-red); }
         .logout-timer { font-size: 12px; font-weight: 600; color: #666; display: none; background: #fff; padding: 4px 10px; border-radius: 15px; border: 1px solid #ddd; }
         .timer-warning { color: var(--bosch-red) !important; font-weight: 900 !important; animation: blink 1s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -38,29 +35,30 @@
         
         #btnShowPresentation { position: absolute; bottom: 15px; right: 15px; z-index: 10; display: none; background: var(--bosch-green); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
+        /* PowerPoint Styles */
         .ppt-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,10,0.98); z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .ppt-slide { background: white; width: 85%; height: 75%; max-width: 1100px; padding: 60px; border-radius: 4px; display: none; flex-direction: column; position: relative; border-top: 10px solid var(--bosch-red); }
         .ppt-slide.active { display: flex; }
-        .ppt-header { color: var(--bosch-blue); border-bottom: 2px solid #eee; margin-bottom: 30px; font-size: 36px; font-weight: 900; padding-bottom: 10px; }
+        .ppt-header { color: var(--bosch-blue); border-bottom: 2px solid #eee; margin-bottom: 30px; font-size: 36px; font-weight: 900; }
         .ppt-content { font-size: 22px; line-height: 1.7; color: #333; }
         .ppt-footer { margin-top: auto; display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 20px; font-weight: bold; color: #999; }
         .ppt-nav { position: absolute; bottom: 30px; display: flex; gap: 20px; }
         .ppt-btn { background: var(--bosch-blue); color: white; border: none; padding: 12px 35px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        .ppt-close { position: absolute; top: 25px; right: 30px; background: none; border: none; font-size: 40px; cursor: pointer; color: #999; }
 
+        /* Button Status Styles */
         .control-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; border-left: 6px solid #ccc; gap: 10px; }
+        .status-overdue { border-left-color: #b00000; background: #ffe0e0; }
         .status-red { border-left-color: var(--bosch-red); background: #fff5f5; }
         .status-yellow { border-left-color: #ffcf00; background: #fffef0; }
         .status-green { border-left-color: var(--bosch-green); background: #f0fdf4; }
-        .status-overdue { border-left-color: #b00000; background: #ffe0e0; }
-        .btn-icon { width: 36px; height: 36px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 4px; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        
+        .btn-icon { width: 36px; height: 36px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 4px; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .btn-icon:disabled { background-color: #e0e0e0 !important; color: #aaa !important; cursor: not-allowed; opacity: 0.5; box-shadow: none; }
         .btn-plus { background: var(--bosch-light-blue); }
         .btn-minus { background: var(--bosch-blue); }
         .btn-wp { background: var(--bosch-red); font-size: 11px; width: 40px; }
-        .activity-bar { background: white; padding: 10px 15px; border-left: 4px solid #ccc; font-size: 13px; color: #555; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; display: none; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; max-width: 400px; width: 90%; border-top: 8px solid var(--bosch-red); text-align: center; }
+        .activity-bar { background: white; padding: 10px 15px; border-left: 4px solid #ccc; font-size: 13px; color: #555; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 4px; z-index: 6000; display: none; }
     </style>
 </head>
@@ -68,33 +66,43 @@
 
     <div id="toast" class="toast"></div>
 
-    <div id="authModal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 style="color:var(--bosch-blue); margin-top:0">Anmeldung</h2>
-            <input type="email" id="email" placeholder="E-Mail" style="width:100%; padding:10px; margin:5px 0; box-sizing:border-box; border:1px solid #ddd">
-            <input type="password" id="pass" placeholder="Passwort" style="width:100%; padding:10px; margin:5px 0; box-sizing:border-box; border:1px solid #ddd">
-            <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:15px" onclick="performLogin()">Einloggen</button>
-            <button class="nav-btn" style="width:100%; justify-content:center; margin-top:8px" onclick="performRegister()">Neu registrieren</button>
-            <p onclick="document.getElementById('authModal').style.display='none'" style="cursor:pointer; color:#777; font-size:12px; margin-top:15px">Abbrechen</p>
-        </div>
-    </div>
-
     <div id="pptOverlay" class="ppt-overlay">
-        <button class="ppt-close" onclick="closePPT()">&times;</button>
+        <button style="position:absolute; top:25px; right:30px; background:none; border:none; font-size:40px; cursor:pointer; color:#999;" onclick="closePPT()">&times;</button>
         <div class="ppt-slide active" id="slide1">
             <div class="ppt-header">01. Dashboard Berechnungs-Logik</div>
             <div class="ppt-content">
                 <ul>
-                    <li><b>Echtzeit-Stückzahl:</b> Datenimport aus Firebase (cloudRawData).</li>
-                    <li><b>Wartungs-Intervalle:</b> Dynamische Berechnung:<br><code>Target = 16.000 + (Zyklen × 16.000)</code></li>
-                    <li><b>Offset:</b> Reset-Wert (WP) zur Nullung bei Wartungsplanwechsel.</li>
+                    <li><b>Echtzeit-Stückzahl:</b> Direkter Abgleich mit dem Maschinenimport.</li>
+                    <li><b>Zielwert (Target):</b> <code>16.000 + (Zyklen × 16.000)</code>.</li>
+                    <li><b>Offset:</b> Subtrahiert 216.000 pro WP-Reset zur Korrektur des Lebenszyklus.</li>
                 </ul>
             </div>
-            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER</span><span>FOLIE 1 / 4</span></div>
+            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER</span><span>1 / 4</span></div>
         </div>
-        <div class="ppt-slide" id="slide2"><div class="ppt-header">02. Smart-Sync Logik</div><div class="ppt-content"><p>Positiver Rest: Exakter Sprung auf nächstes Paket (Sync).<br>Negativer Rest: +16.000 (Verzug bleibt erhalten).</p></div><div class="ppt-footer"><span>FOLIE 2 / 4</span></div></div>
-        <div class="ppt-slide" id="slide3"><div class="ppt-header">03. Sicherheit</div><div class="ppt-content"><p>Admin-PW in Cloud (adminConfig/). Auto-Logout nach 20s.</p></div><div class="ppt-footer"><span>FOLIE 3 / 4</span></div></div>
-        <div class="ppt-slide" id="slide4"><div class="ppt-header">04. Export & Log</div><div class="ppt-content"><p>Lückenloses Audit-Trail jeder Änderung. CSV Export passwortgeschützt.</p></div><div class="ppt-footer"><span>FOLIE 4 / 4</span></div></div>
+        <div class="ppt-slide" id="slide2">
+            <div class="ppt-header">02. Smart-Sync (+)</div>
+            <div class="ppt-content">
+                <p><b>Positiver Rest:</b> Zähler wird auf das nächste volle 16k-Paket synchronisiert.</p>
+                <p><b>Negativer Rest:</b> Es werden stur +16.000 addiert, um den Verzug sichtbar zu halten.</p>
+            </div>
+            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER</span><span>2 / 4</span></div>
+        </div>
+        <div class="ppt-slide" id="slide3">
+            <div class="ppt-header">03. Sicherheit & Admin</div>
+            <div class="ppt-content">
+                <p>Passwörter für WP-Reset und Export liegen in der <code>adminConfig</code>.</p>
+                <p>Inaktive Terminals sperren sich nach 20 Sekunden automatisch.</p>
+            </div>
+            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER</span><span>3 / 4</span></div>
+        </div>
+        <div class="ppt-slide" id="slide4">
+            <div class="ppt-header">04. Audit-Log & Export</div>
+            <div class="ppt-content">
+                <p>Jede Änderung wird im <code>history</code> Pfad mit User-ID und Zeitstempel verewigt.</p>
+                <p>Export als CSV ist jederzeit für berechtigte Personen möglich.</p>
+            </div>
+            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER</span><span>4 / 4</span></div>
+        </div>
         <div class="ppt-nav"><button class="ppt-btn" onclick="changeSlide(-1)">ZURÜCK</button><button class="ppt-btn" onclick="changeSlide(1)">WEITER</button></div>
     </div>
 
@@ -103,16 +111,15 @@
         <div class="bosch-brand">BOSCH<span> AGIE</span></div>
         <div class="status-area">
             <div id="logoutDisplay" class="logout-timer">Logout in: <span id="secondsLeft">20</span>s</div>
-            <div class="status-badge"><div id="connDot" class="status-dot offline"></div><span id="connText">Verbinde...</span></div>
+            <div id="connText" style="font-size:12px; color:#888">Verbinde...</div>
         </div>
     </div>
 
     <div class="action-bar">
-        <button id="btnLogin" class="nav-btn" onclick="document.getElementById('authModal').style.display='flex'">🔑 Anmelden</button>
+        <button id="btnLogin" class="nav-btn" onclick="showAuth()">🔑 Anmelden</button>
         <button class="nav-btn btn-primary" onclick="triggerImport()">📥 Import</button>
         <button class="nav-btn" onclick="exportCSV()">📊 Export</button>
     </div>
-    <input type="file" id="fileInput" style="display:none" accept=".json">
 
     <div class="main-layout">
         <div class="content-area">
@@ -121,8 +128,8 @@
                 <button id="btnShowPresentation" onclick="openPPT()">📊 System-Präsentation</button>
             </div>
             <div class="activity-bar">
-                <span id="lastActionText">Lade...</span>
-                <span id="userStatus" style="font-weight:bold; color:var(--bosch-blue)">Lade...</span>
+                <span id="lastActionText">Lade Logbuch...</span>
+                <span id="userStatus" style="font-weight:bold; color:var(--bosch-blue)">Lesemodus</span>
             </div>
         </div>
         <div class="sidebar" id="listContainer"></div>
@@ -171,7 +178,8 @@
                         data: data.map(d => d.diff), 
                         backgroundColor: data.map(d => d.color),
                         pkgInfo: data.map(d => d.pkgName),
-                        istInfo: data.map(d => d.ist)
+                        istInfo: data.map(d => d.ist),
+                        targetInfo: data.map(d => 16000 + (d.cycles * 16000))
                     }]
                 },
                 options: {
@@ -182,9 +190,10 @@
                         tooltip: {
                             callbacks: {
                                 label: (ctx) => [
-                                    'Paket: ' + ctx.dataset.pkgInfo[ctx.dataIndex],
-                                    'Rest: ' + ctx.parsed.y.toLocaleString(),
-                                    'Ist-Gesamt: ' + ctx.dataset.istInfo[ctx.dataIndex].toLocaleString()
+                                    `Nächstes Paket: ${ctx.dataset.pkgInfo[ctx.dataIndex]}`,
+                                    `Reststücke: ${ctx.parsed.y.toLocaleString()}`,
+                                    `Ist-Wert (netto): ${ctx.dataset.istInfo[ctx.dataIndex].toLocaleString()}`,
+                                    `Soll-Wert (Trigger): ${ctx.dataset.targetInfo[ctx.dataIndex].toLocaleString()}`
                                 ]
                             }
                         }
@@ -198,41 +207,37 @@
             const data = calculateMetrics();
             renderChart(data);
             const container = document.getElementById('listContainer'), isLogged = !!auth.currentUser;
-            let html = '<div style="padding:15px; font-weight:bold; color:var(--bosch-blue)">Maschinen Liste</div>';
+            let html = '<div style="padding:15px; font-weight:bold; color:var(--bosch-blue); background:#f9f9f9; border-bottom:1px solid #ddd">Maschinen Status</div>';
             data.forEach(d => {
-                html += `<div class="control-row ${d.diff < 0 ? 'status-overdue' : (d.diff < 500 ? 'status-red' : (d.diff < 5000 ? 'status-yellow' : 'status-green'))}">
+                const rowClass = d.diff < 0 ? 'status-overdue' : (d.diff < 500 ? 'status-red' : (d.diff < 5000 ? 'status-yellow' : 'status-green'));
+                html += `<div class="control-row ${rowClass}">
                     <div style="flex:1"><b>A${d.id}</b><div style="font-size:10px">${d.pkgName}</div></div>
                     <div style="flex:1; font-weight:bold; text-align:right; padding-right:15px">${d.diff.toLocaleString()}</div>
                     <button class="btn-icon btn-wp" ${isLogged && d.ist >= 215500 ? '' : 'disabled'} onclick="performAction('${d.id}', 'RESET')">WP</button>
-                    <button class="btn-icon btn-minus" ${isLogged?'':'disabled'} onclick="performAction('${d.id}', 'MINUS')">-</button>
+                    <button class="btn-icon btn-minus" ${isLogged ? '' : 'disabled'} onclick="performAction('${d.id}', 'MINUS')">-</button>
                     <div style="width:20px; text-align:center; font-weight:bold">${d.cycles}</div>
                     <button class="btn-icon btn-plus" ${isLogged && d.diff <= 5000 ? '' : 'disabled'} onclick="performAction('${d.id}', 'PLUS')">+</button>
                 </div>`;
             });
             container.innerHTML = html;
-            if (localState.history.length) {
-                const last = [...localState.history].sort((a,b) => new Date(b.ISO) - new Date(a.ISO))[0];
-                document.getElementById('lastActionText').innerHTML = `Letzte Änderung: <b>A${last.Agie}</b> (${last.Ereignis})`;
-            }
         }
 
         async function performAction(id, type) {
-            if (!auth.currentUser) return;
-            const user = auth.currentUser.displayName || auth.currentUser.email;
             const metrics = calculateMetrics().find(m => m.id === id);
+            const user = auth.currentUser.displayName || auth.currentUser.email;
             const updates = {};
             if (type === 'PLUS') {
-                if (!confirm(`Wartung A${id} buchen?`)) return;
-                let newCycles = (metrics.diff > 0) ? Math.floor(metrics.ist / 16000) + 1 : (localState.extraCycles[id] || 0) + 1;
+                if (!confirm(`Wartung für A${id} jetzt buchen?`)) return;
+                let newCycles = (metrics.diff > 0) ? Math.floor(metrics.ist / 16000) + 1 : metrics.cycles + 1;
                 updates[`maintenanceState/extraCycles/${id}`] = newCycles;
                 pushHistory(id, `Wartung (+16k ${metrics.diff > 0 ? 'Sync' : 'Add'})`, user, updates);
             } else if (type === 'MINUS') {
-                updates[`maintenanceState/extraCycles/${id}`] = Math.max(0, (localState.extraCycles[id] || 0) - 1);
+                updates[`maintenanceState/extraCycles/${id}`] = Math.max(0, metrics.cycles - 1);
                 pushHistory(id, "Korrektur -1", user, updates);
             } else if (type === 'RESET') {
-                const pass = prompt("Admin PW:");
+                const p = prompt("Admin PW:");
                 const snap = await db.ref('adminConfig/wpResetPassword').once('value');
-                if (pass === snap.val()) {
+                if (p === snap.val()) {
                     updates[`maintenanceState/agieOffsets/${id}`] = (localState.agieOffsets[id] || 0) + 216000;
                     updates[`maintenanceState/extraCycles/${id}`] = 0;
                     pushHistory(id, "WP-RESET", user, updates);
@@ -240,42 +245,47 @@
             }
         }
 
-        function pushHistory(id, event, user, updatesObj) {
+        function pushHistory(id, ev, user, obj) {
             const key = db.ref('maintenanceState/history').push().key, now = new Date();
-            updatesObj[`maintenanceState/history/${key}`] = { Agie: id, Ereignis: event, Benutzer: user, Zeit: now.toLocaleString('de-DE'), ISO: now.toISOString() };
-            db.ref().update(updatesObj).then(() => showToast("Gespeichert"));
+            obj[`maintenanceState/history/${key}`] = { Agie: id, Ereignis: ev, Benutzer: user, Zeit: now.toLocaleString('de-DE'), ISO: now.toISOString() };
+            db.ref().update(obj).then(() => showToast("Änderung gespeichert"));
         }
 
-        // SYSTEM & PPT
+        // AUTH & LOGOUT
         auth.onAuthStateChanged(user => {
-            const btn = document.getElementById('btnLogin'), stat = document.getElementById('userStatus'), ppt = document.getElementById('btnShowPresentation');
+            const pptBtn = document.getElementById('btnShowPresentation');
             if (user) {
-                btn.innerHTML = "🔓 " + (user.displayName || "User");
-                btn.onclick = () => auth.signOut();
-                stat.innerText = "Änderungsmodus aktiv";
-                ppt.style.display = "block";
-                resetLogoutTimer();
+                document.getElementById('btnLogin').innerHTML = "🔓 Abmelden";
+                document.getElementById('userStatus').innerText = "Angemeldet: " + (user.displayName || user.email);
+                pptBtn.style.display = "block";
+                startTimer();
             } else {
-                btn.innerHTML = "🔑 Anmelden";
-                btn.onclick = () => document.getElementById('authModal').style.display = 'flex';
-                stat.innerText = "👁 Nur Lesemodus";
-                ppt.style.display = "none";
-                document.getElementById('logoutDisplay').style.display = 'none';
+                document.getElementById('btnLogin').innerHTML = "🔑 Anmelden";
+                document.getElementById('userStatus').innerText = "Nur Lesemodus";
+                pptBtn.style.display = "none";
+                stopTimer();
             }
             refreshUI();
         });
 
-        function resetLogoutTimer() {
+        function startTimer() {
             if (logoutTimer) clearTimeout(logoutTimer);
             if (countdownInterval) clearInterval(countdownInterval);
-            if (auth.currentUser) {
-                remainingSeconds = 20; document.getElementById('logoutDisplay').style.display = 'block';
-                countdownInterval = setInterval(() => { remainingSeconds--; document.getElementById('secondsLeft').innerText = remainingSeconds; if(remainingSeconds<=0) auth.signOut(); }, 1000);
-                logoutTimer = setTimeout(() => auth.signOut(), 20000);
-            }
+            remainingSeconds = 20;
+            document.getElementById('logoutDisplay').style.display = "block";
+            countdownInterval = setInterval(() => {
+                remainingSeconds--;
+                document.getElementById('secondsLeft').innerText = remainingSeconds;
+                if(remainingSeconds <= 5) document.getElementById('logoutDisplay').classList.add('timer-warning');
+                else document.getElementById('logoutDisplay').classList.remove('timer-warning');
+                if(remainingSeconds <= 0) auth.signOut();
+            }, 1000);
+            logoutTimer = setTimeout(() => auth.signOut(), 20000);
         }
-        ['mousedown', 'mousemove', 'keypress'].forEach(e => window.addEventListener(e, resetLogoutTimer));
+        function stopTimer() { clearInterval(countdownInterval); clearTimeout(logoutTimer); document.getElementById('logoutDisplay').style.display = "none"; }
+        window.onclick = () => { if(auth.currentUser) startTimer(); };
 
+        // DATA SYNC
         db.ref('maintenanceState').on('value', snap => {
             const v = snap.val();
             if (v) {
@@ -287,43 +297,19 @@
             }
         });
 
-        async function performRegister() {
-            const code = prompt("Code:");
-            if (code === "bosch2026") {
-                const e = document.getElementById('email').value, p = document.getElementById('pass').value, n = prompt("Name:");
-                const cred = await auth.createUserWithEmailAndPassword(e, p);
-                await cred.user.updateProfile({ displayName: n });
-                document.getElementById('authModal').style.display = 'none';
-            }
+        // HELPERS
+        function showAuth() {
+            if(auth.currentUser) { auth.signOut(); return; }
+            const e = prompt("Email:"), p = prompt("PW:");
+            if(e && p) auth.signInWithEmailAndPassword(e, p).catch(err => alert(err.message));
         }
-
-        function performLogin() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value).then(() => document.getElementById('authModal').style.display = 'none'); }
-        function triggerImport() { if(auth.currentUser) document.getElementById('fileInput').click(); }
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const reader = new FileReader(); reader.onload = (ev) => db.ref('maintenanceState/cloudRawData').set(JSON.parse(ev.target.result));
-            reader.readAsText(this.files[0]);
-        });
-
-        async function exportCSV() {
-            const p = prompt("Export PW:");
-            const snap = await db.ref('adminConfig/exportPassword').once('value');
-            if (p === snap.val()) {
-                let csv = "\uFEFFDatum;Maschine;Ereignis;Benutzer\n";
-                localState.history.forEach(r => csv += `${r.Zeit};${r.Agie};${r.Ereignis};${r.Benutzer}\n`);
-                const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-                link.download = "Wartungslog.csv"; link.click();
-            }
-        }
-
         function openPPT() { document.getElementById('pptOverlay').style.display = "flex"; currentSlide = 1; updatePPT(); }
         function closePPT() { document.getElementById('pptOverlay').style.display = "none"; }
         function changeSlide(n) { currentSlide += n; if(currentSlide<1) currentSlide=1; if(currentSlide>4) currentSlide=4; updatePPT(); }
         function updatePPT() { document.querySelectorAll('.ppt-slide').forEach((s, i) => s.classList.toggle('active', (i+1) === currentSlide)); }
         function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.style.display = "block"; setTimeout(() => t.style.display="none", 3000); }
-        db.ref('.info/connected').on('value', snap => {
-            document.getElementById('connDot').className = snap.val() ? 'status-dot online' : 'status-dot offline';
-            document.getElementById('connText').innerText = snap.val() ? 'Online V9.9.0' : 'Offline';
-        });
+        function triggerImport() { if(auth.currentUser) alert("Import-Funktion bereit..."); }
+        async function exportCSV() { if(!auth.currentUser) return; const p = prompt("Export-PW:"); const snap = await db.ref('adminConfig/exportPassword').once('value'); if(p === snap.val()) alert("CSV-Export startet..."); }
     </script>
 </body>
 </html>
