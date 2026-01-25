@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V9.3</title>
+    <title>Agie Wartung - Bosch V9.4</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -75,10 +75,8 @@
             <h2 style="color:var(--bosch-blue); margin-top:0">Anmeldung</h2>
             <input type="email" id="email" placeholder="E-Mail" style="width:100%; padding:10px; margin:5px 0; box-sizing:border-box; border:1px solid #ddd">
             <input type="password" id="pass" placeholder="Passwort" style="width:100%; padding:10px; margin:5px 0; box-sizing:border-box; border:1px solid #ddd">
-            
             <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:15px" onclick="performLogin()">Einloggen</button>
             <button class="nav-btn" style="width:100%; justify-content:center; margin-top:8px" onclick="performRegister()">Neu registrieren</button>
-            
             <p onclick="document.getElementById('authModal').style.display='none'" style="cursor:pointer; color:#777; font-size:12px; margin-top:15px">Abbrechen</p>
         </div>
     </div>
@@ -135,7 +133,7 @@
             </div>
             <div class="activity-bar">
                 <span id="lastActionText">Keine Aktivitäten verzeichnet.</span>
-                <span id="userStatus" style="font-weight:bold; color:var(--bosch-blue)">Gast-Modus</span>
+                <span id="userStatus" style="font-weight:bold; color:var(--bosch-blue)">Status wird geladen...</span>
             </div>
         </div>
         <div class="sidebar">
@@ -167,7 +165,7 @@
         db.ref('.info/connected').on('value', snap => {
             const connected = snap.val();
             document.getElementById('connDot').className = connected ? 'status-dot online' : 'status-dot offline';
-            document.getElementById('connText').innerText = connected ? 'Online V9.3' : 'Offline';
+            document.getElementById('connText').innerText = connected ? 'Online V9.4' : 'Offline';
         });
 
         db.ref('maintenanceState').on('value', snap => {
@@ -185,10 +183,10 @@
             const btn = document.getElementById('btnLogin');
             const stat = document.getElementById('userStatus');
             if (user) {
-                btn.innerHTML = "🔓 " + (user.displayName || "User");
+                btn.innerHTML = "🔓 Angemeldet";
                 btn.classList.add('btn-active');
                 btn.onclick = () => { if(confirm("Abmelden?")) auth.signOut(); };
-                stat.innerText = "Angemeldet als: " + (user.displayName || user.email);
+                stat.innerText = "Änderungsmodus aktiv";
             } else {
                 btn.innerHTML = "🔑 Anmelden";
                 btn.classList.remove('btn-active');
@@ -197,6 +195,16 @@
             }
             refreshUI();
         });
+
+        function refreshUI() {
+            const data = calculateMetrics();
+            renderChart(data);
+            renderList(data);
+            if (localState.history.length > 0) {
+                const last = localState.history.sort((a,b) => new Date(b.ISO) - new Date(a.ISO))[0];
+                if(last) document.getElementById('lastActionText').innerHTML = `Letzte Änderung: <b>A${last.Agie}</b> (${last.Ereignis}) am ${last.Zeit.split(',')[0]}`;
+            }
+        }
 
         function calculateMetrics() {
             if (!localState.cloudRawData || localState.cloudRawData.length === 0) return [];
@@ -219,16 +227,6 @@
             }).filter(x => x !== null).sort((a, b) => a.diff - b.diff);
         }
 
-        function refreshUI() {
-            const data = calculateMetrics();
-            renderChart(data);
-            renderList(data);
-            if (localState.history.length > 0) {
-                const last = localState.history.sort((a,b) => new Date(b.ISO) - new Date(a.ISO))[0];
-                if(last) document.getElementById('lastActionText').innerHTML = `Letzte Änderung: <b>A${last.Agie}</b> (${last.Ereignis}) von ${last.Benutzer} um ${last.Zeit}`;
-            }
-        }
-
         function renderList(data) {
             const container = document.getElementById('listContainer');
             const isLogged = !!auth.currentUser;
@@ -238,7 +236,6 @@
             }
             let html = '';
             data.forEach(d => {
-                const isLogged = !!auth.currentUser;
                 const canPlus = isLogged && d.diff <= 5000;
                 const canReset = isLogged && d.ist >= 215500;
                 html += `
@@ -376,12 +373,11 @@
             const p = document.getElementById('pass').value;
             const name = prompt("Bitte gib deinen Namen für das Logbuch ein:");
             if(!name) return;
-
             auth.createUserWithEmailAndPassword(e, p)
                 .then(cred => {
                     cred.user.updateProfile({ displayName: name }).then(() => {
                         document.getElementById('authModal').style.display = 'none';
-                        showToast("Konto erstellt und angemeldet");
+                        showToast("Konto erstellt");
                     });
                 })
                 .catch(err => alert("Fehler: " + err.message));
@@ -399,12 +395,21 @@
 
         function exportCSV() {
             if(!localState.history.length) return showToast("Keine Daten", "error");
+            
+            // Neues sicheres Admin-Passwort
+            const adminPass = prompt("Admin-Passwort für Export erforderlich:");
+            if (adminPass !== "B#7q!z9$L2v&M*P4xN@1") { 
+                showToast("Zugriff verweigert!", "error");
+                return;
+            }
+
             let csv = "\uFEFFDatum;Zeit;Maschine;Ereignis;Benutzer\n";
             localState.history.forEach(r => csv += `${r.Zeit};${r.Agie};${r.Ereignis};${r.Benutzer}\n`);
             const link = document.createElement("a");
             link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
-            link.download = `Wartung_Export.csv`;
+            link.download = `Wartung_Export_Vertraulich.csv`;
             link.click();
+            showToast("Export gestartet");
         }
 
         window.onload = () => setTimeout(() => document.getElementById('helpModal').style.display='flex', 800);
