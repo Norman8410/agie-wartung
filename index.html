@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V9.2</title>
+    <title>Agie Wartung - Bosch V9.3</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -17,7 +17,6 @@
         
         body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bosch-gray); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; user-select: none; }
         
-        /* HEADER & BAR */
         .top-bar { height: 8px; width: 100%; background: linear-gradient(90deg, var(--bosch-red) 25%, var(--bosch-blue) 25%, var(--bosch-blue) 50%, var(--bosch-light-blue) 50%, var(--bosch-light-blue) 75%, var(--bosch-green) 75%); flex-shrink: 0; }
         .header { background: white; padding: 12px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .bosch-brand { color: var(--bosch-red); font-weight: 900; font-size: 24px; letter-spacing: -0.5px; }
@@ -26,25 +25,19 @@
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
         .online { background: var(--bosch-green); } .offline { background: var(--bosch-red); }
 
-        /* ACTION BAR */
         .action-bar { padding: 10px 30px; display: flex; gap: 12px; align-items: center; flex-shrink: 0; background: var(--bosch-gray); }
         .nav-btn { padding: 8px 16px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: 700; color: var(--bosch-blue); border-radius: 2px; transition: all 0.2s; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .nav-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 5px rgba(0,0,0,0.1); }
         .btn-primary { background: var(--bosch-blue); color: white; border-color: var(--bosch-blue); }
         .btn-active { background: var(--bosch-green) !important; color: white !important; border-color: var(--bosch-green) !important; }
 
-        /* MAIN LAYOUT */
         .main-layout { display: flex; flex: 1; padding: 10px 30px 20px 30px; gap: 20px; box-sizing: border-box; overflow: hidden; }
         .content-area { flex: 3; display: flex; flex-direction: column; gap: 15px; min-width: 0; overflow: hidden; }
         .sidebar { flex: 1.2; background: white; border-top: 4px solid var(--bosch-light-blue); overflow-y: auto; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
         
-        /* CHART */
         .chart-container { background: white; padding: 15px; border-top: 4px solid var(--bosch-blue); flex: 1; min-height: 0; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        
-        /* ACTIVITY LOG */
         .activity-bar { background: white; padding: 10px 15px; border-left: 4px solid #ccc; font-size: 13px; color: #555; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-shrink: 0; }
         
-        /* CONTROLS LIST */
         .control-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; border-left: 6px solid #ccc; gap: 10px; transition: background 0.2s; }
         .control-row:hover { background: #fafafa; }
         .status-red { border-left-color: var(--bosch-red); background: #fff5f5; }
@@ -58,9 +51,8 @@
         .btn-minus { background: var(--bosch-blue); }
         .btn-wp { background: var(--bosch-red); font-size: 11px; width: 40px; }
 
-        /* MODALS & TOASTS */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
-        .modal-content { background: white; padding: 30px; max-width: 600px; width: 90%; border-top: 8px solid var(--bosch-red); box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: slideIn 0.3s ease-out; }
+        .modal-content { background: white; padding: 30px; max-width: 600px; width: 90%; border-top: 8px solid var(--bosch-red); box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: slideIn 0.3s ease-out; position: relative; }
         @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
         .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 4000; display: flex; flex-direction: column; gap: 10px; }
@@ -83,7 +75,10 @@
             <h2 style="color:var(--bosch-blue); margin-top:0">Anmeldung</h2>
             <input type="email" id="email" placeholder="E-Mail" style="width:100%; padding:10px; margin:5px 0; box-sizing:border-box; border:1px solid #ddd">
             <input type="password" id="pass" placeholder="Passwort" style="width:100%; padding:10px; margin:5px 0; box-sizing:border-box; border:1px solid #ddd">
+            
             <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:15px" onclick="performLogin()">Einloggen</button>
+            <button class="nav-btn" style="width:100%; justify-content:center; margin-top:8px" onclick="performRegister()">Neu registrieren</button>
+            
             <p onclick="document.getElementById('authModal').style.display='none'" style="cursor:pointer; color:#777; font-size:12px; margin-top:15px">Abbrechen</p>
         </div>
     </div>
@@ -144,15 +139,12 @@
             </div>
         </div>
         <div class="sidebar">
-            <div style="padding:15px; background:#f8f9fa; border-bottom:1px solid #ddd; font-weight:bold; color:var(--bosch-blue)">
-                Maschinen Liste
-            </div>
+            <div style="padding:15px; background:#f8f9fa; border-bottom:1px solid #ddd; font-weight:bold; color:var(--bosch-blue)">Maschinen Liste</div>
             <div id="listContainer"></div>
         </div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyD6xGCtU-felOyO_BRsFnVlB4yhC46FgYg",
             authDomain: "bosch-agie-wartung.firebaseapp.com",
@@ -172,11 +164,10 @@
         let chartInstance = null;
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
-        // --- CONNECTION & DATA ---
         db.ref('.info/connected').on('value', snap => {
             const connected = snap.val();
             document.getElementById('connDot').className = connected ? 'status-dot online' : 'status-dot offline';
-            document.getElementById('connText').innerText = connected ? 'Online V9.2' : 'Offline';
+            document.getElementById('connText').innerText = connected ? 'Online V9.3' : 'Offline';
         });
 
         db.ref('maintenanceState').on('value', snap => {
@@ -197,7 +188,7 @@
                 btn.innerHTML = "🔓 " + (user.displayName || "User");
                 btn.classList.add('btn-active');
                 btn.onclick = () => { if(confirm("Abmelden?")) auth.signOut(); };
-                stat.innerText = "Angemeldet als: " + user.displayName;
+                stat.innerText = "Angemeldet als: " + (user.displayName || user.email);
             } else {
                 btn.innerHTML = "🔑 Anmelden";
                 btn.classList.remove('btn-active');
@@ -207,39 +198,31 @@
             refreshUI();
         });
 
-        // --- LOGIC ---
         function calculateMetrics() {
             if (!localState.cloudRawData || localState.cloudRawData.length === 0) return [];
-
             return localState.cloudRawData.map(item => {
                 const id = item.StationNo;
                 if (!id) return null;
-
                 const rawParts = parseInt(item.Parts) || 0;
                 const offset = localState.agieOffsets[id] || 0;
                 const ist = rawParts - offset;
                 const cycles = localState.extraCycles[id] || 0;
                 const target = 16000 + (cycles * 16000);
                 const diff = target - ist;
-
                 let statusClass = "status-green";
                 let color = "#008a4f"; 
-
                 if (diff < 0) { statusClass = "status-overdue"; color = "#b00000"; } 
                 else if (diff < 500) { statusClass = "status-red"; color = "#d50000"; } 
                 else if (diff < 5000) { statusClass = "status-yellow"; color = "#ffcf00"; }
-
                 const pkgName = packages[Math.abs(cycles) % packages.length];
                 return { id, diff, ist, cycles, statusClass, color, pkgName, rawParts };
             }).filter(x => x !== null).sort((a, b) => a.diff - b.diff);
         }
 
-        // --- RENDERING ---
         function refreshUI() {
             const data = calculateMetrics();
             renderChart(data);
             renderList(data);
-
             if (localState.history.length > 0) {
                 const last = localState.history.sort((a,b) => new Date(b.ISO) - new Date(a.ISO))[0];
                 if(last) document.getElementById('lastActionText').innerHTML = `Letzte Änderung: <b>A${last.Agie}</b> (${last.Ereignis}) von ${last.Benutzer} um ${last.Zeit}`;
@@ -249,31 +232,26 @@
         function renderList(data) {
             const container = document.getElementById('listContainer');
             const isLogged = !!auth.currentUser;
-            
             if (data.length === 0) {
-                container.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Keine Daten. Bitte JSON importieren.</div>';
+                container.innerHTML = '<div style="padding:20px; text-align:center; color:#999">Keine Daten vorhanden.</div>';
                 return;
             }
-
             let html = '';
             data.forEach(d => {
+                const isLogged = !!auth.currentUser;
                 const canPlus = isLogged && d.diff <= 5000;
                 const canReset = isLogged && d.ist >= 215500;
-                const disabledAttr = isLogged ? '' : 'disabled';
-
                 html += `
                 <div class="control-row ${d.statusClass}">
                     <div style="flex:1">
                         <div style="font-weight:900; font-size:16px; color:#333">A${d.id}</div>
                         <div style="font-size:11px; color:#666; font-weight:bold">${d.pkgName}</div>
                     </div>
-                    <div style="flex:1; font-weight:bold; font-size:18px; color:#333; text-align:right; padding-right:15px">
-                        ${d.diff.toLocaleString()}
-                    </div>
-                    <button class="btn-icon btn-wp" ${canReset ? '' : 'disabled'} onclick="performAction('${d.id}', 'RESET')" title="WP Reset">WP</button>
-                    <button class="btn-icon btn-minus" ${disabledAttr} onclick="performAction('${d.id}', 'MINUS')" title="-">-</button>
+                    <div style="flex:1; font-weight:bold; font-size:18px; color:#333; text-align:right; padding-right:15px">${d.diff.toLocaleString()}</div>
+                    <button class="btn-icon btn-wp" ${canReset ? '' : 'disabled'} onclick="performAction('${d.id}', 'RESET')">WP</button>
+                    <button class="btn-icon btn-minus" ${isLogged ? '' : 'disabled'} onclick="performAction('${d.id}', 'MINUS')">-</button>
                     <div style="width:25px; text-align:center; font-weight:bold; font-size:14px">${d.cycles}</div>
-                    <button class="btn-icon btn-plus" ${canPlus ? '' : 'disabled'} onclick="performAction('${d.id}', 'PLUS')" title="+">+</button>
+                    <button class="btn-icon btn-plus" ${canPlus ? '' : 'disabled'} onclick="performAction('${d.id}', 'PLUS')">+</button>
                 </div>`;
             });
             container.innerHTML = html;
@@ -285,14 +263,14 @@
             const values = data.map(d => d.diff);
             const colors = data.map(d => d.color);
             const pkgNames = data.map(d => d.pkgName); 
-            const totalCounts = data.map(d => d.ist); // HIER: Gesamtzähler für Tooltip
+            const totalCounts = data.map(d => d.ist);
 
             if (chartInstance) {
                 chartInstance.data.labels = labels;
                 chartInstance.data.datasets[0].data = values;
                 chartInstance.data.datasets[0].backgroundColor = colors;
                 chartInstance.data.datasets[0].pkgInfo = pkgNames; 
-                chartInstance.data.datasets[0].totalInfo = totalCounts; // Update total info
+                chartInstance.data.datasets[0].totalInfo = totalCounts;
                 chartInstance.update('none'); 
             } else {
                 chartInstance = new Chart(ctx, {
@@ -304,26 +282,23 @@
                             backgroundColor: colors,
                             borderRadius: 4,
                             barPercentage: 0.7,
-                            pkgInfo: pkgNames, // Benutzerdefiniertes Feld
-                            totalInfo: totalCounts // Benutzerdefiniertes Feld für Gesamtzähler
+                            pkgInfo: pkgNames,
+                            totalInfo: totalCounts
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        animation: { duration: 500 },
                         plugins: {
                             legend: { display: false },
                             datalabels: {
-                                anchor: 'end', align: 'top',
-                                color: '#333', font: { weight: 'bold' },
-                                rotation: -90, 
+                                anchor: 'end', align: 'top', color: '#333', 
+                                font: { weight: 'bold' }, rotation: -90, 
                                 formatter: (val) => val.toLocaleString()
                             },
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        // HIER: Neue Tooltip Logik V9.2
                                         const pkg = context.dataset.pkgInfo[context.dataIndex];
                                         const total = context.dataset.totalInfo[context.dataIndex];
                                         return [
@@ -335,31 +310,25 @@
                                 }
                             }
                         },
-                        scales: {
-                            y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
-                            x: { grid: { display: false } }
-                        }
+                        scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }
                     }
                 });
             }
         }
 
-        // --- ACTIONS ---
         function performAction(id, type) {
             if (!auth.currentUser) return showToast("Bitte anmelden!", "error");
             if (type === 'PLUS' && !confirm(`Wartung (+16.000) für A${id} buchen?`)) return;
             if (type === 'RESET' && !confirm(`⚠️ WP-RESET (216.000) für A${id}?`)) return;
 
-            const user = auth.currentUser.displayName;
+            const user = auth.currentUser.displayName || auth.currentUser.email;
             const updates = {};
-            
             if (type === 'PLUS' || type === 'MINUS') {
                 const delta = type === 'PLUS' ? 1 : -1;
                 const newCount = Math.max(0, (localState.extraCycles[id] || 0) + delta);
                 updates[`maintenanceState/extraCycles/${id}`] = newCount;
                 pushHistory(id, `Zähler ${delta>0?'+1':'-1'}`, user, updates);
-            } 
-            else if (type === 'RESET') {
+            } else if (type === 'RESET') {
                 const currentOffset = localState.agieOffsets[id] || 0;
                 updates[`maintenanceState/agieOffsets/${id}`] = currentOffset + 216000;
                 updates[`maintenanceState/extraCycles/${id}`] = 0;
@@ -368,16 +337,14 @@
         }
 
         function pushHistory(id, event, user, updatesObj) {
-            const newHistoryKey = db.ref('maintenanceState/history').push().key;
-            updatesObj[`maintenanceState/history/${newHistoryKey}`] = {
+            const newKey = db.ref('maintenanceState/history').push().key;
+            updatesObj[`maintenanceState/history/${newKey}`] = {
                 Agie: id, Ereignis: event, Benutzer: user, Zeit: new Date().toLocaleString('de-DE'), ISO: new Date().toISOString()
             };
-            db.ref().update(updatesObj)
-                .then(() => showToast("✅ Gespeichert"))
+            db.ref().update(updatesObj).then(() => showToast("✅ Gespeichert"))
                 .catch(err => showToast("Fehler: " + err.message, "error"));
         }
 
-        // --- UTILS ---
         function triggerImport() {
             if (!auth.currentUser) return showToast("Anmeldung erforderlich", "error");
             document.getElementById('fileInput').click();
@@ -390,10 +357,8 @@
             reader.onload = function(ev) {
                 try {
                     const json = JSON.parse(ev.target.result);
-                    if (!Array.isArray(json) || json.length === 0 || !json[0].StationNo) throw new Error("Formatfehler");
-                    db.ref('maintenanceState/cloudRawData').set(json)
-                        .then(() => showToast("✅ Import OK"))
-                        .catch(err => showToast("Upload Fehler", "error"));
+                    if (!Array.isArray(json) || !json[0].StationNo) throw new Error("Formatfehler");
+                    db.ref('maintenanceState/cloudRawData').set(json).then(() => showToast("✅ Import OK"));
                 } catch (err) { showToast("❌ Fehler: " + err.message, "error"); }
             };
             reader.readAsText(file);
@@ -403,6 +368,22 @@
         function performLogin() {
             auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value)
                 .then(() => { document.getElementById('authModal').style.display = 'none'; showToast("Angemeldet"); })
+                .catch(err => alert("Fehler: " + err.message));
+        }
+
+        function performRegister() {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('pass').value;
+            const name = prompt("Bitte gib deinen Namen für das Logbuch ein:");
+            if(!name) return;
+
+            auth.createUserWithEmailAndPassword(e, p)
+                .then(cred => {
+                    cred.user.updateProfile({ displayName: name }).then(() => {
+                        document.getElementById('authModal').style.display = 'none';
+                        showToast("Konto erstellt und angemeldet");
+                    });
+                })
                 .catch(err => alert("Fehler: " + err.message));
         }
 
@@ -426,7 +407,6 @@
             link.click();
         }
 
-        // AUTO POPUP
         window.onload = () => setTimeout(() => document.getElementById('helpModal').style.display='flex', 800);
     </script>
 </body>
