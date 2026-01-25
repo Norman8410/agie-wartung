@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V9.8.6 Complete</title>
+    <title>Agie Wartung - Bosch V9.8.7 Full Features</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -89,7 +89,7 @@
     <div id="helpModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-modal" onclick="document.getElementById('helpModal').style.display='none'">&times;</span>
-            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px; margin-top:0;">🛠 Handbuch & System-Logik (V9.8.6)</h2>
+            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px; margin-top:0;">🛠 Handbuch & System-Logik (V9.8.7)</h2>
             
             <div class="help-section">
                 <h4>📋 Digitaler Wartungsplan</h4>
@@ -214,7 +214,7 @@
         db.ref('.info/connected').on('value', snap => {
             const connected = snap.val();
             document.getElementById('connDot').className = connected ? 'status-dot online' : 'status-dot offline';
-            document.getElementById('connText').innerText = connected ? 'Online V9.8.6' : 'Offline';
+            document.getElementById('connText').innerText = connected ? 'Online V9.8.7' : 'Offline';
         });
 
         db.ref('maintenanceState').on('value', snap => {
@@ -312,17 +312,38 @@
                 chartInstance.data.labels = labels;
                 chartInstance.data.datasets[0].data = data.map(d => d.diff);
                 chartInstance.data.datasets[0].backgroundColor = data.map(d => d.color);
+                chartInstance.data.datasets[0].pkgInfo = data.map(d => d.pkgName);
+                chartInstance.data.datasets[0].totalInfo = data.map(d => d.ist);
                 chartInstance.update('none'); 
             } else {
                 chartInstance = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: labels,
-                        datasets: [{ data: data.map(d => d.diff), backgroundColor: data.map(d => d.color), borderRadius: 4, barPercentage: 0.7 }]
+                        datasets: [{ 
+                            data: data.map(d => d.diff), 
+                            backgroundColor: data.map(d => d.color), 
+                            borderRadius: 4, 
+                            barPercentage: 0.7,
+                            pkgInfo: data.map(d => d.pkgName),
+                            totalInfo: data.map(d => d.ist)
+                        }]
                     },
                     options: {
                         responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', color: '#333', font: { weight: 'bold' }, rotation: -90, formatter: (val) => val.toLocaleString() } },
+                        plugins: { 
+                            legend: { display: false }, 
+                            datalabels: { anchor: 'end', align: 'top', color: '#333', font: { weight: 'bold' }, rotation: -90, formatter: (val) => val.toLocaleString() },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => [
+                                        'Paket: ' + ctx.dataset.pkgInfo[ctx.dataIndex], 
+                                        'Rest: ' + ctx.parsed.y.toLocaleString(), 
+                                        'Gesamt: ' + ctx.dataset.totalInfo[ctx.dataIndex].toLocaleString()
+                                    ]
+                                }
+                            }
+                        },
                         scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }
                     }
                 });
