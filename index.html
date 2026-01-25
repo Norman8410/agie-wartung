@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V8.6</title>
+    <title>Agie Wartung - Bosch V8.7</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -23,10 +23,8 @@
 
         .action-bar { padding: 10px 30px; display: flex; gap: 15px; align-items: center; flex-shrink: 0; }
         .nav-btn { padding: 8px 16px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: bold; color: var(--bosch-blue); border-radius: 2px; }
-        .btn-login-trigger { border-color: var(--bosch-red); color: var(--bosch-red); }
         .btn-login-active { background: var(--bosch-green) !important; color: white !important; border: none; }
 
-        /* MODALS */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; display: none; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 30px; max-width: 650px; width: 90%; max-height: 85vh; border-top: 10px solid var(--bosch-red); position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.3); overflow-y: auto; }
         .auth-box { background: white; padding: 30px; border-top: 6px solid var(--bosch-red); width: 320px; text-align: center; position: relative; }
@@ -36,7 +34,6 @@
         .main-layout { display: flex; flex: 1; padding: 10px 30px 20px 30px; gap: 20px; box-sizing: border-box; overflow: hidden; }
         .content-area { flex: 3; display: flex; flex-direction: column; gap: 15px; min-width: 0; overflow: hidden; }
         .chart-container { background: white; padding: 15px; border-top: 4px solid var(--bosch-blue); flex: 5; min-height: 0; position: relative; }
-        .last-activity-box { background: white; padding: 15px; border-top: 4px solid #ccc; color: var(--bosch-blue); flex-shrink: 0; }
         .sidebar { flex: 1.2; background: white; padding: 0; border-top: 4px solid var(--bosch-light-blue); overflow-y: auto; max-width: 500px; }
         .control-row { display: flex; align-items: center; padding: 10px 15px; border-bottom: 1px solid #dee2e6; border-left: 8px solid #ccc; gap: 10px; }
 
@@ -53,9 +50,6 @@
         .btn-wplan { background: var(--bosch-red); font-size: 11px; width: 42px; }
 
         .version-tag { font-size: 12px; color: #888; font-weight: bold; }
-        .help-section { margin-bottom: 15px; text-align: left; }
-        .help-section h4 { margin: 0 0 5px 0; color: var(--bosch-blue); border-left: 3px solid var(--bosch-red); padding-left: 8px; }
-        .help-section p { margin: 0; font-size: 14px; line-height: 1.4; color: #333; }
     </style>
 </head>
 <body>
@@ -63,28 +57,11 @@
     <div id="helpModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-modal" onclick="toggleHelp(false)">&times;</span>
-            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px;">🛠 Bedienungsanleitung & Info</h2>
-            <div class="help-section">
-                <h4>📋 Digitaler Wartungsplan</h4>
-                <p>Nach einer Validierungsphase soll dieses System den händischen Plan an der Maschine dauerhaft ersetzen.</p>
-            </div>
-            <div class="help-section">
-                <h4>👁 Öffentlicher Modus & Login</h4>
-                <p>Das Dashboard ist im Lesemodus für alle einsehbar. Um Änderungen vorzunehmen, ist ein Login erforderlich.</p>
-            </div>
-            <div class="help-section">
-                <h4>🔄 Datenaktualität</h4>
-                <p>Die Stückzahlen der Maschinen werden 1-mal täglich über den JSON-Import aktualisiert.</p>
-            </div>
-            <div class="help-section">
-                <h4>⚠️ Sicherheit & Zähler</h4>
-                <p><b>Button (+):</b> Bucht einen Zyklus (+16.000).<br><b>Button (WP):</b> Setzt den Plan (216.000) komplett zurück.</p>
-            </div>
-            <div class="help-section">
-                <h4>🛡 Datenschutz</h4>
-                <p>Jede Änderung wird mit Benutzername und Zeitstempel protokolliert.</p>
-            </div>
-            <button class="nav-btn" style="width:100%; margin-top:10px; background:var(--bosch-blue); color:white" onclick="toggleHelp(false)">Verstanden</button>
+            <h2 style="color:var(--bosch-blue);">🛠 Bedienung V8.7</h2>
+            <p><b>Digitaler Plan:</b> Nach Validierung Ersatz für Handliste.</p>
+            <p><b>JSON Update:</b> Erfordert Login. 1x täglich empfohlen.</p>
+            <p><b>Datenschutz:</b> Protokollierung mit Benutzername.</p>
+            <button class="nav-btn" style="width:100%; background:var(--bosch-blue); color:white" onclick="toggleHelp(false)">OK</button>
         </div>
     </div>
 
@@ -92,44 +69,21 @@
         <div class="auth-box" id="login-form">
             <span class="close-modal" onclick="toggleAuthModal(false)">&times;</span>
             <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-            <p>Anmelden</p>
             <input type="email" id="login-email" placeholder="E-Mail">
             <input type="password" id="login-pass" placeholder="Passwort">
             <button class="nav-btn" style="width:100%; background:var(--bosch-blue); color:white; margin-top:10px" onclick="handleLogin()">Anmelden</button>
-            <p onclick="showRegister(true)" style="cursor:pointer; text-decoration:underline; font-size:12px; margin-top:20px; color:#666">Registrieren</p>
-        </div>
-        <div id="register-form" class="auth-box" style="display:none">
-            <span class="close-modal" onclick="toggleAuthModal(false)">&times;</span>
-            <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-            <input type="text" id="reg-name" placeholder="Vollständiger Name">
-            <input type="email" id="reg-email" placeholder="E-Mail">
-            <input type="password" id="reg-pass" placeholder="Passwort">
-            <input type="password" id="reg-invite" placeholder="Code (bosch2026)">
-            <button class="nav-btn" style="width:100%; background:var(--bosch-light-blue); color:white; margin-top:10px" onclick="handleRegister()">Account erstellen</button>
-            <p onclick="showRegister(false)" style="cursor:pointer; text-decoration:underline; font-size:12px; margin-top:20px">Zurück</p>
         </div>
     </div>
 
     <div class="top-bar"></div>
     <div class="header">
         <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-        <div style="text-align: right;">
-            <div id="user-info" style="display: none;">
-                <span id="user-display" style="font-weight:bold; color:var(--bosch-blue)"></span><br>
-                <span class="version-tag">V 8.6 | Validierung</span><br>
-                <small onclick="handleLogout()" style="text-decoration:underline; cursor:pointer; color:#666">Abmelden</small>
-            </div>
-            <div id="guest-info">
-                👁 Lesemodus<br>
-                <span class="version-tag">V 8.6 | Bosch Agie</span>
-            </div>
-        </div>
+        <div id="status-display" class="version-tag">V 8.7 | Lade Daten...</div>
     </div>
 
     <div class="action-bar">
-        <button id="auth-trigger" class="nav-btn btn-login-trigger" onclick="toggleAuthModal(true)">🔑 Anmelden</button>
+        <button id="auth-trigger" class="nav-btn" onclick="toggleAuthModal(true)">🔑 Anmelden</button>
         <button class="nav-btn" style="background: var(--bosch-blue); color:white" onclick="triggerJsonLoad()">📥 JSON Laden</button>
-        <button class="nav-btn" onclick="exportHistory()">📊 CSV Protokoll</button>
         <button class="nav-btn" onclick="toggleHelp(true)">ℹ️ Hilfe</button>
     </div>
     <input type="file" id="fileInput" style="display:none" accept=".json">
@@ -137,12 +91,10 @@
     <div class="main-layout">
         <div class="content-area">
             <div class="chart-container"><canvas id="myChart"></canvas></div>
-            <div class="last-activity-box" id="last-activity">
-                <div class="last-activity-content">Initialisierung...</div>
-            </div>
+            <div id="last-activity" class="version-tag" style="padding:10px; background:white;">Warte auf Cloud...</div>
         </div>
         <div class="sidebar">
-            <h3 style="padding:15px; margin:0; border-bottom:1px solid #eee; color:var(--bosch-blue);">Maschinen Übersicht</h3>
+            <h3 style="padding:15px; margin:0; border-bottom:1px solid #eee;">Maschinen</h3>
             <div id="controlsList"></div>
         </div>
     </div>
@@ -166,51 +118,41 @@
 
         function toggleAuthModal(show) { document.getElementById('authModal').style.display = show ? 'flex' : 'none'; }
         function toggleHelp(show) { document.getElementById('helpModal').style.display = show ? 'flex' : 'none'; }
-        function showRegister(s) { document.getElementById('login-form').style.display = s?'none':'block'; document.getElementById('register-form').style.display = s?'block':'none'; }
         
-        window.onload = () => { setTimeout(() => toggleHelp(true), 800); };
-
         function handleLogin() { 
             auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-pass').value)
             .then(() => toggleAuthModal(false))
-            .catch(e => alert("Login-Fehler: " + e.message)); 
+            .catch(e => alert("Fehler: " + e.message)); 
         }
-
-        function handleRegister() {
-            const n = document.getElementById('reg-name').value, e = document.getElementById('reg-email').value, p = document.getElementById('reg-pass').value, i = document.getElementById('reg-invite').value;
-            if(i !== "bosch2026") return alert("Code falsch!");
-            auth.createUserWithEmailAndPassword(e, p).then(res => res.user.updateProfile({displayName: n})).then(() => location.reload());
-        }
-
-        function handleLogout() { auth.signOut().then(() => location.reload()); }
 
         auth.onAuthStateChanged(user => {
             const isLogged = !!user;
-            document.getElementById('user-info').style.display = isLogged ? 'block' : 'none';
-            document.getElementById('guest-info').style.display = isLogged ? 'none' : 'block';
             const trigger = document.getElementById('auth-trigger');
             if(isLogged) {
-                trigger.innerText = "🔓 Angemeldet"; trigger.classList.add('btn-login-active');
-                document.getElementById('user-display').innerText = "👤 " + user.displayName;
-            } else {
-                trigger.innerText = "🔑 Anmelden"; trigger.classList.remove('btn-login-active');
+                trigger.innerText = "🔓 " + user.displayName; trigger.classList.add('btn-login-active');
             }
             db.ref('maintenanceState').on('value', snap => { 
                 const val = snap.val();
-                if(val) { state = val; updateUI(isLogged); } 
+                if(val) { state = val; updateUI(isLogged); }
+                document.getElementById('status-display').innerText = isLogged ? "V 8.7 | Bearbeiter-Modus" : "V 8.7 | Lesemodus";
             });
         });
 
-        function triggerJsonLoad() { if(!auth.currentUser) return alert("Anmeldung erforderlich!"); document.getElementById('fileInput').click(); }
+        function triggerJsonLoad() { if(!auth.currentUser) return alert("Bitte erst anmelden!"); document.getElementById('fileInput').click(); }
         
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = this.files[0]; if(!file) return;
             const reader = new FileReader();
             reader.onload = function(ev) { 
                 try {
-                    state.cloudRawData = JSON.parse(ev.target.result);
-                    db.ref('maintenanceState').update(state).then(() => alert("✅ Daten synchronisiert!"));
-                } catch(err) { alert("Formatfehler!"); }
+                    const data = JSON.parse(ev.target.result);
+                    // Validierung der Struktur
+                    if(!Array.isArray(data)) throw "JSON muss eine Liste [...] sein!";
+                    if(data.length > 0 && (!data[0].StationNo || !data[0].Parts)) throw "Spalten 'StationNo' oder 'Parts' fehlen!";
+                    
+                    state.cloudRawData = data;
+                    db.ref('maintenanceState').update(state).then(() => alert("✅ JSON erfolgreich geladen!"));
+                } catch(err) { alert("🚨 Fehler in der Datei: " + err); }
             };
             reader.readAsText(file);
         });
@@ -228,83 +170,46 @@
                 else if(diff < 5000) { s = "status-yellow"; c = "#ffcf00"; }
                 return { id, diff, ist, count, status: s, color: c, pkg: packages[Math.abs(count)%packages.length] || "P1" };
             }).sort((a,b) => a.diff - b.diff);
-            renderChart(processed); renderControls(processed, isLogged); renderLastActivity();
+            renderChart(processed); renderControls(processed, isLogged);
+            if(state.history && state.history.length > 0) {
+                const l = state.history[state.history.length-1];
+                document.getElementById('last-activity').innerText = `Letzte Änderung: A${l.Agie} durch ${l.Benutzer} (${l.Zeitstempel})`;
+            }
         }
 
         function renderControls(data, isLogged) {
             const list = document.getElementById('controlsList'); list.innerHTML = "";
             data.forEach(d => {
-                const canReset = isLogged && d.ist >= 215500;
                 const canPlus = isLogged && d.diff <= 5000;
                 list.innerHTML += `
                 <div class="control-row ${d.status}">
-                    <div style="flex:1"><span style="font-size:16px; font-weight:900">A${d.id}</span><div style="font-size:12px; font-weight:bold">${d.pkg}</div></div>
-                    <div style="flex:1; font-weight:bold; font-size:18px">${d.diff.toLocaleString()}</div>
-                    <button class="btn btn-wplan" ${canReset ? '' : 'disabled'} onclick="wpReset('${d.id}')">WP</button>
+                    <div style="flex:1"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
+                    <div style="flex:1; font-weight:bold; font-size:16px">${d.diff.toLocaleString()}</div>
                     <button class="btn btn-minus" ${isLogged ? '' : 'disabled'} onclick="change('${d.id}', -1)">-</button>
-                    <span style="width:25px; text-align:center; font-weight:bold">${d.count}</span>
+                    <span style="width:20px; text-align:center">${d.count}</span>
                     <button class="btn btn-plus" ${canPlus ? '' : 'disabled'} onclick="change('${d.id}', 1)">+</button>
                 </div>`;
             });
         }
 
         function change(id, delta) {
-            if(!auth.currentUser) return;
-            if(delta > 0 && !confirm(`Wartung (+16.000) für A${id} buchen?`)) return;
             state.extraCycles[id] = Math.max(0, (state.extraCycles[id]||0) + delta);
-            saveLog(id, `Zähler ${delta>0?'+1':'-1'}`, state.extraCycles[id]);
+            saveLog(id, `Zähler ${delta>0?'+1':'-1'}`);
         }
 
-        function wpReset(id) {
-            if(!auth.currentUser) return;
-            if(confirm(`⚠️ Großen WP-RESET für A${id} buchen?`)) {
-                state.agieOffsets[id] = (state.agieOffsets[id]||0) + 216000;
-                state.extraCycles[id] = 0;
-                saveLog(id, "WP-RESET", 0);
-            }
-        }
-
-        function saveLog(id, ev, val) {
+        function saveLog(id, ev) {
             if(!state.history) state.history = [];
-            state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: ev, Benutzer: auth.currentUser.displayName, Zaehlerstand: val });
+            state.history.push({ Zeitstempel: new Date().toLocaleString('de-DE'), Agie: id, Ereignis: ev, Benutzer: auth.currentUser.displayName });
             db.ref('maintenanceState').update(state);
-        }
-
-        function renderLastActivity() {
-            const h = state.history || [];
-            if(h.length > 0) {
-                const l = h[h.length - 1];
-                document.getElementById('last-activity').innerHTML = `
-                    <div style="font-size:10px; color:#666;">LETZTE ÄNDERUNG: ${l.Zeitstempel}</div>
-                    <div style="font-weight:bold;">A${l.Agie}: ${l.Ereignis} durch ${l.Benutzer}</div>`;
-            }
         }
 
         function renderChart(data) {
             const ctx = document.getElementById('myChart').getContext('2d');
             if(myChart) myChart.destroy();
             myChart = new Chart(ctx, {
-                type: 'bar',
-                data: { 
-                    labels: data.map(d=>"A"+d.id), 
-                    datasets:[{ data: data.map(d=>d.diff), backgroundColor: data.map(d=>d.color), borderRadius:3, istValues: data.map(d=>d.ist), pkgValues: data.map(d=>d.pkg) }] 
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', rotation: -90, font: { weight: 900 } },
-                    tooltip: { callbacks: { label: function(c) {
-                        return ['Paket: ' + c.dataset.pkgValues[c.dataIndex], 'Rest: ' + c.parsed.y.toLocaleString()];
-                    }}}}
-                }
+                type: 'bar', data: { labels: data.map(d=>"A"+d.id), datasets:[{ data: data.map(d=>d.diff), backgroundColor: data.map(d=>d.color) }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold' } } } }
             });
-        }
-
-        function exportHistory() {
-            let csv = "\uFEFFZeit;Agie;Ereignis;User;Stand\n";
-            (state.history||[]).forEach(r => csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Benutzer};${r.Zaehlerstand}\n`);
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-            link.download = "Agie_Export.csv"; link.click();
         }
     </script>
 </body>
