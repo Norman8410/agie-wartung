@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V9.8.1 Complete</title>
+    <title>Agie Wartung - Bosch V9.8.2 Secure</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -83,34 +83,29 @@
     <div id="helpModal" class="modal-overlay">
         <div class="modal-content">
             <span class="close-modal" onclick="document.getElementById('helpModal').style.display='none'">&times;</span>
-            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px; margin-top:0;">🛠 Handbuch & System-Logik (V9.8.1)</h2>
+            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px; margin-top:0;">🛠 Handbuch & System-Logik (V9.8.2)</h2>
             
             <div class="help-section">
                 <h4>📋 Digitaler Wartungsplan</h4>
-                <p>Dieses Tool visualisiert die Wartungsintervalle der Agie-Maschinen. Ein grüner Balken zeigt ausreichend Puffer, gelb mahnt zur Vorbereitung und rot signalisiert eine fällige Wartung. Dunkelrot bedeutet: Wartung überfällig.</p>
+                <p>Visualisierung der Wartungsintervalle. Farben: Grün (OK), Gelb (Planung), Rot (Fällig), Dunkelrot (Überfällig).</p>
             </div>
 
             <div class="help-section">
                 <h4>🔄 Zähler & Wartungs-Intervalle</h4>
-                <p><b>Button (+):</b> Bestätigt die Durchführung einer Standardwartung. Der Zielwert wird um +16.000 Stück erhöht.<br>
-                <b>Button (-):</b> Korrigiert eine Fehlbuchung (-16.000).<br>
-                <b>Button (WP):</b> Vollständiger Wartungsplan-Reset (216.000 Stück). Erfordert ein spezielles Admin-Passwort aus der Cloud.</p>
+                <p><b>Button (+):</b> Bestätigt Standardwartung (+16.000 Stück).<br>
+                <b>Button (-):</b> Korrigiert Fehlbuchungen (-16.000 Stück).<br>
+                <b>Button (WP):</b> Vollständiger Wartungsplan-Reset (216.000 Stück). Erfordert ein Admin-Passwort.</p>
             </div>
 
             <div class="help-section">
                 <h4>🔐 Cloud-Sicherheit & Automatik</h4>
-                <p><b>Auto-Logout:</b> Um unbefugte Änderungen an offenen Terminals zu verhindern, wird jeder Benutzer nach <b>20 Sekunden Inaktivität</b> automatisch abgemeldet.<br>
-                <b>Einladungscode:</b> Zur Registrierung neuer Konten wird der Einladungscode <i>bosch2026</i> benötigt (Live-Abgleich mit der Datenbank).</p>
+                <p><b>Auto-Logout:</b> Sitzung endet automatisch nach <b>20 Sekunden Inaktivität</b>.<br>
+                <b>Registrierung:</b> Erfordert einen gültigen <b>Einladungscode</b>. Dieser ist bei der zuständigen Fachabteilung oder dem Admin zu erfragen.</p>
             </div>
 
             <div class="help-section">
                 <h4>📊 Daten & Export</h4>
-                <p>Die Basis-Stückzahlen werden täglich per <b>JSON-Import</b> aktualisiert. Alle manuellen Buchungen (+/-) werden in Echtzeit in der Cloud gespeichert. Über den <b>Export-Button</b> (passwortgeschützt) kann das vollständige Aktivitäts-Logbuch als CSV für Excel heruntergeladen werden.</p>
-            </div>
-
-            <div class="help-section" style="background: #f9f9f9; padding: 10px; border-radius: 4px;">
-                <h4>🛡 Datenschutzhinweis</h4>
-                <p>Namen von Mitarbeitern werden nur im internen Logbuch zur Nachvollziehbarkeit gespeichert, jedoch niemals öffentlich auf dem Dashboard angezeigt.</p>
+                <p>Import von Basis-Stückzahlen per JSON. Export der Historie als CSV (passwortgeschützt).</p>
             </div>
 
             <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:10px" onclick="document.getElementById('helpModal').style.display='none'">Verstanden & Schließen</button>
@@ -188,7 +183,7 @@
         db.ref('.info/connected').on('value', snap => {
             const connected = snap.val();
             document.getElementById('connDot').className = connected ? 'status-dot online' : 'status-dot offline';
-            document.getElementById('connText').innerText = connected ? 'Online V9.8.1' : 'Offline';
+            document.getElementById('connText').innerText = connected ? 'Online V9.8.2' : 'Offline';
         });
 
         db.ref('maintenanceState').on('value', snap => {
