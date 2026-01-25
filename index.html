@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V9.8.9 Smart Sync</title>
+    <title>Agie Wartung - Bosch V9.8.9 Full Help</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -93,20 +93,32 @@
             
             <div class="help-section">
                 <h4>📋 Digitaler Wartungsplan</h4>
-                <p>Visualisiert die Intervalle. Grün = Puffer, Gelb = Vorbereitung, Rot = Fällig, Dunkelrot = Überfällig.</p>
+                <p>Dieses Tool visualisiert die Wartungsintervalle der Agie-Maschinen. Ein grüner Balken zeigt ausreichend Puffer, gelb mahnt zur Vorbereitung und rot signalisiert eine fällige Wartung. Dunkelrot bedeutet: Wartung überfällig.</p>
             </div>
 
             <div class="help-section">
-                <h4>🔄 Zähler-Logik</h4>
-                <p><b>Button (+):</b> Bucht eine Wartung (+16.000).<br>
-                - Ist der Rest <b>positiv</b>: Synchronisierung (Zähler springt exakt auf das nächste Intervall).<br>
-                - Ist der Rest <b>negativ</b>: Addition (Die 16.000 werden zum negativen Stand addiert, der Verzug bleibt erhalten).</p>
+                <h4>🔄 Zähler & Wartungs-Intervalle</h4>
+                <p><b>Button (+):</b> Bestätigt die Durchführung einer Wartung.<br>
+                - Ist der Rest <b>positiv</b>: Der Zähler springt exakt auf das nächste 16.000er Paket (Synchronisierung).<br>
+                - Ist der Rest <b>negativ</b>: Es werden lediglich 16.000 addiert, um den realen Verzug beizubehalten.<br>
+                <b>Button (-):</b> Korrigiert eine Fehlbuchung um exakt einen Zyklus (-16.000).<br>
+                <b>Button (WP):</b> Vollständiger Wartungsplan-Reset (216.000 Stück). Erfordert ein spezielles Admin-Passwort.</p>
             </div>
 
             <div class="help-section">
                 <h4>🔐 Cloud-Sicherheit & Automatik</h4>
-                <p><b>Auto-Logout:</b> Abmeldung nach 20 Sekunden Inaktivität. Ein Live-Countdown ist oben rechts sichtbar.<br>
-                <b>Einladungscode:</b> Für neue Registrierungen ist der Code <b>bosch2026</b> erforderlich.</p>
+                <p><b>Auto-Logout:</b> Um unbefugte Änderungen an offenen Terminals zu verhindern, wird jeder Benutzer nach <b>20 Sekunden Inaktivität</b> automatisch abgemeldet. Ein Live-Countdown oben rechts zeigt die Restzeit.<br>
+                <b>Einladungscode:</b> Zur Registrierung neuer Konten wird der Code <b>bosch2026</b> benötigt.</p>
+            </div>
+
+            <div class="help-section">
+                <h4>📊 Daten & Export</h4>
+                <p>Die Basis-Stückzahlen werden regelmäßig per <b>JSON-Import</b> aktualisiert. Über den <b>Export-Button</b> (passwortgeschützt) kann das vollständige Aktivitäts-Logbuch als CSV für Excel heruntergeladen werden.</p>
+            </div>
+
+            <div class="help-section" style="background: #f9f9f9; padding: 10px; border-radius: 4px;">
+                <h4>🛡 Datenschutzhinweis</h4>
+                <p>Namen von Mitarbeitern werden nur im internen Logbuch zur Nachvollziehbarkeit gespeichert, jedoch niemals öffentlich auf dem Dashboard angezeigt.</p>
             </div>
 
             <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:10px" onclick="document.getElementById('helpModal').style.display='none'">Verstanden & Schließen</button>
@@ -150,6 +162,7 @@
     </div>
 
     <script>
+        // FIREBASE & CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyD6xGCtU-felOyO_BRsFnVlB4yhC46FgYg",
             authDomain: "bosch-agie-wartung.firebaseapp.com",
@@ -173,6 +186,7 @@
 
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
+        // LOGOUT LOGIC
         function resetLogoutTimer() {
             if (logoutTimer) clearTimeout(logoutTimer);
             if (countdownInterval) clearInterval(countdownInterval);
@@ -201,6 +215,7 @@
             window.addEventListener(evt, resetLogoutTimer, false);
         });
 
+        // DATA SYNC
         db.ref('.info/connected').on('value', snap => {
             const connected = snap.val();
             document.getElementById('connDot').className = connected ? 'status-dot online' : 'status-dot offline';
@@ -241,6 +256,7 @@
             refreshUI();
         });
 
+        // CORE LOGIC
         function calculateMetrics() {
             if (!localState.cloudRawData || localState.cloudRawData.length === 0) return [];
             return localState.cloudRawData.map(item => {
@@ -352,10 +368,8 @@
                 // Smart Sync Logik
                 let newCycles;
                 if (metrics.diff > 0) {
-                    // Positiver Rest -> Synchronisierung auf nächstes Paket
                     newCycles = Math.floor(metrics.ist / 16000) + 1;
                 } else {
-                    // Negativer Rest -> Einfach 1 Zyklus addieren (Verzug bleibt)
                     newCycles = (localState.extraCycles[id] || 0) + 1;
                 }
                 
@@ -363,7 +377,7 @@
                 pushHistory(id, `Wartung (+16k ${metrics.diff > 0 ? 'Sync' : 'Add'})`, user, updates);
             } else if (type === 'MINUS') {
                 updates[`maintenanceState/extraCycles/${id}`] = Math.max(0, (localState.extraCycles[id] || 0) - 1);
-                pushHistory(id, "Korrektur (-1)", user, updates);
+                pushHistory(id, "Zähler -1", user, updates);
             } else if (type === 'RESET') {
                 const pass = prompt(`Admin-Passwort für A${id} Reset:`);
                 if (!pass) return;
