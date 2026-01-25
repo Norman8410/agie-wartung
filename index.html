@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V7.8</title>
+    <title>Agie Wartung - Bosch V8.1</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -34,25 +34,25 @@
 
         .action-bar { padding: 10px 30px; display: flex; gap: 15px; align-items: center; flex-shrink: 0; }
         .nav-btn { padding: 8px 16px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: bold; color: var(--bosch-blue); border-radius: 2px; }
+        .btn-login-trigger { border-color: var(--bosch-red); color: var(--bosch-red); }
+        .btn-login-active { background: var(--bosch-green) !important; color: white !important; border: none; }
 
-        /* MODAL / HELP WINDOW */
         .modal-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.7); z-index: 3000; display: none; 
             justify-content: center; align-items: center; 
         }
         .modal-content { 
-            background: white; padding: 30px; max-width: 650px; width: 90%; 
+            background: white; padding: 30px; max-width: 600px; width: 90%; 
             max-height: 85vh; overflow-y: auto; border-top: 10px solid var(--bosch-red); 
             position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
         }
-        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; font-weight: bold; color: #666; }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #666; }
 
-        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bosch-gray); z-index: 2000; display: flex; justify-content: center; align-items: center; }
-        .auth-box { background: white; padding: 40px; border-top: 6px solid var(--bosch-red); width: 320px; text-align: center; }
-        .auth-box input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #bfc0c2; }
+        .auth-box { background: white; padding: 30px; border-top: 6px solid var(--bosch-red); width: 320px; text-align: center; }
+        .auth-box input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #bfc0c2; box-sizing: border-box; }
 
-        .main-layout { display: none; flex: 1; padding: 10px 30px 20px 30px; gap: 20px; box-sizing: border-box; overflow: hidden; }
+        .main-layout { display: flex; flex: 1; padding: 10px 30px 20px 30px; gap: 20px; box-sizing: border-box; overflow: hidden; }
         .content-area { flex: 3; display: flex; flex-direction: column; gap: 15px; min-width: 0; overflow: hidden; }
         
         .chart-container { background: white; padding: 15px; border-top: 4px solid var(--bosch-blue); flex: 5; min-height: 0; position: relative; }
@@ -71,7 +71,7 @@
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
         .btn { width: 38px; height: 38px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 3px; }
-        .btn:disabled { opacity: 0.15; cursor: not-allowed; }
+        .btn:disabled { opacity: 0.15 !important; cursor: not-allowed !important; filter: grayscale(1); }
         .btn-plus { background: var(--bosch-light-blue); font-size: 18px; }
         .btn-minus { background: var(--bosch-blue); font-size: 18px; }
         .btn-wplan { background: var(--bosch-red); font-size: 11px; width: 42px; }
@@ -81,89 +81,64 @@
 </head>
 <body>
 
-    <div id="helpModal" class="modal-overlay">
-        <div class="modal-content">
-            <span class="close-modal" onclick="toggleHelp(false)">&times;</span>
-            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px;">🛠 Bedienungsanleitung: Bosch Agie Wartungs-Dashboard</h2>
-            
-            <p>Dieses Tool dient der Überwachung und Dokumentation der Wartungszyklen aller Agie-Stationen.</p>
-
-            <h3 style="color:var(--bosch-red);">1. Daten-Import & Login</h3>
-            <p><b>Login:</b> Melde dich mit deiner E-Mail an. Neue Nutzer benötigen den Registrierungscode.</p>
-            <p><b>JSON Laden:</b> Nach dem Start musst du die aktuelle Export-Datei der Maschinen laden. Das Dashboard berechnet daraufhin sofort alle Rest-Stückzahlen.</p>
-
-            <h3 style="color:var(--bosch-red);">2. Das Diagramm (Visuelle Übersicht)</h3>
-            <p><b>Farben:</b></p>
-            <ul style="list-style: none; padding-left: 10px;">
-                <li>🟢 <b>Grün:</b> Alles ok (> 5.000 Stück Rest).</li>
-                <li>🟡 <b>Gelb:</b> Wartung rückt näher (< 5.000 Stück Rest).</li>
-                <li>🔴 <b>Rot:</b> Wartung dringend erforderlich (< 500 Stück Rest).</li>
-                <li>🚨 <b>Blinkend:</b> Wartungsintervall überschritten (Negativer Wert).</li>
-            </ul>
-            <p><b>Tooltip:</b> Fahre mit der Maus über einen Balken, um das anstehende Paket (z.B. P1/2/3), die genaue Rest-Stückzahl und die Stückzahl seit dem letzten Wartungsplan-Wechsel zu sehen.</p>
-
-            <h3 style="color:var(--bosch-red);">3. Wartungs-Steuerung (Sidebar rechts)</h3>
-            <p><b>Button + :</b> Erhöht den Wartungszyklus um 16.000 Stück. Dieser Button wird erst aktiv, wenn die Rest-Stückzahl unter 5.000 sinkt.</p>
-            <p><b>Button - :</b> Korrigiert den Zähler nach unten (bei Fehleingaben).</p>
-            <p><b>Button WP (Wartungsplan):</b> Setzt die Maschine komplett zurück (entspricht einem großen Service nach ca. 216.000 Stück).</p>
-            <ul>
-                <li><b>Voraussetzung:</b> Die Maschine muss mindestens 215.500 Stück gelaufen sein.</li>
-                <li><b>Admin-Code:</b> Für den Reset ist der Code erforderlich.</li>
-            </ul>
-
-            <h3 style="color:var(--bosch-red);">4. Dokumentation & Export</h3>
-            <p><b>Letzte Änderung:</b> Der Balken ganz unten zeigt sofort an, wer zuletzt welche Änderung vorgenommen hat.</p>
-            <p><b>CSV Protokoll:</b> Klicke oben auf "📊 CSV Protokoll", um die gesamte Historie für Audits oder zur Archivierung als Excel-lesbare Datei zu speichern.</p>
-            
-            <button class="nav-btn" style="width:100%; margin-top:20px; background:var(--bosch-blue); color:white" onclick="toggleHelp(false)">Verstanden</button>
-        </div>
-    </div>
-
-    <div id="auth-overlay">
+    <div id="authModal" class="modal-overlay">
         <div class="auth-box" id="login-form">
+            <span class="close-modal" onclick="toggleAuthModal(false)">&times;</span>
             <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-            <p>Login</p>
+            <p>Anmelden zum Bearbeiten</p>
             <input type="email" id="login-email" placeholder="E-Mail">
             <input type="password" id="login-pass" placeholder="Passwort">
             <button class="nav-btn" style="width:100%; background:var(--bosch-blue); color:white; margin-top:10px" onclick="handleLogin()">Anmelden</button>
             <p onclick="showRegister(true)" style="cursor:pointer; text-decoration:underline; font-size:12px; margin-top:20px; color:#666">Registrieren</p>
         </div>
         <div class="auth-box" id="register-form" style="display:none">
+            <span class="close-modal" onclick="toggleAuthModal(false)">&times;</span>
             <div class="bosch-brand">BOSCH<span> AGIE</span></div>
             <input type="text" id="reg-name" placeholder="Name">
             <input type="email" id="reg-email" placeholder="E-Mail">
             <input type="password" id="reg-pass" placeholder="Passwort">
-            <input type="password" id="reg-invite" placeholder="Code">
-            <button class="nav-btn" style="width:100%; background:var(--bosch-light-blue); color:white; margin-top:10px" onclick="handleRegister()">Erstellen</button>
+            <input type="password" id="reg-invite" placeholder="Code (bosch2026)">
+            <button class="nav-btn" style="width:100%; background:var(--bosch-light-blue); color:white; margin-top:10px" onclick="handleRegister()">Account erstellen</button>
             <p onclick="showRegister(false)" style="cursor:pointer; text-decoration:underline; font-size:12px; margin-top:20px">Zurück</p>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-modal" onclick="toggleHelp(false)">&times;</span>
+            <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px;">🛠 Bedienungsanleitung</h2>
+            <p>Öffentlicher Modus (Lesen) aktiv. Zum Ändern bitte anmelden.</p>
+            <button class="nav-btn" style="width:100%; margin-top:20px; background:var(--bosch-blue); color:white" onclick="toggleHelp(false)">Schließen</button>
         </div>
     </div>
 
     <div class="top-bar"></div>
     <div class="header">
         <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-        <div style="text-align: right;">
+        <div id="user-info" style="text-align: right; display: none;">
             <span id="user-display" style="font-weight:bold; color:var(--bosch-blue)"></span><br>
-            <small style="color:#666">Version 7.8 | Finaler Hilfetext</small>
-            <button onclick="handleLogout()" style="margin-left:15px; border:none; background:none; text-decoration:underline; cursor:pointer; color:#666">Logout</button>
+            <small onclick="handleLogout()" style="text-decoration:underline; cursor:pointer; color:#666">Abmelden</small>
+        </div>
+        <div id="guest-info" style="text-align: right; color:#666">
+            👁 Nur Lesen (Public Terminal)<br>
+            <small>Version 8.1 | Safe Actions</small>
         </div>
     </div>
 
     <div class="action-bar">
-        <button class="nav-btn" style="background: var(--bosch-blue); color:white" onclick="document.getElementById('fileInput').click()">📥 JSON Laden</button>
+        <button id="auth-trigger" class="nav-btn btn-login-trigger" onclick="toggleAuthModal(true)">🔑 Anmelden zum Bearbeiten</button>
+        <button class="nav-btn" style="background: var(--bosch-blue); color:white" onclick="triggerJsonLoad()">📥 JSON Laden</button>
         <button class="nav-btn" onclick="exportHistory()">📊 CSV Protokoll</button>
-        <button class="nav-btn" onclick="toggleHelp(true)" style="border-color:var(--bosch-light-blue)">ℹ️ Hilfe</button>
+        <button class="nav-btn" onclick="toggleHelp(true)">ℹ️ Hilfe</button>
     </div>
     <input type="file" id="fileInput" style="display:none" accept=".json">
 
     <div class="main-layout" id="dashboard">
         <div class="content-area">
-            <div class="chart-container">
-                <canvas id="myChart"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="myChart"></canvas></div>
             <div class="last-activity-box" id="last-activity">
                 <div class="last-activity-title">LETZTE ÄNDERUNG</div>
-                <div class="last-activity-content">Warte auf Daten...</div>
+                <div class="last-activity-content">Lade...</div>
             </div>
         </div>
         <div class="sidebar">
@@ -189,10 +164,15 @@
         let myChart, rawData = [], state = { extraCycles: {}, agieOffsets: {}, history: [], cloudRawData: [] };
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
+        function toggleAuthModal(show) { document.getElementById('authModal').style.display = show ? 'flex' : 'none'; }
+        function showRegister(s) { document.getElementById('login-form').style.display = s?'none':'block'; document.getElementById('register-form').style.display = s?'block':'none'; }
         function toggleHelp(show) { document.getElementById('helpModal').style.display = show ? 'flex' : 'none'; }
 
-        function handleLogin() { auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-pass').value).catch(e => alert(e.message)); }
-        function showRegister(s) { document.getElementById('login-form').style.display = s?'none':'block'; document.getElementById('register-form').style.display = s?'block':'none'; }
+        function handleLogin() { 
+            auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-pass').value)
+            .then(() => toggleAuthModal(false))
+            .catch(e => alert("Fehler: " + e.message)); 
+        }
         function handleRegister() {
             const n = document.getElementById('reg-name').value, e = document.getElementById('reg-email').value, p = document.getElementById('reg-pass').value, i = document.getElementById('reg-invite').value;
             if(i !== "bosch2026") return alert("Code falsch!");
@@ -201,41 +181,35 @@
         function handleLogout() { auth.signOut().then(() => location.reload()); }
 
         auth.onAuthStateChanged(user => {
-            if(user) {
-                document.getElementById('auth-overlay').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'flex';
+            const isLogged = !!user;
+            document.getElementById('user-info').style.display = isLogged ? 'block' : 'none';
+            document.getElementById('guest-info').style.display = isLogged ? 'none' : 'block';
+            const trigger = document.getElementById('auth-trigger');
+            if(isLogged) {
+                trigger.innerText = "🔓 Bearbeitung aktiv"; trigger.classList.add('btn-login-active');
                 document.getElementById('user-display').innerText = "👤 " + user.displayName;
-                db.ref('maintenanceState').on('value', snap => { 
-                    const val = snap.val();
-                    if(val) { 
-                        state = val;
-                        if(!state.extraCycles) state.extraCycles = {};
-                        if(!state.agieOffsets) state.agieOffsets = {};
-                        if(state.cloudRawData) rawData = state.cloudRawData; 
-                        updateUI(); 
-                    } 
-                });
+            } else {
+                trigger.innerText = "🔑 Anmelden zum Bearbeiten"; trigger.classList.remove('btn-login-active');
             }
+            db.ref('maintenanceState').on('value', snap => { 
+                const val = snap.val();
+                if(val) { state = val; rawData = state.cloudRawData || []; updateUI(isLogged); } 
+            });
         });
 
+        function triggerJsonLoad() { if(!auth.currentUser) return toggleAuthModal(true); document.getElementById('fileInput').click(); }
         document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = this.files[0];
-            if(!file) return;
+            const file = this.files[0]; if(!file) return;
             const reader = new FileReader();
             reader.onload = function(ev) { 
-                try {
-                    const data = JSON.parse(ev.target.result);
-                    state.cloudRawData = data;
-                    db.ref('maintenanceState').update(state).then(() => alert("✅ Daten geladen!"));
-                } catch(err) { alert("JSON Fehler!"); }
+                try { state.cloudRawData = JSON.parse(ev.target.result); db.ref('maintenanceState').update(state); } catch(err) { alert("JSON Fehler!"); }
             };
             reader.readAsText(file);
         });
 
-        function updateUI() {
+        function updateUI(isLogged) {
             if(!rawData || !Array.isArray(rawData)) return;
             const processed = rawData.map(item => {
-                if(!item || !item.StationNo) return null;
                 const id = item.StationNo;
                 const ist = Number(item.Parts || 0) - (state.agieOffsets[id] || 0);
                 const count = state.extraCycles[id] || 0;
@@ -244,43 +218,43 @@
                 if(diff < 0) { s = "status-overdue"; c = "#b00000"; } 
                 else if(diff < 500) { s = "status-red"; c = "#d50000"; } 
                 else if(diff < 5000) { s = "status-yellow"; c = "#ffcf00"; }
-                let pkgName = packages[Math.abs(count) % packages.length] || "P1";
-                return { id, diff, ist, count, status: s, color: c, pkg: pkgName };
-            }).filter(x => x !== null).sort((a,b) => a.diff - b.diff);
-
+                return { id, diff, ist, count, status: s, color: c, pkg: packages[Math.abs(count)%packages.length] || "P1" };
+            }).sort((a,b) => a.diff - b.diff);
             renderChart(processed);
-            renderControls(processed);
+            renderControls(processed, isLogged);
             renderLastActivity();
         }
 
-        function renderControls(data) {
-            const list = document.getElementById('controlsList');
-            list.innerHTML = "";
+        function renderControls(data, isLogged) {
+            const list = document.getElementById('controlsList'); list.innerHTML = "";
             data.forEach(d => {
-                const canReset = d.ist >= 215500;
-                const canPlus = d.diff <= 5000;
+                const canReset = isLogged && d.ist >= 215500;
+                const canPlus = isLogged && d.diff <= 5000;
                 list.innerHTML += `
                 <div class="control-row ${d.status}">
-                    <div style="flex:1">
-                        <span style="font-size:16px; font-weight:900">A${d.id}</span>
-                        <div style="font-size:12px; color:#444; font-weight:bold">${d.pkg}</div>
-                    </div>
+                    <div style="flex:1"><span style="font-size:16px; font-weight:900">A${d.id}</span><div style="font-size:12px; font-weight:bold">${d.pkg}</div></div>
                     <div style="flex:1; font-weight:bold; font-size:18px">${d.diff.toLocaleString()}</div>
-                    <button class="btn btn-wplan" ${canReset ? '' : 'disabled title="Gesperrt bis 215.500 Stück"'} onclick="wpReset('${d.id}')">WP</button>
-                    <button class="btn btn-minus" onclick="change('${d.id}', -1)">-</button>
-                    <span style="width:30px; text-align:center; font-weight:bold">${d.count}</span>
-                    <button class="btn btn-plus" ${canPlus ? '' : 'disabled title="Gesperrt bis < 5.000 Rest-Stückzahl"'} onclick="change('${d.id}', 1)">+</button>
+                    <button class="btn btn-wplan" ${canReset ? '' : 'disabled'} onclick="wpReset('${d.id}')">WP</button>
+                    <button class="btn btn-minus" ${isLogged ? '' : 'disabled'} onclick="change('${d.id}', -1)">-</button>
+                    <span style="width:25px; text-align:center; font-weight:bold">${d.count}</span>
+                    <button class="btn btn-plus" ${canPlus ? '' : 'disabled'} onclick="change('${d.id}', 1)">+</button>
                 </div>`;
             });
         }
 
+        // --- AKTUALISIERTE FUNKTIONEN MIT SICHERHEITSABFRAGE ---
         function change(id, delta) {
+            if(!auth.currentUser) return;
+            if(delta > 0) {
+                if(!confirm(`Möchtest du für Agie A${id} wirklich einen neuen Wartungszyklus (+16.000 Stück) buchen?`)) return;
+            }
             state.extraCycles[id] = Math.max(0, (state.extraCycles[id]||0) + delta);
             saveLog(id, `Zähler ${delta>0?'+1':'-1'}`, state.extraCycles[id]);
         }
 
         function wpReset(id) {
-            if(prompt("Admin-Code (216k Reset):") === "23091861") {
+            if(!auth.currentUser) return;
+            if(confirm(`⚠️ ACHTUNG: Du setzt den Wartungsplan (216.000 Stück) für Agie A${id} komplett zurück. Dies ist nur nach einem großen Service zulässig. Fortfahren?`)) {
                 state.agieOffsets[id] = (state.agieOffsets[id]||0) + 216000;
                 state.extraCycles[id] = 0;
                 saveLog(id, "WP-RESET", 0);
@@ -294,12 +268,12 @@
         }
 
         function renderLastActivity() {
-            const history = state.history || [];
-            if(history.length > 0) {
-                const latest = history[history.length - 1];
+            const h = state.history || [];
+            if(h.length > 0) {
+                const l = h[h.length - 1];
                 document.getElementById('last-activity').innerHTML = `
-                    <div class="last-activity-title">LETZTE ÄNDERUNG (${latest.Zeitstempel})</div>
-                    <div class="last-activity-content"><span style="color:var(--bosch-red)">Agie A${latest.Agie}</span>: ${latest.Ereignis} durch ${latest.Benutzer}</div>`;
+                    <div class="last-activity-title">LETZTE ÄNDERUNG (${l.Zeitstempel})</div>
+                    <div class="last-activity-content"><span style="color:var(--bosch-red)">Agie A${l.Agie}</span>: ${l.Ereignis} durch ${l.Benutzer}</div>`;
             }
         }
 
@@ -310,37 +284,14 @@
                 type: 'bar',
                 data: { 
                     labels: data.map(d=>"A"+d.id), 
-                    datasets:[{
-                        data: data.map(d=>d.diff), 
-                        backgroundColor: data.map(d=>d.color), 
-                        borderRadius:3,
-                        istValues: data.map(d=>d.ist),
-                        packageValues: data.map(d=>d.pkg)
-                    }] 
+                    datasets:[{ data: data.map(d=>d.diff), backgroundColor: data.map(d=>d.color), borderRadius:3, istValues: data.map(d=>d.ist), pkgValues: data.map(d=>d.pkg) }] 
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 45, bottom: 10 } },
-                    scales: { y: { beginAtZero: true } },
-                    plugins: { 
-                        legend: { display: false }, 
-                        datalabels: { anchor: 'end', align: 'top', rotation: -90, font: { weight: 900, size: 12 } },
-                        tooltip: {
-                            callbacks: {
-                                title: function(context) { return 'Station: ' + context[0].label; },
-                                label: function(context) {
-                                    const rest = context.parsed.y;
-                                    const ist = context.dataset.istValues[context.dataIndex];
-                                    const pkg = context.dataset.packageValues[context.dataIndex];
-                                    return [
-                                        'Anstehendes Paket: ' + pkg,
-                                        'Rest bis Wartung: ' + rest.toLocaleString() + ' Stück',
-                                        'Stückzahl seit WP-Wechsel: ' + ist.toLocaleString()
-                                    ];
-                                }
-                            }
-                        }
-                    } 
+                    plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', rotation: -90, font: { weight: 900 } },
+                    tooltip: { callbacks: { label: function(c) {
+                        return ['Paket: ' + c.dataset.pkgValues[c.dataIndex], 'Rest: ' + c.parsed.y.toLocaleString(), 'Ist seit WP: ' + c.dataset.istValues[c.dataIndex].toLocaleString()];
+                    }}}}
                 }
             });
         }
@@ -350,8 +301,7 @@
             (state.history||[]).forEach(r => csv += `${r.Zeitstempel};${r.Agie};${r.Ereignis};${r.Benutzer};${r.Zaehlerstand}\n`);
             const link = document.createElement("a");
             link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-            link.download = "Agie_Export.csv";
-            link.click();
+            link.download = "Agie_Protokoll.csv"; link.click();
         }
     </script>
 </body>
