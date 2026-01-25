@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V9.9.5 Stable Presentation</title>
+    <title>Agie Wartung - Bosch V9.8.9 + Help Module</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -33,15 +33,13 @@
         .sidebar { flex: 1.2; background: white; border-top: 4px solid var(--bosch-light-blue); overflow-y: auto; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .chart-container { background: white; padding: 15px; border-top: 4px solid var(--bosch-blue); flex: 1; min-height: 0; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
-        /* Präsentations-Button Design */
+        /* HILFE-MODUL CSS */
         #btnShowPresentation { 
             position: absolute; bottom: 20px; right: 20px; z-index: 100; 
             display: none; background: var(--bosch-green); color: white; 
             border: none; padding: 12px 20px; border-radius: 4px; 
             cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-
-        /* PowerPoint Overlay Styles */
         .ppt-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
         .ppt-slide { background: white; width: 85%; height: 75%; max-width: 1100px; padding: 50px; border-radius: 4px; display: none; flex-direction: column; position: relative; border-top: 10px solid var(--bosch-red); }
         .ppt-slide.active { display: flex; }
@@ -52,14 +50,12 @@
         .ppt-btn { background: var(--bosch-blue); color: white; border: none; padding: 10px 30px; cursor: pointer; border-radius: 4px; font-weight: bold; }
         .ppt-close { position: absolute; top: 20px; right: 25px; background: none; border: none; font-size: 45px; cursor: pointer; color: #ccc; }
 
-        /* Button Status Styles */
         .control-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; border-left: 6px solid #ccc; gap: 10px; }
-        .btn-icon { width: 36px; height: 36px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 4px; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .btn-icon:disabled { background-color: #e0e0e0 !important; color: #aaa !important; cursor: not-allowed; opacity: 0.4; }
+        .btn-icon { width: 36px; height: 36px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 4px; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+        .btn-icon:disabled { background-color: #e0e0e0 !important; color: #aaa !important; cursor: not-allowed; opacity: 0.5; }
         .btn-plus { background: var(--bosch-light-blue); }
         .btn-minus { background: var(--bosch-blue); }
         .btn-wp { background: var(--bosch-red); font-size: 11px; width: 40px; }
-        
         .activity-bar { background: white; padding: 10px 15px; border-left: 4px solid #ccc; font-size: 13px; color: #555; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 4px; z-index: 6000; display: none; }
     </style>
@@ -71,37 +67,37 @@
     <div id="pptOverlay" class="ppt-overlay">
         <button class="ppt-close" onclick="closePPT()">&times;</button>
         <div class="ppt-slide active" id="ps1">
-            <div class="ppt-header">01. Berechnungs-Logik</div>
+            <div class="ppt-header">01. Dashboard Logik</div>
             <div class="ppt-content">
                 <ul>
-                    <li><b>Ist-Wert:</b> Die reale Teileanzahl abzüglich der WP-Resets (Offset).</li>
-                    <li><b>Ziel-Wert (Target):</b> Wird dynamisch berechnet: 16.000 + (Zyklen × 16.000).</li>
-                    <li><b>Status-Farben:</b> Grün (>5k), Gelb (<5k), Rot (<500), Schwarz (Überfällig).</li>
+                    <li><b>Ist-Wert:</b> Berechnet aus Rohdaten minus WP-Offset.</li>
+                    <li><b>Soll-Trigger:</b> Fällig alle 16.000 Einheiten (Intervall).</li>
+                    <li><b>Farben:</b> Grün (>5000), Gelb (<5000), Rot (<500), Schwarz (Verzug).</li>
                 </ul>
             </div>
-            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER</span><span>1 / 3</span></div>
+            <div class="ppt-footer"><span>BOSCH AGIE HELP</span><span>1 / 3</span></div>
         </div>
         <div class="ppt-slide" id="ps2">
-            <div class="ppt-header">02. Die Smart-Sync (+) Funktion</div>
+            <div class="ppt-header">02. Synchronisation (+)</div>
             <div class="ppt-content">
-                <p>Das System erkennt automatisch den Wartungszustand:</p>
+                <p>Beim Klick auf (+):</p>
                 <ul>
-                    <li><b>Pünktliche Wartung:</b> Ist der Rest positiv, springt der Zähler exakt auf das nächste Paket.</li>
-                    <li><b>Verspätete Wartung:</b> Ist der Rest negativ, wird um exakt 16.000 erhöht (der Verzug bleibt sichtbar).</li>
+                    <li><b>Vorgeschriebener Rhythmus:</b> Das System springt immer auf das nächste volle 16.000er Paket.</li>
+                    <li><b>Verzugskorrektur:</b> Bei negativem Rest wird exakt ein Paket (+16k) addiert.</li>
                 </ul>
             </div>
-            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER</span><span>2 / 3</span></div>
+            <div class="ppt-footer"><span>BOSCH AGIE HELP</span><span>2 / 3</span></div>
         </div>
         <div class="ppt-slide" id="ps3">
-            <div class="ppt-header">03. Sicherheit & Schutz</div>
+            <div class="ppt-header">03. Sicherheit</div>
             <div class="ppt-content">
                 <ul>
-                    <li><b>Einladungscode:</b> Für neue Registrierungen gilt der Code <b>bosch2026</b>.</li>
-                    <li><b>Auto-Logout:</b> Zum Schutz vor unbefugtem Zugriff an Terminals erfolgt eine Abmeldung nach 20s.</li>
-                    <li><b>WP-Reset:</b> Erfordert ein gesondertes Admin-Passwort.</li>
+                    <li><b>Auto-Logout:</b> Automatisches Sperren nach 20s Inaktivität.</li>
+                    <li><b>Einladung:</b> Code <b>bosch2026</b> für neue Accounts.</li>
+                    <li><b>WP-Reset:</b> Erfordert Admin-Autorisierung.</li>
                 </ul>
             </div>
-            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER</span><span>3 / 3</span></div>
+            <div class="ppt-footer"><span>BOSCH AGIE HELP</span><span>3 / 3</span></div>
         </div>
         <div class="ppt-nav">
             <button class="ppt-btn" onclick="changeSlide(-1)">ZURÜCK</button>
@@ -113,13 +109,13 @@
     <div class="header">
         <div class="bosch-brand">BOSCH<span> AGIE</span></div>
         <div class="status-area">
-            <div id="logoutDisplay" class="logout-timer">Abmeldung in: <span id="secondsLeft">20</span>s</div>
-            <div id="connText" style="font-size:12px; color:#999">Verbinde...</div>
+            <div id="logoutDisplay" class="logout-timer">Logout in: <span id="secondsLeft">20</span>s</div>
+            <div id="connText" style="font-size:11px; color:#999">Verbinde...</div>
         </div>
     </div>
 
     <div class="action-bar">
-        <button id="btnLogin" class="nav-btn" onclick="handleAuthAction()">🔑 Anmelden</button>
+        <button id="btnLogin" class="nav-btn" onclick="handleAuth()">🔑 Anmelden</button>
         <button class="nav-btn btn-primary" onclick="document.getElementById('fileInput').click()">📥 Import</button>
     </div>
     <input type="file" id="fileInput" style="display:none" accept=".json">
@@ -131,7 +127,7 @@
                 <button id="btnShowPresentation" onclick="openPPT()">📊 System-Hilfe</button>
             </div>
             <div class="activity-bar">
-                <span id="lastActionText">Lade Log...</span>
+                <span id="lastActionText">Bereit</span>
                 <span id="userStatus" style="font-weight:bold; color:var(--bosch-blue)">Lesemodus</span>
             </div>
         </div>
@@ -157,7 +153,6 @@
         let chartInstance = null, logoutTimer = null, countdownInterval = null, remainingSeconds = 20, currentSlide = 1;
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
-        // CORE LOGIC V9.8.9
         function calculateMetrics() {
             if (!localState.cloudRawData.length) return [];
             return localState.cloudRawData.map(item => {
@@ -175,7 +170,7 @@
             const data = calculateMetrics();
             const isLogged = !!auth.currentUser;
             
-            // Render Chart
+            // Chart Rendering
             const ctx = document.getElementById('mainChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
@@ -198,9 +193,9 @@
                         tooltip: {
                             callbacks: {
                                 label: (ctx) => [
-                                    'Paket: ' + ctx.dataset.pkgInfo[ctx.dataIndex],
-                                    'Rest: ' + ctx.parsed.y.toLocaleString(),
-                                    'Ist-Wert: ' + ctx.dataset.istInfo[ctx.dataIndex].toLocaleString(),
+                                    'Nächstes Paket: ' + ctx.dataset.pkgInfo[ctx.dataIndex],
+                                    'Reststücke: ' + ctx.parsed.y.toLocaleString(),
+                                    'Ist-Stand: ' + ctx.dataset.istInfo[ctx.dataIndex].toLocaleString(),
                                     'Soll-Trigger: ' + ctx.dataset.targetInfo[ctx.dataIndex].toLocaleString()
                                 ]
                             }
@@ -209,11 +204,10 @@
                 }
             });
 
-            // Render Sidebar
-            let html = '<div style="padding:15px; font-weight:bold; color:var(--bosch-blue)">Maschinen Liste</div>';
+            // List Rendering
+            let html = '<div style="padding:15px; font-weight:bold; color:var(--bosch-blue); background:#fcfcfc; border-bottom:1px solid #eee">Maschinen Status</div>';
             data.forEach(d => {
-                const statusClass = d.diff < 0 ? 'rgba(0,0,0,0.05)' : '';
-                html += `<div class="control-row" style="background:${statusClass}; border-left-color:${d.color}">
+                html += `<div class="control-row" style="border-left-color:${d.color}">
                     <div style="flex:1"><b>A${d.id}</b><div style="font-size:10px">${d.pkgName}</div></div>
                     <div style="flex:1; font-weight:bold; text-align:right; padding-right:15px">${d.diff.toLocaleString()}</div>
                     <button class="btn-icon btn-wp" ${isLogged && d.ist >= 215500 ? '' : 'disabled'} onclick="performAction('${d.id}', 'RESET')">WP</button>
@@ -224,11 +218,10 @@
             });
             document.getElementById('listContainer').innerHTML = html;
             
-            // Show/Hide Help Button
+            // Hilfe Button Sichtbarkeit
             document.getElementById('btnShowPresentation').style.display = isLogged ? 'block' : 'none';
         }
 
-        // ACTIONS
         async function performAction(id, type) {
             if (!auth.currentUser) return;
             resetTimer();
@@ -263,14 +256,14 @@
             });
         }
 
-        // AUTH & SYSTEM
-        function handleAuthAction() {
+        // SYSTEM & AUTH
+        function handleAuth() {
             if (auth.currentUser) { auth.signOut(); return; }
-            const mode = confirm("Abbrechen für Login, OK für Registrierung");
+            const mode = confirm("Abbrechen für Login / OK für Registrierung");
             const e = prompt("Email:"), p = prompt("Passwort:");
             if (mode) {
-                const c = prompt("Einladungscode:");
-                if (c === "bosch2026") {
+                const code = prompt("Einladungscode:");
+                if (code === "bosch2026") {
                     const n = prompt("Name:");
                     auth.createUserWithEmailAndPassword(e, p).then(cr => cr.user.updateProfile({displayName: n}));
                 }
@@ -280,7 +273,7 @@
         }
 
         auth.onAuthStateChanged(user => {
-            document.getElementById('btnLogin').innerHTML = user ? "🔓 " + (user.displayName || "Logout") : "🔑 Anmelden";
+            document.getElementById('btnLogin').innerHTML = user ? "🔓 Logout" : "🔑 Anmelden";
             document.getElementById('userStatus').innerText = user ? "Änderungsmodus aktiv" : "Nur Lesemodus";
             if (user) resetTimer(); else stopTimer();
             refreshUI();
