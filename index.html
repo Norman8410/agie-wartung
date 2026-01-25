@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V9.9.0 Final Presentation</title>
+    <title>Agie Wartung - Bosch V9.9.0 Final & Full Data</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -30,31 +30,23 @@
         .action-bar { padding: 10px 30px; display: flex; gap: 12px; align-items: center; flex-shrink: 0; background: var(--bosch-gray); }
         .nav-btn { padding: 8px 16px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: 700; color: var(--bosch-blue); border-radius: 2px; transition: all 0.2s; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .btn-primary { background: var(--bosch-blue); color: white; border-color: var(--bosch-blue); }
-        .btn-active { background: var(--bosch-green) !important; color: white !important; border-color: var(--bosch-green) !important; }
 
         .main-layout { display: flex; flex: 1; padding: 10px 30px 20px 30px; gap: 20px; box-sizing: border-box; overflow: hidden; }
         .content-area { flex: 3; display: flex; flex-direction: column; gap: 15px; min-width: 0; overflow: hidden; }
         .sidebar { flex: 1.2; background: white; border-top: 4px solid var(--bosch-light-blue); overflow-y: auto; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .chart-container { background: white; padding: 15px; border-top: 4px solid var(--bosch-blue); flex: 1; min-height: 0; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
-        /* Präsentations-Button */
-        #btnShowPresentation { position: absolute; bottom: 15px; right: 15px; z-index: 10; display: none; background: var(--bosch-green); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.2s; }
-        #btnShowPresentation:hover { transform: scale(1.05); background: #007a45; }
+        #btnShowPresentation { position: absolute; bottom: 15px; right: 15px; z-index: 10; display: none; background: var(--bosch-green); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-        /* PowerPoint-Modus Styles */
-        .ppt-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,10,0.95); z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .ppt-slide { background: white; width: 85%; height: 75%; max-width: 1100px; padding: 60px; border-radius: 4px; display: none; flex-direction: column; position: relative; box-shadow: 0 30px 60px rgba(0,0,0,0.5); border-top: 10px solid var(--bosch-red); }
+        .ppt-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,10,0.98); z-index: 5000; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .ppt-slide { background: white; width: 85%; height: 75%; max-width: 1100px; padding: 60px; border-radius: 4px; display: none; flex-direction: column; position: relative; border-top: 10px solid var(--bosch-red); }
         .ppt-slide.active { display: flex; }
         .ppt-header { color: var(--bosch-blue); border-bottom: 2px solid #eee; margin-bottom: 30px; font-size: 36px; font-weight: 900; padding-bottom: 10px; }
         .ppt-content { font-size: 22px; line-height: 1.7; color: #333; }
-        .ppt-content ul { margin-top: 20px; }
-        .ppt-content li { margin-bottom: 15px; }
-        .ppt-footer { margin-top: auto; display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 20px; font-weight: bold; color: #999; font-size: 14px; }
-        .ppt-nav { position: absolute; bottom: 30px; display: flex; gap: 20px; z-index: 5001; }
-        .ppt-btn { background: var(--bosch-blue); color: white; border: none; padding: 12px 35px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 16px; transition: 0.2s; }
-        .ppt-btn:hover { background: var(--bosch-light-blue); }
-        .ppt-close { position: absolute; top: 25px; right: 30px; background: none; border: none; font-size: 40px; cursor: pointer; color: #999; font-weight: bold; transition: 0.2s; }
-        .ppt-close:hover { color: var(--bosch-red); }
+        .ppt-footer { margin-top: auto; display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 20px; font-weight: bold; color: #999; }
+        .ppt-nav { position: absolute; bottom: 30px; display: flex; gap: 20px; }
+        .ppt-btn { background: var(--bosch-blue); color: white; border: none; padding: 12px 35px; cursor: pointer; border-radius: 4px; font-weight: bold; }
+        .ppt-close { position: absolute; top: 25px; right: 30px; background: none; border: none; font-size: 40px; cursor: pointer; color: #999; }
 
         .control-row { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f0f0f0; border-left: 6px solid #ccc; gap: 10px; }
         .status-red { border-left-color: var(--bosch-red); background: #fff5f5; }
@@ -69,7 +61,7 @@
         
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; display: none; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 25px; max-width: 400px; width: 90%; border-top: 8px solid var(--bosch-red); text-align: center; }
-        .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 4px; z-index: 6000; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 4px; z-index: 6000; display: none; }
     </style>
 </head>
 <body>
@@ -89,60 +81,21 @@
 
     <div id="pptOverlay" class="ppt-overlay">
         <button class="ppt-close" onclick="closePPT()">&times;</button>
-        
         <div class="ppt-slide active" id="slide1">
             <div class="ppt-header">01. Dashboard Berechnungs-Logik</div>
             <div class="ppt-content">
                 <ul>
-                    <li><b>Echtzeit-Stückzahl:</b> Die Daten werden aus der Firebase Cloud geladen (<code>cloudRawData</code>).</li>
-                    <li><b>Wartungs-Intervalle:</b> Die Berechnung erfolgt dynamisch:<br>
-                        <code>Target = 16.000 + (Anzahl_Zyklen × 16.000)</code></li>
-                    <li><b>Offset-Management:</b> Der <code>agieOffset</code> subtrahiert bei einem Wartungsplan-Reset (WP) die Grund-Stückzahl (216.000), um den Zähler zu nullen.</li>
+                    <li><b>Echtzeit-Stückzahl:</b> Datenimport aus Firebase (cloudRawData).</li>
+                    <li><b>Wartungs-Intervalle:</b> Dynamische Berechnung:<br><code>Target = 16.000 + (Zyklen × 16.000)</code></li>
+                    <li><b>Offset:</b> Reset-Wert (WP) zur Nullung bei Wartungsplanwechsel.</li>
                 </ul>
             </div>
-            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER V9.9.0</span><span>FOLIE 1 / 4</span></div>
+            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER</span><span>FOLIE 1 / 4</span></div>
         </div>
-
-        <div class="ppt-slide" id="slide2">
-            <div class="ppt-header">02. Die Smart-Sync Logik (+)</div>
-            <div class="ppt-content">
-                <p>Das System erkennt automatisch, wann eine Wartung durchgeführt wurde:</p>
-                <ul>
-                    <li><b>Fall A (Pünktlich/Vorher):</b> Wenn der Rest positiv ist, springt der Zähler exakt auf das nächste 16.000er Paket. Die Maschine ist somit perfekt synchronisiert.</li>
-                    <li><b>Fall B (Verspätet):</b> Wenn der Rest negativ ist, werden stur 16.000 addiert. Der Verzug (z.B. -200) bleibt erhalten, um die reale Abnutzung abzubilden.</li>
-                </ul>
-            </div>
-            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER V9.9.0</span><span>FOLIE 2 / 4</span></div>
-        </div>
-
-        <div class="ppt-slide" id="slide3">
-            <div class="ppt-header">03. Sicherheits-Details</div>
-            <div class="ppt-content">
-                <ul>
-                    <li><b>Passwort-Speicherung:</b> Alle Admin-Passwörter (Reset/Export) sind in der Cloud hinterlegt (<code>adminConfig/</code>) und werden bei Abfrage verschlüsselt abgeglichen.</li>
-                    <li><b>Schreibschutz:</b> Ohne Anmeldung (Firebase Auth) sind alle Buttons gesperrt.</li>
-                    <li><b>Auto-Logout:</b> Bei Inaktivität erfolgt nach 20 Sekunden die automatische Abmeldung zum Schutz offener Terminals.</li>
-                </ul>
-            </div>
-            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER V9.9.0</span><span>FOLIE 3 / 4</span></div>
-        </div>
-
-        <div class="ppt-slide" id="slide4">
-            <div class="ppt-header">04. Daten-Export & Historie</div>
-            <div class="ppt-content">
-                <ul>
-                    <li><b>Audit-Trail:</b> Jede Änderung am Zähler wird im Logbuch mit Benutzername, Uhrzeit und Ereignistyp (z.B. "Sync" oder "Add") dokumentiert.</li>
-                    <li><b>CSV-Export:</b> Das Logbuch kann als Excel-kompatible Datei heruntergeladen werden (Passwort erforderlich).</li>
-                    <li><b>Registrierung:</b> Neue Benutzer benötigen den Einladungscode <b>bosch2026</b>.</li>
-                </ul>
-            </div>
-            <div class="ppt-footer"><span>BOSCH AGIE MAINTAINER V9.9.0</span><span>FOLIE 4 / 4</span></div>
-        </div>
-
-        <div class="ppt-nav">
-            <button class="ppt-btn" onclick="changeSlide(-1)">ZURÜCK</button>
-            <button class="ppt-btn" onclick="changeSlide(1)">WEITER</button>
-        </div>
+        <div class="ppt-slide" id="slide2"><div class="ppt-header">02. Smart-Sync Logik</div><div class="ppt-content"><p>Positiver Rest: Exakter Sprung auf nächstes Paket (Sync).<br>Negativer Rest: +16.000 (Verzug bleibt erhalten).</p></div><div class="ppt-footer"><span>FOLIE 2 / 4</span></div></div>
+        <div class="ppt-slide" id="slide3"><div class="ppt-header">03. Sicherheit</div><div class="ppt-content"><p>Admin-PW in Cloud (adminConfig/). Auto-Logout nach 20s.</p></div><div class="ppt-footer"><span>FOLIE 3 / 4</span></div></div>
+        <div class="ppt-slide" id="slide4"><div class="ppt-header">04. Export & Log</div><div class="ppt-content"><p>Lückenloses Audit-Trail jeder Änderung. CSV Export passwortgeschützt.</p></div><div class="ppt-footer"><span>FOLIE 4 / 4</span></div></div>
+        <div class="ppt-nav"><button class="ppt-btn" onclick="changeSlide(-1)">ZURÜCK</button><button class="ppt-btn" onclick="changeSlide(1)">WEITER</button></div>
     </div>
 
     <div class="top-bar"></div>
@@ -168,7 +121,7 @@
                 <button id="btnShowPresentation" onclick="openPPT()">📊 System-Präsentation</button>
             </div>
             <div class="activity-bar">
-                <span id="lastActionText">Lade Logbuch...</span>
+                <span id="lastActionText">Lade...</span>
                 <span id="userStatus" style="font-weight:bold; color:var(--bosch-blue)">Lade...</span>
             </div>
         </div>
@@ -194,7 +147,6 @@
         let chartInstance = null, logoutTimer = null, countdownInterval = null, remainingSeconds = 20, currentSlide = 1;
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
-        // UI REFRESH & CALCULATION
         function calculateMetrics() {
             if (!localState.cloudRawData.length) return [];
             return localState.cloudRawData.map(item => {
@@ -203,25 +155,9 @@
                 const cycles = localState.extraCycles[id] || 0;
                 const target = 16000 + (cycles * 16000);
                 const diff = target - ist;
-                let statusClass = diff < 0 ? "status-overdue" : (diff < 500 ? "status-red" : (diff < 5000 ? "status-yellow" : "status-green"));
                 let color = diff < 0 ? "#b00000" : (diff < 500 ? "#d50000" : (diff < 5000 ? "#ffcf00" : "#008a4f"));
-                return { id, diff, ist, cycles, statusClass, color, pkgName: packages[Math.abs(cycles) % packages.length] };
+                return { id, diff, ist, cycles, color, pkgName: packages[Math.abs(cycles) % packages.length] };
             }).sort((a,b) => a.diff - b.diff);
-        }
-
-        function refreshUI() {
-            const data = calculateMetrics();
-            renderChart(data);
-            const container = document.getElementById('listContainer'), isLogged = !!auth.currentUser;
-            let html = '<div style="padding:15px; background:#f8f9fa; border-bottom:1px solid #ddd; font-weight:bold; color:var(--bosch-blue)">Maschinen Liste</div>';
-            data.forEach(d => {
-                html += `<div class="control-row ${d.statusClass}"><div style="flex:1"><b>A${d.id}</b><div style="font-size:10px">${d.pkgName}</div></div><div style="flex:1; font-weight:bold; text-align:right; padding-right:15px">${d.diff.toLocaleString()}</div><button class="btn-icon btn-wp" ${isLogged && d.ist >= 215500 ? '' : 'disabled'} onclick="performAction('${d.id}', 'RESET')">WP</button><button class="btn-icon btn-minus" ${isLogged?'':'disabled'} onclick="performAction('${d.id}', 'MINUS')">-</button><div style="width:20px; text-align:center; font-weight:bold">${d.cycles}</div><button class="btn-icon btn-plus" ${isLogged && d.diff <= 5000 ? '' : 'disabled'} onclick="performAction('${d.id}', 'PLUS')">+</button></div>`;
-            });
-            container.innerHTML = html;
-            if (localState.history.length) {
-                const last = [...localState.history].sort((a,b) => new Date(b.ISO) - new Date(a.ISO))[0];
-                document.getElementById('lastActionText').innerHTML = `Letzte: <b>A${last.Agie}</b> (${last.Ereignis})`;
-            }
         }
 
         function renderChart(data) {
@@ -229,19 +165,62 @@
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: data.map(d => "A"+d.id), datasets: [{ data: data.map(d => d.diff), backgroundColor: data.map(d => d.color) }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: true, anchor: 'end', align: 'top', rotation: -90, formatter: v => v.toLocaleString() } } }
+                data: {
+                    labels: data.map(d => "A"+d.id),
+                    datasets: [{ 
+                        data: data.map(d => d.diff), 
+                        backgroundColor: data.map(d => d.color),
+                        pkgInfo: data.map(d => d.pkgName),
+                        istInfo: data.map(d => d.ist)
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: { anchor: 'end', align: 'top', rotation: -90, formatter: v => v.toLocaleString() },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => [
+                                    'Paket: ' + ctx.dataset.pkgInfo[ctx.dataIndex],
+                                    'Rest: ' + ctx.parsed.y.toLocaleString(),
+                                    'Ist-Gesamt: ' + ctx.dataset.istInfo[ctx.dataIndex].toLocaleString()
+                                ]
+                            }
+                        }
+                    },
+                    scales: { y: { beginAtZero: true } }
+                }
             });
         }
 
-        // ACTIONS
+        function refreshUI() {
+            const data = calculateMetrics();
+            renderChart(data);
+            const container = document.getElementById('listContainer'), isLogged = !!auth.currentUser;
+            let html = '<div style="padding:15px; font-weight:bold; color:var(--bosch-blue)">Maschinen Liste</div>';
+            data.forEach(d => {
+                html += `<div class="control-row ${d.diff < 0 ? 'status-overdue' : (d.diff < 500 ? 'status-red' : (d.diff < 5000 ? 'status-yellow' : 'status-green'))}">
+                    <div style="flex:1"><b>A${d.id}</b><div style="font-size:10px">${d.pkgName}</div></div>
+                    <div style="flex:1; font-weight:bold; text-align:right; padding-right:15px">${d.diff.toLocaleString()}</div>
+                    <button class="btn-icon btn-wp" ${isLogged && d.ist >= 215500 ? '' : 'disabled'} onclick="performAction('${d.id}', 'RESET')">WP</button>
+                    <button class="btn-icon btn-minus" ${isLogged?'':'disabled'} onclick="performAction('${d.id}', 'MINUS')">-</button>
+                    <div style="width:20px; text-align:center; font-weight:bold">${d.cycles}</div>
+                    <button class="btn-icon btn-plus" ${isLogged && d.diff <= 5000 ? '' : 'disabled'} onclick="performAction('${d.id}', 'PLUS')">+</button>
+                </div>`;
+            });
+            container.innerHTML = html;
+            if (localState.history.length) {
+                const last = [...localState.history].sort((a,b) => new Date(b.ISO) - new Date(a.ISO))[0];
+                document.getElementById('lastActionText').innerHTML = `Letzte Änderung: <b>A${last.Agie}</b> (${last.Ereignis})`;
+            }
+        }
+
         async function performAction(id, type) {
             if (!auth.currentUser) return;
-            resetLogoutTimer();
             const user = auth.currentUser.displayName || auth.currentUser.email;
             const metrics = calculateMetrics().find(m => m.id === id);
             const updates = {};
-
             if (type === 'PLUS') {
                 if (!confirm(`Wartung A${id} buchen?`)) return;
                 let newCycles = (metrics.diff > 0) ? Math.floor(metrics.ist / 16000) + 1 : (localState.extraCycles[id] || 0) + 1;
@@ -267,18 +246,7 @@
             db.ref().update(updatesObj).then(() => showToast("Gespeichert"));
         }
 
-        // AUTH & SYSTEM
-        function resetLogoutTimer() {
-            if (logoutTimer) clearTimeout(logoutTimer);
-            if (countdownInterval) clearInterval(countdownInterval);
-            if (auth.currentUser) {
-                remainingSeconds = 20; document.getElementById('logoutDisplay').style.display = 'block';
-                countdownInterval = setInterval(() => { remainingSeconds--; document.getElementById('secondsLeft').innerText = remainingSeconds; if(remainingSeconds<=0) auth.signOut(); }, 1000);
-                logoutTimer = setTimeout(() => auth.signOut(), 20000);
-            }
-        }
-        ['mousedown', 'mousemove', 'keypress'].forEach(e => window.addEventListener(e, resetLogoutTimer));
-
+        // SYSTEM & PPT
         auth.onAuthStateChanged(user => {
             const btn = document.getElementById('btnLogin'), stat = document.getElementById('userStatus'), ppt = document.getElementById('btnShowPresentation');
             if (user) {
@@ -297,6 +265,28 @@
             refreshUI();
         });
 
+        function resetLogoutTimer() {
+            if (logoutTimer) clearTimeout(logoutTimer);
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (auth.currentUser) {
+                remainingSeconds = 20; document.getElementById('logoutDisplay').style.display = 'block';
+                countdownInterval = setInterval(() => { remainingSeconds--; document.getElementById('secondsLeft').innerText = remainingSeconds; if(remainingSeconds<=0) auth.signOut(); }, 1000);
+                logoutTimer = setTimeout(() => auth.signOut(), 20000);
+            }
+        }
+        ['mousedown', 'mousemove', 'keypress'].forEach(e => window.addEventListener(e, resetLogoutTimer));
+
+        db.ref('maintenanceState').on('value', snap => {
+            const v = snap.val();
+            if (v) {
+                localState.cloudRawData = v.cloudRawData || [];
+                localState.extraCycles = v.extraCycles || {};
+                localState.agieOffsets = v.agieOffsets || {};
+                localState.history = v.history ? Object.values(v.history) : [];
+                refreshUI();
+            }
+        });
+
         async function performRegister() {
             const code = prompt("Code:");
             if (code === "bosch2026") {
@@ -304,7 +294,7 @@
                 const cred = await auth.createUserWithEmailAndPassword(e, p);
                 await cred.user.updateProfile({ displayName: n });
                 document.getElementById('authModal').style.display = 'none';
-            } else alert("Falsch!");
+            }
         }
 
         function performLogin() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value).then(() => document.getElementById('authModal').style.display = 'none'); }
@@ -315,23 +305,21 @@
         });
 
         async function exportCSV() {
-            const p = prompt("PW:");
+            const p = prompt("Export PW:");
             const snap = await db.ref('adminConfig/exportPassword').once('value');
             if (p === snap.val()) {
                 let csv = "\uFEFFDatum;Maschine;Ereignis;Benutzer\n";
                 localState.history.forEach(r => csv += `${r.Zeit};${r.Agie};${r.Ereignis};${r.Benutzer}\n`);
                 const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-                link.download = "Log.csv"; link.click();
+                link.download = "Wartungslog.csv"; link.click();
             }
         }
 
-        // PPT LOGIC
         function openPPT() { document.getElementById('pptOverlay').style.display = "flex"; currentSlide = 1; updatePPT(); }
         function closePPT() { document.getElementById('pptOverlay').style.display = "none"; }
         function changeSlide(n) { currentSlide += n; if(currentSlide<1) currentSlide=1; if(currentSlide>4) currentSlide=4; updatePPT(); }
         function updatePPT() { document.querySelectorAll('.ppt-slide').forEach((s, i) => s.classList.toggle('active', (i+1) === currentSlide)); }
         function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.style.display = "block"; setTimeout(() => t.style.display="none", 3000); }
-
         db.ref('.info/connected').on('value', snap => {
             document.getElementById('connDot').className = snap.val() ? 'status-dot online' : 'status-dot offline';
             document.getElementById('connText').innerText = snap.val() ? 'Online V9.9.0' : 'Offline';
