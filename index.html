@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V9.8.9.1 Full Help</title>
+    <title>Agie Wartung - Bosch V9.8.9 Full Help</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -90,38 +90,15 @@
         <div class="modal-content">
             <span class="close-modal" onclick="document.getElementById('helpModal').style.display='none'">&times;</span>
             <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px; margin-top:0;">🛠 Handbuch & System-Logik (V9.8.9)</h2>
-            
             <div class="help-section">
                 <h4>📋 Digitaler Wartungsplan</h4>
-                <p>Dieses Tool visualisiert die Wartungsintervalle der Agie-Maschinen. Ein grüner Balken zeigt ausreichend Puffer, gelb mahnt zur Vorbereitung und rot signalisiert eine fällige Wartung. Dunkelrot bedeutet: Wartung überfällig.</p>
+                <p>Dieses Tool visualisiert die Wartungsintervalle der Agie-Maschinen.</p>
             </div>
-
-            <div class="help-section">
-                <h4>🔄 Zähler & Wartungs-Intervalle</h4>
-                <p><b>Button (+):</b> Bestätigt die Durchführung einer Wartung.<br>
-                - Ist der Rest <b>positiv</b>: Der Zähler springt exakt auf das nächste 16.000er Paket (Synchronisierung).<br>
-                - Ist der Rest <b>negativ</b>: Es werden lediglich 16.000 addiert, um den realen Verzug beizubehalten.<br>
-                <b>Button (-):</b> Korrigiert eine Fehlbuchung um exakt einen Zyklus (-16.000).<br>
-                <b>Button (WP):</b> Vollständiger Wartungsplan-Reset (216.000 Stück). Erfordert ein spezielles Admin-Passwort.</p>
-            </div>
-
-            <div class="help-section">
-                <h4>🔐 Cloud-Sicherheit & Automatik</h4>
-                <p><b>Auto-Logout:</b> Um unbefugte Änderungen an offenen Terminals zu verhindern, wird jeder Benutzer nach <b>20 Sekunden Inaktivität</b> automatisch abgemeldet. Ein Live-Countdown oben rechts zeigt die Restzeit.<br>
-                <b>Einladungscode:</b> Zur Registrierung neuer Konten wird der Code <b>bosch2026</b> benötigt.</p>
-            </div>
-
             <div class="help-section">
                 <h4>📊 Daten & Export</h4>
-                <p>Die Basis-Stückzahlen werden regelmäßig per <b>JSON-Import</b> aktualisiert. Über den <b>Export-Button</b> (passwortgeschützt) kann das vollständige Aktivitäts-Logbuch als CSV für Excel heruntergeladen werden.</p>
+                <p>Über den <b>Export-Button</b> (passwortgeschützt) kann das vollständige Aktivitäts-Logbuch als CSV für Excel heruntergeladen werden.</p>
             </div>
-
-            <div class="help-section" style="background: #f9f9f9; padding: 10px; border-radius: 4px;">
-                <h4>🛡 Datenschutzhinweis</h4>
-                <p>Namen von Mitarbeitern werden nur im internen Logbuch zur Nachvollziehbarkeit gespeichert, jedoch niemals öffentlich auf dem Dashboard angezeigt.</p>
-            </div>
-
-            <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:10px" onclick="document.getElementById('helpModal').style.display='none'">Verstanden & Schließen</button>
+            <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:10px" onclick="document.getElementById('helpModal').style.display='none'">Schließen</button>
         </div>
     </div>
 
@@ -162,7 +139,7 @@
     </div>
 
     <script>
-        // FIREBASE & CONFIG
+        // FIREBASE INITIALISIERUNG
         const firebaseConfig = {
             apiKey: "AIzaSyD6xGCtU-felOyO_BRsFnVlB4yhC46FgYg",
             authDomain: "bosch-agie-wartung.firebaseapp.com",
@@ -186,7 +163,7 @@
 
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
-        // LOGOUT LOGIC
+        // LOGOUT LOGIK
         function resetLogoutTimer() {
             if (logoutTimer) clearTimeout(logoutTimer);
             if (countdownInterval) clearInterval(countdownInterval);
@@ -211,11 +188,9 @@
             else box.classList.remove('timer-warning');
         }
 
-        ['mousedown', 'mousemove', 'keypress', 'touchstart'].forEach(evt => {
-            window.addEventListener(evt, resetLogoutTimer, false);
-        });
+        ['mousedown', 'mousemove', 'keypress', 'touchstart'].forEach(evt => window.addEventListener(evt, resetLogoutTimer, false));
 
-        // DATA SYNC
+        // DATEN SYNC
         db.ref('.info/connected').on('value', snap => {
             const connected = snap.val();
             document.getElementById('connDot').className = connected ? 'status-dot online' : 'status-dot offline';
@@ -250,8 +225,6 @@
                 btn.onclick = () => document.getElementById('authModal').style.display = 'flex';
                 stat.innerText = "👁 Nur Lesemodus";
                 timerBox.style.display = 'none';
-                if (logoutTimer) clearTimeout(logoutTimer);
-                if (countdownInterval) clearInterval(countdownInterval);
             }
             refreshUI();
         });
@@ -359,23 +332,12 @@
             if (!auth.currentUser) return;
             resetLogoutTimer();
             const user = auth.currentUser.displayName || auth.currentUser.email;
-            
-            // FIX: Verwendung von '==' statt '===', da id aus HTML ein String ist, aber in den Daten oft eine Zahl
             const metrics = calculateMetrics().find(m => m.id == id);
-            
             const updates = {};
 
             if (type === 'PLUS') {
                 if (!confirm(`Wartung für A${id} buchen?`)) return;
-                
-                // Smart Sync Logik
-                let newCycles;
-                if (metrics.diff > 0) {
-                    newCycles = Math.floor(metrics.ist / 16000) + 1;
-                } else {
-                    newCycles = (localState.extraCycles[id] || 0) + 1;
-                }
-                
+                let newCycles = metrics.diff > 0 ? Math.floor(metrics.ist / 16000) + 1 : (localState.extraCycles[id] || 0) + 1;
                 updates[`maintenanceState/extraCycles/${id}`] = newCycles;
                 pushHistory(id, `Wartung (+16k ${metrics.diff > 0 ? 'Sync' : 'Add'})`, user, updates);
             } else if (type === 'MINUS') {
@@ -419,34 +381,52 @@
                 .catch(err => alert("Fehler: " + err.message));
         }
 
+        // --- REPARIERTER EXPORT ---
         async function exportCSV() {
             const pass = prompt("Export-Passwort:");
             if (!pass) return;
             
-            // Datenbankabfrage
-            const snap = await db.ref('adminConfig/exportPassword').once('value');
-            
-            if (pass === snap.val()) {
-                let csv = "\uFEFFDatum;Maschine;Ereignis;Benutzer\n";
-                // Sicherstellen, dass History existiert
-                if (localState.history) {
-                    localState.history.forEach(r => csv += `${r.Zeit};${r.Agie};${r.Ereignis};${r.Benutzer}\n`);
+            try {
+                const snap = await db.ref('adminConfig/exportPassword').once('value');
+                const dbPass = snap.val();
+                
+                if (pass === dbPass) {
+                    if (!localState.history || localState.history.length === 0) {
+                        alert("Keine Daten zum Exportieren vorhanden.");
+                        return;
+                    }
+
+                    // CSV Erstellen
+                    let csv = "\uFEFFDatum;Maschine;Ereignis;Benutzer\n";
+                    localState.history.forEach(r => {
+                        csv += `${r.Zeit || ''};${r.Agie || ''};${r.Ereignis || ''};${r.Benutzer || ''}\n`;
+                    });
+
+                    // Blob-Methode
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    
+                    // Wir müssen den Link SICHTBAR kurz einfügen, damit der Browser ihn nicht blockt
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `Wartungslog_${new Date().toLocaleDateString()}.csv`;
+                    
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // Cleanup mit Verzögerung
+                    setTimeout(() => {
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    }, 150);
+                    
+                    showToast("📥 Export gestartet");
+                } else {
+                    alert("Passwort falsch!");
                 }
-                
-                // Reparierter Download-Prozess:
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                
-                // WICHTIG: Link ins Dokument einfügen, damit 'click' im Browser sicher funktioniert
-                link.setAttribute("href", url);
-                link.setAttribute("download", "Wartungslog.csv");
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } else {
-                alert("Passwort falsch!");
+            } catch (error) {
+                alert("Fehler beim Export: " + error.message);
             }
         }
 
