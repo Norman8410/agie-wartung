@@ -2,12 +2,11 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V11.3 (Full Controls)</title>
+    <title>Agie Wartung - Bosch V11.5 (Threshold-Fix)</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     
     <style>
         :root { 
@@ -24,26 +23,35 @@
         .sidebar { flex: 1.5; background: white; border-top: 4px solid var(--bosch-light-blue); overflow-y: auto; padding: 10px; }
         
         .control-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; border-left: 5px solid #ccc; margin-bottom: 5px; gap: 8px; }
-        .nav-btn { padding: 6px 12px; cursor: pointer; border: 1px solid #ccc; background: white; font-weight: bold; color: var(--bosch-blue); font-size: 13px; border-radius: 2px; }
-        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .nav-btn { padding: 6px 12px; cursor: pointer; border: 1px solid #ccc; background: white; font-weight: bold; color: var(--bosch-blue); font-size: 13px; }
+        .nav-btn:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
         .btn-primary { background: var(--bosch-blue); color: white; border: none; }
         .btn-wp { background: var(--bosch-red); color: white; border: none; font-size: 11px; }
         
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-box { background: white; padding: 30px; border-top: 8px solid var(--bosch-red); width: 350px; text-align: center; }
+        .modal-box { background: white; padding: 30px; border-top: 8px solid var(--bosch-red); width: 400px; text-align: center; max-height: 80vh; overflow-y: auto; }
         input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; border: 1px solid #ddd; }
+        .admin-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; font-size: 12px; }
     </style>
 </head>
 <body>
 
     <div id="authModal" class="modal">
-        <div class="modal-box">
+        <div class="modal-box" style="width:300px">
             <h2 style="color:var(--bosch-blue)">Anmeldung</h2>
             <input type="email" id="email" placeholder="E-Mail">
             <input type="password" id="pass" placeholder="Passwort">
             <button class="nav-btn btn-primary" style="width:100%" onclick="performLogin()">Einloggen</button>
             <button class="nav-btn" style="width:100%; margin-top:10px" onclick="performRegister()">Neu registrieren</button>
-            <p onclick="closeModal()" style="cursor:pointer; font-size:12px; margin-top:15px; color:#666">Abbrechen</p>
+            <p onclick="closeModal('authModal')" style="cursor:pointer; font-size:12px; margin-top:15px; color:#666">Abbrechen</p>
+        </div>
+    </div>
+
+    <div id="adminModal" class="modal">
+        <div class="modal-box">
+            <h2 style="color:var(--bosch-red)">Admin-Bereich</h2>
+            <div id="adminActionsList" style="text-align:left; margin-top:20px"></div>
+            <button class="nav-btn btn-primary" style="width:100%; margin-top:20px" onclick="closeModal('adminModal')">Schließen</button>
         </div>
     </div>
 
@@ -54,14 +62,13 @@
     </div>
 
     <div style="padding: 10px 20px; background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; gap: 10px;">
-        <button id="authBtn" class="nav-btn" onclick="openModal()">🔑 Login</button>
+        <button id="authBtn" class="nav-btn" onclick="openModal('authModal')">🔑 Login</button>
         <button id="importBtn" class="nav-btn btn-primary" onclick="triggerImport()" disabled>📥 JSON Import</button>
+        <button id="adminBtn" class="nav-btn" onclick="openAdmin()" disabled>⚙️ Admin</button>
     </div>
 
     <div class="main-layout">
-        <div class="content">
-            <canvas id="mainChart"></canvas>
-        </div>
+        <div class="content"><canvas id="mainChart"></canvas></div>
         <div class="sidebar" id="machineList"></div>
     </div>
 
@@ -88,7 +95,7 @@
         db.ref('config').on('value', snap => {
             if(snap.exists()) {
                 cloudConfig = snap.val();
-                document.getElementById('statusLabel').innerText = "V11.3 | Cloud Online";
+                document.getElementById('statusLabel').innerText = "V11.5 | Cloud Online";
                 document.getElementById('statusLabel').style.color = "green";
             }
         });
@@ -104,8 +111,9 @@
         auth.onAuthStateChanged(user => {
             const btn = document.getElementById('authBtn');
             btn.innerText = user ? "🔓 Logout (" + (user.displayName || "User") + ")" : "🔑 Login";
-            btn.onclick = user ? () => auth.signOut() : openModal;
+            btn.onclick = user ? () => auth.signOut() : () => openModal('authModal');
             document.getElementById('importBtn').disabled = !user;
+            document.getElementById('adminBtn').disabled = !user;
             updateUI();
         });
 
@@ -123,36 +131,59 @@
             const list = document.getElementById('machineList');
             const isLogged = !!auth.currentUser;
 
-            list.innerHTML = data.map(d => `
+            list.innerHTML = data.map(d => {
+                // LOGIK: + Button nur aktiv wenn Rest < 2000 UND Buchung führt nicht über 16000
+                const plusEnabled = isLogged && d.rest < 2000 && (d.rest + 16000 <= 16500);
+                
+                return `
                 <div class="control-row" style="border-left-color:${d.color}">
                     <div style="flex:1.5"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
                     <div style="flex:1; text-align:right; font-weight:bold; font-size:16px">${d.rest.toLocaleString()}</div>
                     <button class="nav-btn btn-wp" ${isLogged && d.ist > 210000 ? '' : 'disabled'} onclick="wpReset('${d.id}')">WP</button>
-                    <button class="nav-btn" ${isLogged ? '' : 'disabled'} onclick="changeCycle('${d.id}', -1)">-</button>
+                    <button class="nav-btn" ${isLogged && d.cycles > 0 ? '' : 'disabled'} onclick="changeCycle('${d.id}', -1)">-</button>
                     <div style="width:20px; text-align:center; font-weight:bold">${d.cycles}</div>
-                    <button class="nav-btn" ${isLogged ? '' : 'disabled'} onclick="changeCycle('${d.id}', 1)">+</button>
-                </div>
-            `).join('');
+                    <button class="nav-btn" ${plusEnabled ? '' : 'disabled'} onclick="changeCycle('${d.id}', 1)">+</button>
+                </div>`;
+            }).join('');
+            
             renderChart(data);
+            renderAdminList(data);
         }
 
         async function changeCycle(id, val) {
             const current = state.extraCycles[id] || 0;
-            const newVal = Math.max(0, current + val);
-            await db.ref(`maintenanceState/extraCycles/${id}`).set(newVal);
+            await db.ref(`maintenanceState/extraCycles/${id}`).set(Math.max(0, current + val));
         }
 
         async function wpReset(id) {
-            const pw = prompt("Master-Passwort für WP-Reset A" + id + ":");
+            const pw = prompt("Master-Passwort für A" + id + ":");
             if(pw === cloudConfig.masterPassword) {
                 const updates = {};
                 updates[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 216000;
                 updates[`maintenanceState/extraCycles/${id}`] = 0;
                 await db.ref().update(updates);
-                alert("WP-Reset für A" + id + " erfolgreich durchgeführt.");
-            } else {
-                alert("Passwort falsch!");
-            }
+            } else { alert("Falsch!"); }
+        }
+
+        function openAdmin() {
+            if(prompt("Admin-Passwort:") === cloudConfig.masterPassword) openModal('adminModal');
+            else alert("Zugriff verweigert.");
+        }
+
+        function renderAdminList(data) {
+            const container = document.getElementById('adminActionsList');
+            container.innerHTML = data.map(d => `
+                <div class="admin-list-item">
+                    <span><b>A${d.id}</b> (Zyklen: ${d.cycles})</span>
+                    <div>
+                        <button onclick="clearPath('extraCycles/${d.id}')">Zyklen 0</button>
+                        <button onclick="clearPath('agieOffsets/${d.id}')">WP Reset weg</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        async function clearPath(path) {
+            if(confirm("Löschen?")) await db.ref(`maintenanceState/${path}`).remove();
         }
 
         function renderChart(data) {
@@ -165,34 +196,16 @@
             });
         }
 
-        function openModal() { document.getElementById('authModal').style.display = 'flex'; }
-        function closeModal() { document.getElementById('authModal').style.display = 'none'; }
-
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         async function performLogin() {
-            try {
-                await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value);
-                closeModal();
-            } catch(e) { alert("Login Fehler: " + e.message); }
+            try { await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value); closeModal('authModal'); } catch(e) { alert(e.message); }
         }
-
         async function performRegister() {
-            const inviteIn = prompt("Einladungscode eingeben:");
-            if (inviteIn !== cloudConfig.inviteCode) return alert("Code falsch!");
-            
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('pass').value;
-            const name = prompt("Name:");
-
-            if(!e || !p || !name) return alert("Felder ausfüllen!");
-
-            try {
-                const cred = await auth.createUserWithEmailAndPassword(e, p);
-                await cred.user.updateProfile({ displayName: name });
-                alert("Konto erstellt!");
-                closeModal();
-            } catch(error) { alert(error.message); }
+            if(prompt("Code:") !== cloudConfig.inviteCode) return alert("Falsch!");
+            const e = document.getElementById('email').value, p = document.getElementById('pass').value, n = prompt("Name:");
+            try { const cred = await auth.createUserWithEmailAndPassword(e, p); await cred.user.updateProfile({ displayName: n }); closeModal('authModal'); } catch(e) { alert(e.message); }
         }
-
         function triggerImport() { document.getElementById('fileInput').click(); }
         document.getElementById('fileInput').onchange = (e) => {
             const reader = new FileReader();
