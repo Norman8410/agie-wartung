@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V11.7 (Mixed Security)</title>
+    <title>Agie Wartung - Bosch V11.9 (Final History)</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -50,7 +50,6 @@
     <div id="adminModal" class="modal">
         <div class="modal-box">
             <h2 style="color:var(--bosch-red)">⚙️ Admin Korrektur</h2>
-            <p style="font-size:11px; margin-bottom:15px">Änderungen direkt in der Cloud-Datenbank.</p>
             <div id="adminActionsList" style="text-align:left;"></div>
             <button class="nav-btn btn-primary" style="width:100%; margin-top:20px" onclick="closeModal('adminModal')">Schließen</button>
         </div>
@@ -59,13 +58,14 @@
     <div class="top-bar"></div>
     <div class="header">
         <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-        <div id="statusLabel" style="font-size: 12px; font-weight: bold;">Initialisiere...</div>
+        <div id="statusLabel" style="font-size: 12px; font-weight: bold;">Verbinde...</div>
     </div>
 
     <div style="padding: 10px 20px; background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; gap: 10px;">
         <button id="authBtn" class="nav-btn" onclick="openModal('authModal')">🔑 Login</button>
         <button id="importBtn" class="nav-btn btn-primary" onclick="triggerImport()" disabled>📥 JSON Import</button>
         <button id="adminBtn" class="nav-btn" onclick="openAdmin()" disabled>⚙️ Admin</button>
+        <button id="exportBtn" class="nav-btn" onclick="exportCSV()">📊 CSV Protokoll</button>
     </div>
 
     <div class="main-layout">
@@ -90,15 +90,13 @@
         const auth = firebase.auth();
 
         let cloudConfig = { inviteCode: "", AdminPW: "", masterPassword: "" };
-        let state = { cloudRawData: [], extraCycles: {}, agieOffsets: {} };
+        let state = { cloudRawData: [], extraCycles: {}, agieOffsets: {}, history: [] };
         let chart = null;
 
         db.ref('config').on('value', snap => {
-            if(snap.exists()) {
-                cloudConfig = snap.val();
-                document.getElementById('statusLabel').innerText = "V11.7 | Cloud Online";
-                document.getElementById('statusLabel').style.color = "green";
-            }
+            if(snap.exists()) cloudConfig = snap.val();
+            document.getElementById('statusLabel').innerText = "V11.9 | Online";
+            document.getElementById('statusLabel').style.color = "green";
         });
 
         db.ref('maintenanceState').on('value', snap => {
@@ -106,6 +104,7 @@
             state.cloudRawData = val.cloudRawData || [];
             state.extraCycles = val.extraCycles || {};
             state.agieOffsets = val.agieOffsets || {};
+            state.history = val.history ? Object.values(val.history) : [];
             updateUI();
         });
 
@@ -151,40 +150,72 @@
 
         async function changeCycle(id, val) {
             const current = state.extraCycles[id] || 0;
+            const user = auth.currentUser ? auth.currentUser.displayName : "Unbekannt";
+            const now = new Date().toLocaleString();
+            const action = val > 0 ? "Wartung durchgeführt (+16k)" : "Korrektur (-16k)";
+            
             await db.ref(`maintenanceState/extraCycles/${id}`).set(Math.max(0, current + val));
+            await db.ref('maintenanceState/history').push({
+                Zeit: now, Agie: "A"+id, Aktion: action, User: user, TS: Date.now()
+            });
         }
 
         async function wpReset(id) {
-            const pw = prompt("Master-Passwort für A" + id + ":");
-            if(pw === cloudConfig.masterPassword) {
+            const pwIn = prompt("Master-Passwort für WP-Reset A" + id + ":");
+            if(pwIn === String(cloudConfig.masterPassword)) {
+                const user = auth.currentUser.displayName;
                 const updates = {};
                 updates[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 216000;
                 updates[`maintenanceState/extraCycles/${id}`] = 0;
+                updates[`maintenanceState/history/${db.ref().push().key}`] = {
+                    Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: "WP-Reset (Vollwartung)", User: user, TS: Date.now()
+                };
                 await db.ref().update(updates);
+                alert("WP-Reset erfolgreich.");
             } else { alert("Falsch!"); }
         }
 
         function openAdmin() {
-            // ADMINBEREICH NUTZT AdminPW
-            if(prompt("Bitte Admin-Passwort eingeben:") === cloudConfig.AdminPW) {
-                openModal('adminModal');
-            } else { alert("Zugriff verweigert."); }
+            if(prompt("Admin-Passwort:") === String(cloudConfig.AdminPW)) openModal('adminModal');
+            else alert("Verweigert.");
+        }
+
+        async function clearPath(id, field) {
+            if(confirm("Admin-Korrektur für A" + id + " wirklich durchführen?")) {
+                const user = auth.currentUser.displayName;
+                const path = field === 'cycles' ? `extraCycles/${id}` : `agieOffsets/${id}`;
+                const label = field === 'cycles' ? "Admin: Zyklen auf 0" : "Admin: WP-Reset gelöscht";
+                
+                await db.ref(`maintenanceState/${path}`).remove();
+                await db.ref('maintenanceState/history').push({
+                    Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: label, User: user, TS: Date.now()
+                });
+            }
+        }
+
+        function exportCSV() {
+            if(state.history.length === 0) return alert("Keine Daten.");
+            let csv = "\uFEFFDatum;Maschine;Aktion;Mitarbeiter\n";
+            state.history.sort((a,b) => b.TS - a.TS).forEach(h => {
+                csv += `${h.Zeit};${h.Agie};${h.Aktion};${h.User}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Protokoll_Agie_${new Date().toLocaleDateString()}.csv`;
+            link.click();
         }
 
         function renderAdminList(data) {
             const container = document.getElementById('adminActionsList');
             container.innerHTML = data.map(d => `
                 <div class="admin-list-item">
-                    <span><b>A${d.id}</b> (Zyklen: ${d.cycles})</span>
+                    <span><b>A${d.id}</b></span>
                     <div>
-                        <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('extraCycles/${d.id}')">Zyklen 0</button>
-                        <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('agieOffsets/${d.id}')">WP-Offset 0</button>
+                        <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('${d.id}', 'cycles')">Zyklen 0</button>
+                        <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('${d.id}', 'wp')">WP Weg</button>
                     </div>
                 </div>`).join('');
-        }
-
-        async function clearPath(path) {
-            if(confirm("Diesen Eintrag wirklich löschen?")) await db.ref(`maintenanceState/${path}`).remove();
         }
 
         function renderChart(data) {
@@ -199,17 +230,14 @@
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        
         async function performLogin() {
             try { await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value); closeModal('authModal'); } catch(e) { alert(e.message); }
         }
-        
         async function performRegister() {
-            if(prompt("Einladungscode:") !== cloudConfig.inviteCode) return alert("Falsch!");
+            if(prompt("Code:") !== String(cloudConfig.inviteCode)) return alert("Falsch!");
             const e = document.getElementById('email').value, p = document.getElementById('pass').value, n = prompt("Name:");
             try { const cred = await auth.createUserWithEmailAndPassword(e, p); await cred.user.updateProfile({ displayName: n }); closeModal('authModal'); } catch(e) { alert(e.message); }
         }
-
         function triggerImport() { document.getElementById('fileInput').click(); }
         document.getElementById('fileInput').onchange = (e) => {
             const reader = new FileReader();
