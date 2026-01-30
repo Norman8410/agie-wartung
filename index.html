@@ -141,8 +141,8 @@
             const isLogged = !!auth.currentUser;
 
             list.innerHTML = data.map(d => {
-                // LOGIK: Aktiv nur wenn eingeloggt UND Rest < 2000 UND Zielwert max. 16000
-                const plusEnabled = isLogged && d.rest < 2000 && (d.rest + 16000 <= 16000);
+                // Button aktiv, sobald Rest unter 2000
+                const plusEnabled = isLogged && d.rest < 2000;
                 
                 return `
                 <div class="control-row" style="border-left-color:${d.color}">
@@ -160,11 +160,33 @@
         }
 
         async function changeCycle(id, val) {
-            const current = state.extraCycles[id] || 0;
-            const user = auth.currentUser.displayName || "User";
-            const action = val > 0 ? "Wartung durchgeführt (+16k)" : "Korrektur (-16k)";
+            const currentCycles = state.extraCycles[id] || 0;
+            const item = state.cloudRawData.find(x => x.StationNo == id);
+            const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
             
-            await db.ref(`maintenanceState/extraCycles/${id}`).set(Math.max(0, current + val));
+            let newCycles = currentCycles;
+
+            if (val > 0) {
+                // Logik für den + Button:
+                const aktuellerRest = (16000 + (currentCycles * 16000)) - ist;
+                
+                if (aktuellerRest > 0) {
+                    // Fall 1: Rest ist positiv (z.B. 1500) -> Setze Rest auf exakt 16000
+                    // Berechnung: (Ziel 16000 + Ist-Wert) / 16000 - 1
+                    newCycles = (16000 + ist) / 16000 - 1;
+                } else {
+                    // Fall 2: Rest ist negativ (z.B. -500) -> Addiere einfach 16000 (neuer Rest 15500)
+                    newCycles = currentCycles + 1;
+                }
+            } else {
+                // Logik für den - Button:
+                newCycles = Math.max(0, currentCycles - 1);
+            }
+
+            const user = auth.currentUser ? auth.currentUser.displayName : "Unbekannt";
+            const action = val > 0 ? "Wartung gebucht (Cap auf 16k)" : "Zyklus reduziert";
+
+            await db.ref(`maintenanceState/extraCycles/${id}`).set(newCycles);
             await db.ref('maintenanceState/history').push({
                 Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: action, User: user, TS: Date.now()
             });
