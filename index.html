@@ -155,14 +155,13 @@
         }
 
         async function wpReset(id) {
-            // ZURÜCKGESETZT AUF masterPassword
-            if(prompt("Master-Passwort für WP-Reset A" + id + ":") === cloudConfig.masterPassword) {
+            const pw = prompt("Master-Passwort für A" + id + ":");
+            if(pw === cloudConfig.masterPassword) {
                 const updates = {};
                 updates[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 216000;
                 updates[`maintenanceState/extraCycles/${id}`] = 0;
                 await db.ref().update(updates);
-                alert("WP-Reset erfolgreich.");
-            } else { alert("Passwort falsch!"); }
+            } else { alert("Falsch!"); }
         }
 
         function openAdmin() {
