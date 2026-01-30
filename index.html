@@ -29,25 +29,45 @@
             overflow: hidden; 
         }
 
+        /* Der farbige "Like a Bosch" Balken */
         .top-bar { 
-            height: 8px; 
+            height: 45px; 
             width: 100%; 
-            background: linear-gradient(90deg, var(--bosch-red) 25%, var(--bosch-blue) 25%, var(--bosch-blue) 50%, var(--bosch-light-blue) 50%, var(--bosch-light-blue) 75%, var(--bosch-green) 75%); 
+            background: linear-gradient(90deg, 
+                #d50000 0%, #d50000 25%, 
+                #003a6c 25%, #003a6c 50%, 
+                #00b5e2 50%, #00b5e2 75%, 
+                #008a4f 75%, #008a4f 100%); 
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            box-sizing: border-box;
         }
 
+        .bar-title {
+            color: white;
+            font-size: 19px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        /* Der weiße Header-Bereich */
         .header { 
             background: white; 
-            padding: 12px 30px; 
+            padding: 12px 25px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .bosch-brand { 
-            color: var(--bosch-red); 
-            font-weight: 900; 
-            font-size: 24px; 
+        .bosch-text {
+            color: #d50000;
+            font-size: 30px;
+            font-weight: 900;
+            letter-spacing: -1.5px;
+            font-family: 'Arial Black', Gadget, sans-serif;
+            line-height: 1;
         }
         
         .main-layout { 
@@ -183,15 +203,20 @@
         </div>
     </div>
 
-    <div class="top-bar"></div>
+    <div class="top-bar">
+        <span style="color: white; font-size: 18px; font-weight: bold;">›</span>
+        <div class="bar-title">Wartungsintervall Agie</div>
+    </div>
+
     <div class="header">
-        <div class="bosch-brand">BOSCH<span> AGIE</span></div>
-        <div style="display: flex; gap: 20px; align-items: center;">
-            <div id="timerDisplay" style="font-size: 12px; color: var(--bosch-red); font-weight: bold; display: none;"></div>
-            <div id="statusLabel" style="font-size: 12px; font-weight: bold;">Verbinde...</div>
+        <div class="bosch-brand">
+            <span class="bosch-text">BOSCH</span>
         </div>
-        <div style="position: absolute; right: 30px; top: 20px;">
-            <button id="helpBtn" class="nav-btn" onclick="toggleHelp()" style="border-radius: 50%; width: 30px; height: 30px; padding: 0;">?</button>
+        
+        <div style="display: flex; gap: 20px; align-items: center;">
+            <div id="timerDisplay" style="font-size: 13px; color: var(--bosch-red); font-weight: bold; display: none;"></div>
+            <div id="statusLabel" style="font-size: 14px; font-weight: bold; color: #008a4f;">Online</div>
+            <button id="helpBtn" class="nav-btn" onclick="toggleHelp()" style="border-radius: 50%; width: 35px; height: 35px; padding: 0; font-size: 18px; background: #003a6c; color: white; border: none; cursor: pointer;">?</button>
         </div>
 
         <div id="helpLoggedOut" class="modal">
@@ -212,9 +237,9 @@
                 <hr>
                 <p><b>Balkendiagramm:</b> Zeigt den Rest bis zur Wartung. Ein Hover zeigt Details zur Maschine.</p>
                 <p><b>Buttons (+/-):</b> Nur aktiv, wenn Stückzahlen erreicht sind (Rest < 2000).</p>
-                <p><b>WP-Reset:</b> Bestädigt einen austausches des Wartungsplanes. Erfordert <b>Master-PW</b>.</p>
-                <p><b>CSV-Export:</b> Protokoll-Download. Erfordert <b>Admin-PW</b>.</p>
-                <p><b>Admin:</b> Hier kann ein <b>WP-Reset verworfen</b> werden.</p>
+                <p><b>WP-Reset:</b> Bestätigt einen Austausch des Wartungsplanes an der Maschine. Erfordert <b>Master-Passwort</b>.</p>
+                <p><b>CSV-Export:</b> Protokoll-Download. Erfordert <b>Admin-Passwort</b>.</p>
+                <p><b>🛠️ Admin-Bereich:</b> Ermöglicht Korrekturen. Hier kann ein <b>WP-Reset verworfen</b> werden.</p>
                 <button class="nav-btn btn-primary" style="width:100%" onclick="closeModal('helpLoggedIn')">Schließen</button>
             </div>
         </div>
@@ -259,8 +284,6 @@
 
         db.ref('config').on('value', snap => {
             if(snap.exists()) cloudConfig = snap.val();
-            document.getElementById('statusLabel').innerText = "V12.7 | Online";
-            document.getElementById('statusLabel').style.color = "green";
         });
 
         db.ref('maintenanceState').on('value', snap => {
@@ -357,6 +380,7 @@
                     Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: "WP-Reset", User: auth.currentUser.displayName, TS: Date.now()
                 };
                 await db.ref().update(updates);
+                alert("WP-Reset erfolgreich.");
             } else { alert("Passwort falsch!"); }
         }
 
@@ -475,18 +499,31 @@
         function toggleHelp() { auth.currentUser ? openModal('helpLoggedIn') : openModal('helpLoggedOut'); }
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        async function performLogin() { try { await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value); closeModal('authModal'); } catch(e) { alert(e.message); } }
+        
+        async function performLogin() { 
+            try { 
+                await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value); 
+                closeModal('authModal'); 
+            } catch(e) { alert(e.message); } 
+        }
+
         async function performRegister() {
             if(prompt("Einladungscode:") !== String(cloudConfig.inviteCode)) return alert("Falsch!");
             const e = document.getElementById('email').value, p = document.getElementById('pass').value, n = prompt("Name:");
-            try { const cred = await auth.createUserWithEmailAndPassword(e, p); await cred.user.updateProfile({ displayName: n }); closeModal('authModal'); } catch(e) { alert(e.message); }
+            try { 
+                const cred = await auth.createUserWithEmailAndPassword(e, p); 
+                await cred.user.updateProfile({ displayName: n }); 
+                closeModal('authModal'); 
+            } catch(e) { alert(e.message); }
         }
+
         function triggerImport() { document.getElementById('fileInput').click(); }
         document.getElementById('fileInput').onchange = (e) => {
             const r = new FileReader();
             r.onload = (ev) => db.ref('maintenanceState/cloudRawData').set(JSON.parse(ev.target.result));
             r.readAsText(e.target.files[0]);
         };
+
         ['mousemove', 'mousedown', 'keypress', 'touchstart'].forEach(evt => document.addEventListener(evt, resetLogoutTimer));
     </script>
 </body>
