@@ -7,250 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"><<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V1.0</title>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-    
-    <style>
-        :root { 
-            --bosch-red: #d50000; --bosch-blue: #003a6c; --bosch-light-blue: #00b5e2; 
-            --bosch-green: #008a4f; --bosch-gray: #eff1f2; --critical-red: #8b0000;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bosch-gray); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        .top-bar { height: 45px; width: 100%; background: linear-gradient(90deg, #d50000 0%, #d50000 25%, #003a6c 25%, #003a6c 50%, #00b5e2 50%, #00b5e2 75%, #008a4f 75%, #008a4f 100%); display: flex; align-items: center; padding: 0 15px; box-sizing: border-box; }
-        .bar-title { color: white; font-size: 19px; font-weight: 600; margin-left: 10px; }
-        .header { background: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .bosch-brand { display: flex; align-items: baseline; gap: 8px; }
-        .bosch-text { color: #d50000; font-size: 30px; font-weight: 900; letter-spacing: -1.5px; font-family: 'Arial Black', sans-serif; line-height: 1; }
-        .version-tag { color: #525f6b; font-size: 14px; font-weight: bold; }
-        .main-layout { display: flex; flex: 1; padding: 20px; gap: 20px; overflow: hidden; }
-        .content { flex: 3; background: white; padding: 20px; border-top: 4px solid var(--bosch-blue); position: relative; }
-        .sidebar { flex: 1.5; background: white; border-top: 4px solid var(--bosch-light-blue); overflow-y: auto; padding: 10px; }
-        .footer { background: white; padding: 10px 30px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; }
-        .control-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; border-left: 8px solid #ccc; margin-bottom: 5px; gap: 8px; }
-        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-        .pulse { animation: pulse-red 1.5s infinite ease-in-out; }
-        .nav-btn { padding: 6px 12px; cursor: pointer; border: 1px solid #ccc; background: white; font-weight: bold; color: var(--bosch-blue); font-size: 13px; border-radius: 2px; }
-        .nav-btn:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
-        .btn-primary { background: var(--bosch-blue); color: white; border: none; }
-        .btn-wp { background: var(--bosch-red); color: white; border: none; font-size: 11px; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-box { background: white; padding: 30px; border-top: 8px solid var(--bosch-red); width: 400px; text-align: center; max-height: 85vh; overflow-y: auto; }
-        input { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
-        .admin-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; font-size: 12px; }
-        .switch-auth { font-size: 12px; color: var(--bosch-blue); cursor: pointer; text-decoration: underline; margin-top: 15px; display: block; }
-    </style>
-</head>
-<body>
-
-    <div id="authModal" class="modal">
-        <div class="modal-box" id="loginContainer">
-            <h2 style="color:var(--bosch-blue)">Anmeldung</h2>
-            <input type="email" id="loginEmail" placeholder="E-Mail (@de.bosch.com / @bcn.bosch.com)">
-            <input type="password" id="loginPass" placeholder="Passwort">
-            <button class="nav-btn btn-primary" style="width:100%" onclick="performLogin()">Einloggen</button>
-            <span class="switch-auth" onclick="toggleAuthMode('reg')">Noch kein Konto? Hier registrieren</span>
-            <p onclick="closeModal('authModal')" style="cursor:pointer; font-size:12px; margin-top:15px; color:#666">Abbrechen</p>
-        </div>
-        
-        <div class="modal-box" id="regContainer" style="display:none">
-            <h2 style="color:var(--bosch-red)">Registrierung</h2>
-            <input type="text" id="regName" placeholder="Vollständiger Name">
-            <input type="email" id="regEmail" placeholder="Bosch E-Mail (de oder bcn)">
-            <input type="password" id="regPass" placeholder="Passwort">
-            <input type="password" id="regPassConfirm" placeholder="Passwort bestätigen">
-            <input type="text" id="regInvite" placeholder="Einladungscode">
-            <button class="nav-btn btn-primary" style="width:100%; background: var(--bosch-green);" onclick="performRegister()">Konto erstellen</button>
-            <span class="switch-auth" onclick="toggleAuthMode('login')">Zurück zum Login</span>
-        </div>
-    </div>
-
-    <div id="adminModal" class="modal">
-        <div class="modal-box">
-            <h2 style="color:var(--bosch-red)">⚙️ Admin Korrektur</h2>
-            <div id="adminActionsList" style="text-align:left;"></div>
-            <button class="nav-btn btn-primary" style="width:100%; margin-top:20px" onclick="closeModal('adminModal')">Schließen</button>
-        </div>
-    </div>
-
-    <div class="top-bar">
-        <span style="color: white; font-size: 18px; font-weight: bold;">›</span>
-        <div class="bar-title">Wartungsintervall Agie</div>
-    </div>
-    <div class="header">
-        <div class="bosch-brand"><span class="bosch-text">BOSCH</span><span class="version-tag">V1.0</span></div>
-        <div style="display: flex; gap: 20px; align-items: center;">
-            <div id="timerDisplay" style="font-size: 13px; color: var(--bosch-red); font-weight: bold; display: none;"></div>
-            <div id="statusLabel" style="font-size: 14px; font-weight: bold; color: #008a4f;">Online</div>
-            <button id="helpBtn" class="nav-btn" onclick="toggleHelp()" style="border-radius: 50%; width: 35px; height: 35px; padding: 0; font-size: 18px; background: #003a6c; color: white; border: none; cursor: pointer;">?</button>
-        </div>
-    </div>
-
-    <div style="padding: 10px 20px; background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; gap: 10px; align-items: center;">
-        <button id="authBtn" class="nav-btn" onclick="openModal('authModal')">🔑 Login</button>
-        <button id="importBtn" class="nav-btn btn-primary" onclick="triggerImport()" style="display:none">📥 JSON Import</button>
-        <button id="adminBtn" class="nav-btn" onclick="openAdmin()" style="display:none">⚙️ Admin</button>
-        <button id="exportBtn" class="nav-btn" onclick="exportCSVWithAuth()" style="display:none">📊 CSV Protokoll</button>
-    </div>
-
-    <div class="main-layout">
-        <div class="content"><canvas id="mainChart"></canvas></div>
-        <div class="sidebar" id="machineList"></div>
-    </div>
-    <div class="footer">Verantwortlicher Norman Schultheis | Agie Wartung V1.0</div>
-    <input type="file" id="fileInput" style="display:none" accept=".json">
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyD6xGCtU-felOyO_BRsFnVlB4yhC46FgYg",
-            authDomain: "bosch-agie-wartung.firebaseapp.com",
-            databaseURL: "https://bosch-agie-wartung-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "bosch-agie-wartung",
-            storageBucket: "bosch-agie-wartung.firebasestorage.app",
-            messagingSenderId: "211606405555",
-            appId: "1:211606405555:web:cc2475ca47804086a3cbc6"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database(), auth = firebase.auth();
-        let cloudConfig = { inviteCode: "", AdminPW: "", masterPassword: "" };
-        let state = { cloudRawData: [], extraCycles: {}, agieOffsets: {}, history: [] };
-        let chart = null, logoutTimer, countdownInterval;
-        const timeoutSeconds = 70;
-
-        db.ref('config').on('value', snap => { if(snap.exists()) cloudConfig = snap.val(); });
-        db.ref('maintenanceState').on('value', snap => {
-            const v = snap.val() || {};
-            state.cloudRawData = v.cloudRawData || [];
-            state.extraCycles = v.extraCycles || {};
-            state.agieOffsets = v.agieOffsets || {};
-            state.history = v.history ? Object.values(v.history) : [];
-            updateUI();
-        });
-
-        auth.onAuthStateChanged(user => {
-            const btn = document.getElementById('authBtn'), imBtn = document.getElementById('importBtn'),
-                  adBtn = document.getElementById('adminBtn'), exBtn = document.getElementById('exportBtn'),
-                  hBtn = document.getElementById('helpBtn');
-            btn.innerText = user ? "🔓 Logout (" + (user.displayName || "User") + ")" : "🔑 Login";
-            btn.onclick = user ? () => auth.signOut() : () => openModal('authModal');
-            const dS = user ? "inline-block" : "none";
-            imBtn.style.display = dS; adBtn.style.display = dS; exBtn.style.display = dS;
-            if (user) { resetLogoutTimer(); hBtn.style.background = "var(--bosch-blue)"; hBtn.style.color = "white"; }
-            else { stopLogoutTimer(); hBtn.style.background = "white"; hBtn.style.color = "var(--bosch-blue)"; }
-            updateUI();
-        });
-
-        function toggleAuthMode(mode) {
-            document.getElementById('loginContainer').style.display = (mode === 'login') ? 'block' : 'none';
-            document.getElementById('regContainer').style.display = (mode === 'reg') ? 'block' : 'none';
-        }
-
-        async function performRegister() {
-            const name = document.getElementById('regName').value;
-            const email = document.getElementById('regEmail').value.toLowerCase();
-            const pass = document.getElementById('regPass').value;
-            const passConf = document.getElementById('regPassConfirm').value;
-            const invite = document.getElementById('regInvite').value;
-
-            if(!name || !email || !pass || !invite) return alert("Bitte alle Felder ausfüllen!");
-            if(pass !== passConf) return alert("Passwörter stimmen nicht überein!");
-            if(invite !== String(cloudConfig.inviteCode)) return alert("Einladungscode ungültig!");
-            
-            // Domain Check
-            if(!email.endsWith("@de.bosch.com") && !email.endsWith("@bcn.bosch.com")) {
-                return alert("Registrierung nur mit @de.bosch.com oder @bcn.bosch.com E-Mails möglich!");
-            }
-
-            try {
-                const cred = await auth.createUserWithEmailAndPassword(email, pass);
-                await cred.user.updateProfile({ displayName: name });
-                alert("Konto erfolgreich erstellt!");
-                closeModal('authModal');
-            } catch(e) { alert("Fehler: " + e.message); }
-        }
-
-        async function performLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const pass = document.getElementById('loginPass').value;
-            try { 
-                await auth.signInWithEmailAndPassword(email, pass); 
-                closeModal('authModal'); 
-            } catch(e) { alert("Login fehlgeschlagen: " + e.message); }
-        }
-
-        function updateUI() {
-            const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7"];
-            const data = state.cloudRawData.map(item => {
-                const id = item.StationNo;
-                const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
-                const cycles = state.extraCycles[id] || 0;
-                const rest = (16000 + (cycles * 16000)) - ist;
-                let col = "#008a4f";
-                if (rest <= 0) col = "#8b0000"; else if (rest < 500) col = "#ff4d4d"; else if (rest < 2000) col = "#ffa500";
-                return { id, rest, color: col, ist, cycles, pkg: packages[cycles % packages.length] };
-            }).sort((a,b) => a.rest - b.rest);
-
-            const list = document.getElementById('machineList'), isLogged = !!auth.currentUser;
-            list.innerHTML = data.map(d => {
-                const isOverdue = d.rest <= 0;
-                const plusEnabled = isLogged && d.rest < 2000;
-                return `<div class="control-row ${isOverdue ? 'pulse' : ''}" style="border-left-color:${d.color}">
-                    <div style="flex:1.5"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
-                    <div style="flex:1; text-align:right; font-weight:bold; font-size:16px; color:${isOverdue ? '#8b0000' : 'black'}">${d.rest.toLocaleString()}</div>
-                    <button class="nav-btn btn-wp" ${isLogged && d.ist > 210000 ? '' : 'disabled'} onclick="wpReset('${d.id}')">WP</button>
-                    <button class="nav-btn" ${isLogged && d.cycles > 0 ? '' : 'disabled'} onclick="changeCycle('${d.id}', -1)">-</button>
-                    <div style="width:20px; text-align:center; font-weight:bold">${d.cycles}</div>
-                    <button class="nav-btn" ${plusEnabled ? '' : 'disabled'} onclick="changeCycle('${d.id}', 1)">+</button>
-                </div>`;
-            }).join('');
-            renderChart(data);
-        }
-
-        async function changeCycle(id, val) {
-            const cC = state.extraCycles[id] || 0;
-            const item = state.cloudRawData.find(x => x.StationNo == id);
-            const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
-            let nC = (val > 0) ? ( ((16000 + (cC * 16000)) - ist) > 0 ? (16000 + ist) / 16000 - 1 : cC + 1 ) : Math.max(0, cC - 1);
-            await db.ref(`maintenanceState/extraCycles/${id}`).set(nC);
-            await db.ref('maintenanceState/history').push({ Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: val > 0 ? "Wartung" : "Korrektur", User: auth.currentUser.displayName, TS: Date.now() });
-        }
-
-        async function wpReset(id) {
-            if(prompt("Master-Passwort A" + id + ":") === String(cloudConfig.masterPassword)) {
-                const up = {}; up[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 216000; up[`maintenanceState/extraCycles/${id}`] = 0;
-                up[`maintenanceState/history/${db.ref().push().key}`] = { Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: "WP-Reset", User: auth.currentUser.displayName, TS: Date.now() };
-                await db.ref().update(up); alert("Erfolgreich.");
-            } else alert("Falsch!");
-        }
-
-        function openAdmin() { if(prompt("Admin-Passwort:") === String(cloudConfig.AdminPW)) openModal('adminModal'); }
-        function renderChart(data) {
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            if(chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'bar', plugins: [ChartDataLabels],
-                data: { labels: data.map(d => "A" + d.id), datasets: [{ data: data.map(d => d.rest), backgroundColor: data.map(d => d.color) }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', offset: 5, rotation: -90, formatter: (v) => v.toLocaleString(), font: { weight: 'bold' }, color: '#003a6c' } }, scales: { y: { beginAtZero: false } }, layout: { padding: { top: 60 } } }
-            });
-        }
-
-        function resetLogoutTimer() { stopLogoutTimer(); if (!auth.currentUser) return; let tL = timeoutSeconds; const disp = document.getElementById('timerDisplay'); disp.style.display = "block"; countdownInterval = setInterval(() => { tL--; disp.innerText = "Auto-Logout: " + tL + "s"; if (tL <= 0) clearInterval(countdownInterval); }, 1000); logoutTimer = setTimeout(() => auth.signOut(), timeoutSeconds * 1000); }
-        function stopLogoutTimer() { if (logoutTimer) clearTimeout(logoutTimer); if (countdownInterval) clearInterval(countdownInterval); if (document.getElementById('timerDisplay')) document.getElementById('timerDisplay').style.display = "none"; }
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function triggerImport() { document.getElementById('fileInput').click(); }
-        document.getElementById('fileInput').onchange = (e) => { const r = new FileReader(); r.onload = (ev) => db.ref('maintenanceState/cloudRawData').set(JSON.parse(ev.target.result)); r.readAsText(e.target.files[0]); };
-        ['mousemove', 'mousedown', 'keypress', 'touchstart'].forEach(evt => document.addEventListener(evt, resetLogoutTimer));
-    </script>
-</body>
-</html>/script>
     
     <style>
         :root { 
@@ -297,13 +54,11 @@
 
         .footer { background: white; padding: 10px 30px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; }
         
-        /* Seitenleiste Zeilen mit dickerem Rand */
         .control-row { 
             display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; 
             border-left: 8px solid #ccc; margin-bottom: 5px; gap: 8px; 
         }
 
-        /* Pulsieren für Überfällige */
         @keyframes pulse-red {
             0% { opacity: 1; }
             50% { opacity: 0.6; }
@@ -320,20 +75,33 @@
         .btn-wp { background: var(--bosch-red); color: white; border: none; font-size: 11px; }
         
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-box { background: white; padding: 30px; border-top: 8px solid var(--bosch-red); width: 500px; text-align: center; max-height: 85vh; overflow-y: auto; }
-        input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; border: 1px solid #ddd; }
+        .modal-box { background: white; padding: 30px; border-top: 8px solid var(--bosch-red); width: 450px; text-align: center; max-height: 85vh; overflow-y: auto; }
+        input { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
         .admin-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; font-size: 12px; }
+        .switch-auth { font-size: 12px; color: var(--bosch-blue); cursor: pointer; text-decoration: underline; margin-top: 15px; display: block; }
     </style>
 </head>
 <body>
 
     <div id="authModal" class="modal">
-        <div class="modal-box" style="width:300px">
+        <div class="modal-box" id="loginContainer">
             <h2 style="color:var(--bosch-blue)">Anmeldung</h2>
-            <input type="email" id="email" placeholder="E-Mail">
-            <input type="password" id="pass" placeholder="Passwort">
+            <input type="email" id="loginEmail" placeholder="E-Mail (@de.bosch.com / @bcn.bosch.com)">
+            <input type="password" id="loginPass" placeholder="Passwort">
             <button class="nav-btn btn-primary" style="width:100%" onclick="performLogin()">Einloggen</button>
-            <button class="nav-btn" style="width:100%; margin-top:10px" onclick="performRegister()">Neu registrieren</button>
+            <span class="switch-auth" onclick="toggleAuthMode('reg')">Noch kein Konto? Hier registrieren</span>
+            <p onclick="closeModal('authModal')" style="cursor:pointer; font-size:12px; margin-top:15px; color:#666">Abbrechen</p>
+        </div>
+        
+        <div class="modal-box" id="regContainer" style="display:none">
+            <h2 style="color:var(--bosch-red)">Registrierung</h2>
+            <input type="text" id="regName" placeholder="Vollständiger Name">
+            <input type="email" id="regEmail" placeholder="Bosch E-Mail (de oder bcn)">
+            <input type="password" id="regPass" placeholder="Passwort">
+            <input type="password" id="regPassConfirm" placeholder="Passwort bestätigen">
+            <input type="text" id="regInvite" placeholder="Einladungscode">
+            <button class="nav-btn btn-primary" style="width:100%; background: var(--bosch-green);" onclick="performRegister()">Konto erstellen</button>
+            <span class="switch-auth" onclick="toggleAuthMode('login')">Zurück zum Login</span>
             <p onclick="closeModal('authModal')" style="cursor:pointer; font-size:12px; margin-top:15px; color:#666">Abbrechen</p>
         </div>
     </div>
@@ -366,7 +134,7 @@
         <div id="helpLoggedOut" class="modal">
             <div class="modal-box" style="text-align: left;">
                 <h2 style="color:var(--bosch-blue)">Anleitung: Registrierung</h2>
-                <hr><p>1. Oben auf <b>🔑 Login</b> klicken.<br>2. <b>"Neu registrieren"</b> wählen.<br>3. <b>Den Einladungscode erhalten Sie von Ihrem TL, FK oder Admin.</b></p>
+                <hr><p>1. Oben auf <b>🔑 Login</b> klicken.<br>2. <b>"Hier registrieren"</b> wählen.<br>3. <b>Den Einladungscode erhalten Sie von Ihrem TL, FK oder Admin.</b></p>
                 <p>Verantwortlicher: Norman Schultheis</p>
                 <button class="nav-btn btn-primary" style="width:100%" onclick="closeModal('helpLoggedOut')">Verstanden</button>
             </div>
@@ -439,6 +207,45 @@
             updateUI();
         });
 
+        // HILFSFUNKTIONEN FÜR AUTH MODAL
+        function toggleAuthMode(mode) {
+            document.getElementById('loginContainer').style.display = (mode === 'login') ? 'block' : 'none';
+            document.getElementById('regContainer').style.display = (mode === 'reg') ? 'block' : 'none';
+        }
+
+        async function performLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPass').value;
+            try { 
+                await auth.signInWithEmailAndPassword(email, pass); 
+                closeModal('authModal'); 
+            } catch(e) { alert("Login fehlgeschlagen: " + e.message); }
+        }
+
+        async function performRegister() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value.toLowerCase();
+            const pass = document.getElementById('regPass').value;
+            const passConf = document.getElementById('regPassConfirm').value;
+            const invite = document.getElementById('regInvite').value;
+
+            if(!name || !email || !pass || !invite) return alert("Bitte alle Felder ausfüllen!");
+            if(pass !== passConf) return alert("Passwörter stimmen nicht überein!");
+            if(invite !== String(cloudConfig.inviteCode)) return alert("Einladungscode ungültig!");
+            
+            // Domain Check
+            if(!email.endsWith("@de.bosch.com") && !email.endsWith("@bcn.bosch.com")) {
+                return alert("Registrierung nur mit @de.bosch.com oder @bcn.bosch.com E-Mails möglich!");
+            }
+
+            try {
+                const cred = await auth.createUserWithEmailAndPassword(email, pass);
+                await cred.user.updateProfile({ displayName: name });
+                alert("Konto für " + name + " erfolgreich erstellt!");
+                closeModal('authModal');
+            } catch(e) { alert("Fehler: " + e.message); }
+        }
+
         function updateUI() {
             const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7"];
             const data = state.cloudRawData.map(item => {
@@ -446,13 +253,10 @@
                 const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
                 const cycles = state.extraCycles[id] || 0;
                 const rest = (16000 + (cycles * 16000)) - ist;
-                
-                // Neue Farblogik
-                let color = "#008a4f"; // Grün >= 2000
-                if (rest <= 0) color = "#8b0000"; // Dunkelrot überfällig
-                else if (rest < 500) color = "#ff4d4d"; // Hellrot < 500
-                else if (rest < 2000) color = "#ffa500"; // Orange < 2000
-
+                let color = "#008a4f"; 
+                if (rest <= 0) color = "#8b0000"; 
+                else if (rest < 500) color = "#ff4d4d"; 
+                else if (rest < 2000) color = "#ffa500";
                 return { id, rest, color, ist, cycles, pkg: packages[cycles % packages.length] };
             }).sort((a,b) => a.rest - b.rest);
 
@@ -540,13 +344,6 @@
         function toggleHelp() { auth.currentUser ? openModal('helpLoggedIn') : openModal('helpLoggedOut'); }
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        async function performLogin() { try { await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value); closeModal('authModal'); } catch(e) { alert(e.message); } }
-        async function performRegister() {
-            if(prompt("Einladungscode:") !== String(cloudConfig.inviteCode)) return alert("Falsch!");
-            try { const cred = await auth.createUserWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value); await cred.user.updateProfile({ displayName: prompt("Name:") }); closeModal('authModal'); } catch(e) { alert(e.message); }
-        }
-        function triggerImport() { document.getElementById('fileInput').click(); }
-        document.getElementById('fileInput').onchange = (e) => { const r = new FileReader(); r.onload = (ev) => db.ref('maintenanceState/cloudRawData').set(JSON.parse(ev.target.result)); r.readAsText(e.target.files[0]); };
         ['mousemove', 'mousedown', 'keypress', 'touchstart'].forEach(evt => document.addEventListener(evt, resetLogoutTimer));
     </script>
 </body>
