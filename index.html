@@ -141,7 +141,9 @@
             const isLogged = !!auth.currentUser;
 
             list.innerHTML = data.map(d => {
-                const plusEnabled = isLogged && d.rest < 2000;
+                // LOGIK: Aktiv wenn eingeloggt UND Restwert < 2000 UND neue Buchung <= 16000
+                const plusEnabled = isLogged && d.rest < 2000 && (d.rest + 16000 <= 16500);
+                
                 return `
                 <div class="control-row" style="border-left-color:${d.color}">
                     <div style="flex:1.5"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
