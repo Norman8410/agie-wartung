@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V11.6 (Admin-Security)</title>
+    <title>Agie Wartung - Bosch V11.7 (Mixed Security)</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -49,8 +49,8 @@
 
     <div id="adminModal" class="modal">
         <div class="modal-box">
-            <h2 style="color:var(--bosch-red)">Admin-Bereich</h2>
-            <p style="font-size:11px; margin-bottom:15px">Aktionen werden direkt in der Cloud korrigiert.</p>
+            <h2 style="color:var(--bosch-red)">⚙️ Admin Korrektur</h2>
+            <p style="font-size:11px; margin-bottom:15px">Änderungen direkt in der Cloud-Datenbank.</p>
             <div id="adminActionsList" style="text-align:left;"></div>
             <button class="nav-btn btn-primary" style="width:100%; margin-top:20px" onclick="closeModal('adminModal')">Schließen</button>
         </div>
@@ -89,15 +89,14 @@
         const db = firebase.database();
         const auth = firebase.auth();
 
-        let cloudConfig = { inviteCode: "", AdminPW: "" };
+        let cloudConfig = { inviteCode: "", AdminPW: "", masterPassword: "" };
         let state = { cloudRawData: [], extraCycles: {}, agieOffsets: {} };
         let chart = null;
 
-        // Synchronisation der Einstellungen aus der Firebase
         db.ref('config').on('value', snap => {
             if(snap.exists()) {
                 cloudConfig = snap.val();
-                document.getElementById('statusLabel').innerText = "V11.6 | Cloud Online";
+                document.getElementById('statusLabel').innerText = "V11.7 | Cloud Online";
                 document.getElementById('statusLabel').style.color = "green";
             }
         });
@@ -156,21 +155,21 @@
         }
 
         async function wpReset(id) {
-            // Auch hier nutzen wir nun das neue AdminPW Feld
-            if(prompt("Admin-Passwort für WP-Reset A" + id + ":") === cloudConfig.AdminPW) {
+            // ZURÜCKGESETZT AUF masterPassword
+            if(prompt("Master-Passwort für WP-Reset A" + id + ":") === cloudConfig.masterPassword) {
                 const updates = {};
                 updates[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 216000;
                 updates[`maintenanceState/extraCycles/${id}`] = 0;
                 await db.ref().update(updates);
+                alert("WP-Reset erfolgreich.");
             } else { alert("Passwort falsch!"); }
         }
 
         function openAdmin() {
+            // ADMINBEREICH NUTZT AdminPW
             if(prompt("Bitte Admin-Passwort eingeben:") === cloudConfig.AdminPW) {
                 openModal('adminModal');
-            } else { 
-                alert("Passwort ungültig. Zugriff verweigert."); 
-            }
+            } else { alert("Zugriff verweigert."); }
         }
 
         function renderAdminList(data) {
@@ -180,13 +179,13 @@
                     <span><b>A${d.id}</b> (Zyklen: ${d.cycles})</span>
                     <div>
                         <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('extraCycles/${d.id}')">Zyklen 0</button>
-                        <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('agieOffsets/${d.id}')">WP Weg</button>
+                        <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('agieOffsets/${d.id}')">WP-Offset 0</button>
                     </div>
                 </div>`).join('');
         }
 
         async function clearPath(path) {
-            if(confirm("Eintrag in der Cloud löschen?")) await db.ref(`maintenanceState/${path}`).remove();
+            if(confirm("Diesen Eintrag wirklich löschen?")) await db.ref(`maintenanceState/${path}`).remove();
         }
 
         function renderChart(data) {
