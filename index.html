@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V12.0 (Secure History)</title>
+    <title>Agie Wartung - Bosch V12.1 (Secure History)</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -97,6 +97,8 @@
         let state = { cloudRawData: [], extraCycles: {}, agieOffsets: {}, history: [] };
         let chart = null;
         let logoutTimer;
+        let countdownInterval;
+        const timeoutSeconds = 70;
 
         db.ref('config').on('value', snap => {
             if(snap.exists()) cloudConfig = snap.val();
@@ -129,6 +131,13 @@
             exportBtn.style.display = displayStyle;
             
             updateUI();
+            if (user) {
+                resetLogoutTimer();
+            } else {
+                if (logoutTimer) clearTimeout(logoutTimer);
+                if (countdownInterval) clearInterval(countdownInterval);
+                document.getElementById('timerDisplay').style.display = "none";
+            }
         });
 
         function updateUI() {
@@ -372,6 +381,38 @@
                 if (logoutTimer) clearTimeout(logoutTimer);
             }
         });
+        // --- DIE AUTO-LOGOUT FUNKTION ---
+        function resetLogoutTimer() {
+            if (logoutTimer) clearTimeout(logoutTimer);
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            const display = document.getElementById('timerDisplay');
+        
+            if (auth.currentUser) {
+                let timeLeft = timeoutSeconds;
+                display.style.display = "block";
+                display.innerText = "Auto-Logout in: " + timeLeft + "s";
+        
+                countdownInterval = setInterval(() => {
+                    timeLeft--;
+                    display.innerText = "Auto-Logout in: " + timeLeft + "s";
+                    if (timeLeft <= 0) clearInterval(countdownInterval);
+                }, 1000);
+        
+                logoutTimer = setTimeout(() => {
+                    auth.signOut().then(() => {
+                        display.style.display = "none";
+                        alert("Sitzung abgelaufen: Automatischer Logout nach 70 Sekunden.");
+                    });
+                }, timeoutSeconds * 1000);
+            }
+        }
+        
+        // Überwachung aller Aktionen (Maus, Tastatur, Touch)
+        document.addEventListener('mousemove', resetLogoutTimer);
+        document.addEventListener('mousedown', resetLogoutTimer);
+        document.addEventListener('keypress', resetLogoutTimer);
+        document.addEventListener('touchstart', resetLogoutTimer);
     </script>
 </body>
 </html>
