@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V10.7 (Cloud-Auth Step 1)</title>
+    <title>Agie Wartung - Bosch V10.8</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -24,14 +24,12 @@
         
         .logout-timer { font-size: 12px; font-weight: 600; color: #666; display: none; background: #fff; padding: 4px 10px; border-radius: 15px; border: 1px solid #ddd; }
         .timer-warning { color: var(--bosch-red) !important; animation: blink 1s infinite; font-weight: bold; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         .action-bar { padding: 10px 30px; display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
         .nav-btn { padding: 8px 16px; cursor: pointer; border: 1px solid #bfc0c2; background: white; font-weight: 700; color: var(--bosch-blue); border-radius: 2px; font-size: 13px; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: 0.2s; }
         .nav-btn:hover { background: #f8f9fa; }
         .nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .btn-primary { background: var(--bosch-blue); color: white; border-color: var(--bosch-blue); }
-        .btn-active { background: var(--bosch-green) !important; color: white !important; border-color: var(--bosch-green) !important; }
 
         .main-layout { display: flex; flex: 1; padding: 10px 30px 20px 30px; gap: 20px; overflow: hidden; }
         .content-area { flex: 3; display: flex; flex-direction: column; gap: 15px; overflow: hidden; }
@@ -46,24 +44,14 @@
         .status-green { border-left-color: var(--bosch-green); background: #f0fdf4; }
         .status-overdue { border-left-color: #b00000; background: #ffe0e0; }
 
-        .btn-icon { width: 36px; height: 36px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 4px; font-size: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .btn-icon:disabled { opacity: 0.2; background: #ccc !important; box-shadow: none; }
+        .btn-icon { width: 36px; height: 36px; cursor: pointer; border: none; color: white; font-weight: bold; border-radius: 4px; font-size: 18px; }
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 3000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
-        .modal-content { background: white; padding: 25px; max-width: 700px; width: 95%; border-top: 8px solid var(--bosch-red); box-shadow: 0 20px 50px rgba(0,0,0,0.4); position: relative; animation: slideIn 0.3s ease-out; max-height: 90vh; overflow-y: auto; }
-        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-content { background: white; padding: 25px; max-width: 700px; width: 95%; border-top: 8px solid var(--bosch-red); box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
         
-        .help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
-        .help-box { background: #f9f9f9; padding: 12px; border-left: 4px solid var(--bosch-blue); }
-        .help-box h4 { margin: 0 0 5px 0; color: var(--bosch-blue); font-size: 14px; }
-        .help-box p { margin: 0; font-size: 12px; color: #444; line-height: 1.4; }
-
-        .pkg-sequence { font-family: monospace; font-size: 11px; background: #eee; padding: 8px; border-radius: 4px; color: #333; margin-top: 5px; white-space: pre-wrap; word-break: break-all; }
-
         .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 4000; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: #333; color: white; padding: 12px 20px; border-radius: 4px; opacity: 0; transition: 0.3s; border-left: 4px solid var(--bosch-green); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .toast { background: #333; color: white; padding: 12px 20px; border-radius: 4px; opacity: 0; transition: 0.3s; border-left: 4px solid var(--bosch-green); }
         .toast.show { opacity: 1; }
-        .toast-error { border-left-color: var(--bosch-red) !important; background: #440000 !important; }
     </style>
 </head>
 <body>
@@ -76,49 +64,16 @@
             <input type="email" id="email" placeholder="E-Mail" style="width:100%; padding:10px; margin:5px 0; border:1px solid #ddd; box-sizing:border-box">
             <input type="password" id="pass" placeholder="Passwort" style="width:100%; padding:10px; margin:5px 0; border:1px solid #ddd; box-sizing:border-box">
             <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:15px" onclick="performLogin()">Einloggen</button>
-            <button class="nav-btn" style="width:100%; justify-content:center; margin-top:8px" onclick="performRegister()">Neu registrieren</button>
+            <button id="btnRegFinal" class="nav-btn" style="width:100%; justify-content:center; margin-top:8px" onclick="performRegister()">Neu registrieren</button>
             <p onclick="document.getElementById('authModal').style.display='none'" style="cursor:pointer; font-size:12px; margin-top:15px; color:#666">Abbrechen</p>
         </div>
     </div>
 
     <div id="helpModal" class="modal-overlay">
         <div class="modal-content">
-            <h2 style="color:var(--bosch-blue); margin-top:0; border-bottom:2px solid var(--bosch-red); padding-bottom:10px">🛠 Systemhilfe Agie-Wartung V10.7</h2>
-            
-            <div class="help-grid">
-                <div class="help-box">
-                    <h4>📊 Farbindikatoren (Ampel)</h4>
-                    <p>
-                        🟢 <b>Grün:</b> > 5.000 Reststück<br>
-                        🟡 <b>Gelb:</b> < 5.000 Reststück<br>
-                        🔴 <b>Rot:</b> < 500 Reststück (Achtung)<br>
-                        💀 <b>Dunkelrot:</b> Wartung überfällig!
-                    </p>
-                </div>
-                <div class="help-box">
-                    <h4>⚙️ Bedienung & Zugriff</h4>
-                    <p>
-                        <b>Einladungscode:</b> Verwaltet via Cloud.<br>
-                        <b>Reset-Passwort:</b> Nur für Administrator.<br>
-                        <b>Auto-Logout:</b> Erfolgt nach 20 Sek. Inaktivität.
-                    </p>
-                </div>
-            </div>
-
-            <div class="help-box" style="margin-top:15px">
-                <h4>🔄 Wartungsintervalle & Paket-Abfolge</h4>
-                <p>Das Intervall beträgt <b>16.000 Stück</b>. Nach jeder Wartung (+) wird automatisch das nächste Paket in dieser Reihenfolge fällig:</p>
-                <div class="pkg-sequence">Start → P1/2 → P1/3 → P1/2 → P1/4 → P1/2/3 → P1/5 → P1/2 → P1/3 → P1/2 → P1/4 → P1/2/3 → P1/6/7 → (Wiederholung)</div>
-                <p style="margin-top:5px; font-size:11px; color:#666">
-                    <b>WP-Reset:</b> Setzt die Maschine auf 216.000 Stück zurück (großer Service).
-                </p>
-            </div>
-
-            <p style="font-size:11px; color:#888; border-top:1px solid #eee; padding-top:10px; margin-top:15px">
-                <b>Tipp:</b> Bewegen Sie die Maus über einen Balken im Diagramm, um Details zum aktuellen Paket und den genauen Zählerständen zu sehen.
-            </p>
-
-            <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:15px" onclick="document.getElementById('helpModal').style.display='none'">Verstanden & Schließen</button>
+            <h2 style="color:var(--bosch-blue); margin-top:0; border-bottom:2px solid var(--bosch-red); padding-bottom:10px">🛠 Systemhilfe Agie-Wartung V10.8</h2>
+            <p>Einladungscode und Intervalle werden automatisch aus der Cloud bezogen.</p>
+            <button class="nav-btn btn-primary" style="width:100%; justify-content:center; margin-top:15px" onclick="document.getElementById('helpModal').style.display='none'">Verstanden</button>
         </div>
     </div>
 
@@ -127,7 +82,7 @@
         <div class="bosch-brand">BOSCH<span> AGIE</span></div>
         <div class="status-area" style="display:flex; gap:15px; align-items:center">
             <div id="logoutDisplay" class="logout-timer">Logout in: <span id="secondsLeft">20</span>s</div>
-            <span id="connText" style="font-size:12px; color:#999">Verbinde...</span>
+            <span id="connText" style="font-size:12px; color:#999">Lade Konfiguration...</span>
         </div>
     </div>
 
@@ -143,23 +98,19 @@
         <div class="content-area">
             <div class="chart-container"><canvas id="mainChart"></canvas></div>
             <div class="activity-bar">
-                <span id="lastActionText">Initialisiere...</span>
+                <span id="lastActionText">Bereit.</span>
                 <span id="userStatus" style="font-weight:bold; color:var(--bosch-blue)">Modus: Gast</span>
             </div>
         </div>
         <div class="sidebar">
-            <div style="padding:15px; font-weight:bold; border-bottom:1px solid #ddd; background:#f8f9fa; color:var(--bosch-blue)">Maschinen Liste</div>
             <div id="listContainer"></div>
         </div>
     </div>
 
     <script>
-        // --- STEP 1: INVITE CODE MIGRATION ---
-        // Lokaler Fallback, falls Cloud leer ist (wird dann hochgeladen)
+        // --- KONFIGURATION ---
         const DEFAULT_INVITE = "Bosch2026W430"; 
-        let cloudInviteCode = null; // Wird aus Firebase geladen
-
-        // Master Passwort bleibt vorerst noch lokal
+        let cloudInviteCode = null; 
         const MASTER_PASSWORD = "123"; 
 
         const firebaseConfig = {
@@ -179,43 +130,21 @@
 
         let localState = { cloudRawData: [], extraCycles: {}, agieOffsets: {}, history: [] };
         let chartInstance = null;
-        let logoutTimer = null, countdownInterval = null, remainingSeconds = 20;
-
         const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
 
-        // --- CLOUD CONFIG SYNC (NEU in V10.7) ---
-        db.ref('config').on('value', snap => {
-            const config = snap.val() || {};
-            
-            if (config.inviteCode) {
-                // Code existiert in Cloud -> Übernehmen
-                cloudInviteCode = config.inviteCode;
-                console.log("Cloud Invite Code geladen.");
+        // --- 1. CONFIG LADEN (PRIO) ---
+        db.ref('config/inviteCode').on('value', snap => {
+            if (snap.exists()) {
+                cloudInviteCode = snap.val();
+                document.getElementById('connText').innerText = "Cloud verbunden";
             } else {
-                // Code fehlt in Cloud -> Auto-Export des Defaults
-                console.log("Cloud Config leer. Exportiere Invite Code...");
+                // Falls gelöscht: Neu anlegen
                 db.ref('config/inviteCode').set(DEFAULT_INVITE);
                 cloudInviteCode = DEFAULT_INVITE;
             }
         });
 
-        function resetLogoutTimer() {
-            if (logoutTimer) clearTimeout(logoutTimer);
-            if (countdownInterval) clearInterval(countdownInterval);
-            if (auth.currentUser) {
-                remainingSeconds = 20;
-                document.getElementById('logoutDisplay').style.display = 'block';
-                countdownInterval = setInterval(() => {
-                    remainingSeconds--;
-                    document.getElementById('secondsLeft').innerText = remainingSeconds;
-                    if (remainingSeconds <= 5) document.getElementById('logoutDisplay').classList.add('timer-warning');
-                    if (remainingSeconds <= 0) clearInterval(countdownInterval);
-                }, 1000);
-                logoutTimer = setTimeout(() => auth.signOut(), 20000);
-            }
-        }
-        ['mousedown', 'mousemove', 'keypress', 'touchstart'].forEach(e => window.addEventListener(e, resetLogoutTimer));
-
+        // --- RESTLICHE LOGIK ---
         db.ref('maintenanceState').on('value', snap => {
             const val = snap.val() || {};
             localState = {
@@ -225,26 +154,14 @@
                 history: val.history ? Object.values(val.history) : []
             };
             refreshUI();
-            document.getElementById('connText').innerText = "Online V10.7 (Cloud-Cfg)";
         });
 
         auth.onAuthStateChanged(user => {
-            const btn = document.getElementById('btnLogin');
-            const btnEx = document.getElementById('btnExport');
-            const btnIm = document.getElementById('btnImport');
-            if (user) {
-                btn.innerHTML = "🔓 Logout"; btn.classList.add('btn-active');
-                btn.onclick = () => auth.signOut();
-                btnEx.disabled = false; btnIm.disabled = false;
-                document.getElementById('userStatus').innerText = "Angemeldet: " + (user.displayName || user.email);
-                resetLogoutTimer();
-            } else {
-                btn.innerHTML = "🔑 Login"; btn.classList.remove('btn-active');
-                btn.onclick = () => document.getElementById('authModal').style.display='flex';
-                btnEx.disabled = true; btnIm.disabled = true;
-                document.getElementById('userStatus').innerText = "Modus: Schreibgeschützt";
-                document.getElementById('logoutDisplay').style.display='none';
-            }
+            const isLogged = !!user;
+            document.getElementById('btnLogin').innerHTML = isLogged ? "🔓 Logout" : "🔑 Login";
+            document.getElementById('btnImport').disabled = !isLogged;
+            document.getElementById('btnExport').disabled = !isLogged;
+            document.getElementById('userStatus').innerText = isLogged ? "Angemeldet: " + (user.displayName || user.email) : "Modus: Gast";
             refreshUI();
         });
 
@@ -268,57 +185,36 @@
             const isLogged = !!auth.currentUser;
             document.getElementById('listContainer').innerHTML = data.map(d => `
                 <div class="control-row ${d.status}">
-                    <div style="flex:1"><span style="font-weight:900; font-size:16px">A${d.id}</span><br><small style="color:#777">${d.pkg}</small></div>
-                    <div style="flex:1; font-weight:bold; font-size:19px; text-align:right; padding-right:15px">${d.diff.toLocaleString()}</div>
-                    <button class="btn-icon" style="background:var(--bosch-red); font-size:11px" ${isLogged && d.ist > 210000 ? '' : 'disabled'} onclick="performAction('${d.id}', 'RESET')">WP</button>
+                    <div style="flex:1"><span style="font-weight:900">A${d.id}</span><br><small>${d.pkg}</small></div>
+                    <div style="flex:1; font-weight:bold; text-align:right; font-size:18px">${d.diff.toLocaleString()}</div>
                     <button class="btn-icon" style="background:var(--bosch-blue)" ${isLogged ? '' : 'disabled'} onclick="performAction('${d.id}', 'MINUS')">−</button>
-                    <div style="width:25px; text-align:center; font-weight:bold; font-size:16px">${d.cycles}</div>
+                    <div style="width:20px; text-align:center; font-weight:bold">${d.cycles}</div>
                     <button class="btn-icon" style="background:var(--bosch-light-blue)" ${isLogged && d.diff < 6000 ? '' : 'disabled'} onclick="performAction('${d.id}', 'PLUS')">+</button>
                 </div>`).join('');
-            
-            if(localState.history.length > 0) {
-                const last = [...localState.history].sort((a,b) => new Date(b.ISO) - new Date(a.ISO))[0];
-                document.getElementById('lastActionText').innerHTML = `Letzte Aktivität: <b>A${last.Agie}</b> (${last.Benutzer})`;
-            }
         }
 
         function renderChart(data) {
             const ctx = document.getElementById('mainChart').getContext('2d');
-            const tooltipOptions = {
-                callbacks: {
-                    label: function(context) {
-                        const d = data[context.dataIndex];
-                        return [` Paket: ${d.pkg}`, ` Reststück: ${d.diff.toLocaleString()}`, ` Ist-Gesamt: ${d.ist.toLocaleString()}`, ` Zyklen erledigt: ${d.cycles}`];
-                    }
-                },
-                backgroundColor: 'rgba(0, 58, 108, 0.9)', 
-                titleFont: { size: 14, weight: 'bold' },
-                bodyFont: { size: 13 },
-                padding: 10,
-                displayColors: false
-            };
-
-            if (chartInstance) {
-                chartInstance.data.labels = data.map(d => "A"+d.id);
-                chartInstance.data.datasets[0].data = data.map(d => d.diff);
-                chartInstance.data.datasets[0].backgroundColor = data.map(d => d.color);
-                chartInstance.options.plugins.tooltip = tooltipOptions;
-                chartInstance.update('none');
-            } else {
-                chartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: { labels: data.map(d => "A"+d.id), datasets: [{ data: data.map(d => d.diff), backgroundColor: data.map(d => d.color), borderRadius: 4 }] },
-                    options: { 
-                        responsive: true, maintainAspectRatio: false, 
-                        plugins: { 
-                            legend: { display: false }, 
-                            tooltip: tooltipOptions,
-                            datalabels: { anchor: 'end', align: 'top', rotation: -90, offset: 10, font: { weight: 'bold', size: 11 } } 
+            const config = {
+                type: 'bar',
+                data: { labels: data.map(d => "A"+d.id), datasets: [{ data: data.map(d => d.diff), backgroundColor: data.map(d => d.color), borderRadius: 4 }] },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: {
+                            callbacks: { label: (ctx) => {
+                                const d = data[ctx.dataIndex];
+                                return [` Paket: ${d.pkg}`, ` Rest: ${d.diff.toLocaleString()}`, ` Ist: ${d.ist.toLocaleString()}`, ` Wartungen: ${d.cycles}`];
+                            }}
                         },
-                        scales: { y: { beginAtZero: true, grace: '15%' } }
-                    }
-                });
-            }
+                        datalabels: { anchor: 'end', align: 'top', rotation: -90, font: { weight: 'bold' } }
+                    },
+                    scales: { y: { beginAtZero: true, grace: '15%' } }
+                }
+            };
+            if (chartInstance) { chartInstance.destroy(); }
+            chartInstance = new Chart(ctx, config);
         }
 
         async function performAction(id, type) {
@@ -326,92 +222,73 @@
             const user = auth.currentUser.displayName || auth.currentUser.email;
             if (type === 'PLUS') {
                 updates[`maintenanceState/extraCycles/${id}`] = (localState.extraCycles[id] || 0) + 1;
-                pushHistory(id, "Wartung (+16k)", user, updates);
+                pushHistory(id, "Wartung", user, updates);
             } else if (type === 'MINUS') {
                 updates[`maintenanceState/extraCycles/${id}`] = Math.max(0, (localState.extraCycles[id] || 0) - 1);
                 pushHistory(id, "Korrektur", user, updates);
-            } else if (type === 'RESET') {
-                if (prompt("Sicherheits-Passwort für Reset A" + id + ":") === MASTER_PASSWORD) {
-                    updates[`maintenanceState/agieOffsets/${id}`] = (localState.agieOffsets[id] || 0) + 216000;
-                    updates[`maintenanceState/extraCycles/${id}`] = 0;
-                    pushHistory(id, "FULL-RESET (216k)", user, updates);
-                } else alert("Falsches Passwort! Aktion abgebrochen.");
             }
         }
 
         function pushHistory(id, event, user, updatesObj) {
             const key = db.ref('maintenanceState/history').push().key;
-            const now = new Date();
-            updatesObj[`maintenanceState/history/${key}`] = { Agie: id, Ereignis: event, Benutzer: user, Zeit: now.toLocaleString('de-DE'), ISO: now.toISOString() };
-            db.ref().update(updatesObj).then(() => showToast("💾 Cloud-Update erfolgreich"));
+            updatesObj[`maintenanceState/history/${key}`] = { Agie: id, Ereignis: event, Benutzer: user, Zeit: new Date().toLocaleString(), ISO: new Date().toISOString() };
+            db.ref().update(updatesObj).then(() => showToast("💾 Gespeichert"));
         }
 
-        // --- REGISTRIERUNG JETZT MIT CLOUD-CHECK ---
+        // --- REGISTRIERUNG FIX ---
         async function performRegister() {
-            // Wir prüfen gegen die Variable, die aus der Cloud geladen wurde
+            // Falls der Code noch lädt, erzwingen wir eine kurze Pause
             if (!cloudInviteCode) {
-                alert("Verbindung zur Cloud wird noch hergestellt. Bitte kurz warten.");
+                showToast("Warte auf Cloud...", true);
                 return;
             }
 
-            if (prompt("Einladungscode eingeben:") === cloudInviteCode) {
+            const inputCode = prompt("Einladungscode eingeben:");
+            if (inputCode === cloudInviteCode) {
                 const e = document.getElementById('email').value, p = document.getElementById('pass').value;
                 const name = prompt("Anzeigename für Protokoll:");
                 if(!e || !p || !name) return alert("Alle Felder ausfüllen!");
-                const cred = await auth.createUserWithEmailAndPassword(e, p);
-                await cred.user.updateProfile({ displayName: name });
-                document.getElementById('authModal').style.display = 'none';
-                showToast("Konto erstellt!");
-            } else alert("Code ungültig!");
+                try {
+                    const cred = await auth.createUserWithEmailAndPassword(e, p);
+                    await cred.user.updateProfile({ displayName: name });
+                    document.getElementById('authModal').style.display = 'none';
+                    showToast("Konto erstellt!");
+                } catch(err) { alert(err.message); }
+            } else {
+                alert("Code ungültig!");
+            }
         }
 
         function performLogin() {
             auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value)
                 .then(() => document.getElementById('authModal').style.display='none')
-                .catch(e => alert("Fehler: " + e.message));
+                .catch(e => alert(e.message));
         }
 
         function exportCSV() {
-            const exporter = auth.currentUser.displayName || auth.currentUser.email;
-            let csv = "\uFEFFDatum;Agie-Maschine;Ereignis-Typ;Durchgeführt von\n";
+            let csv = "\uFEFFDatum;Agie;Ereignis;Benutzer\n";
             localState.history.forEach(h => csv += `${h.Zeit};${h.Agie};${h.Ereignis};${h.Benutzer}\n`);
-            csv += `${new Date().toLocaleString()};SYSTEM;DATEI-EXPORT;${exporter}\n`;
             const a = document.createElement('a');
             a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-            a.download = `Agie_Wartung_Log_${new Date().toLocaleDateString()}.csv`; a.click();
-            showToast("📥 Export erfolgreich");
+            a.download = `Wartungslog.csv`; a.click();
         }
 
         function triggerImport() { document.getElementById('fileInput').click(); }
-        
         document.getElementById('fileInput').onchange = (e) => {
-            if(!e.target.files[0]) return;
             const reader = new FileReader();
             reader.onload = (ev) => {
-                try {
-                    const rawData = JSON.parse(ev.target.result);
-                    if (!Array.isArray(rawData)) throw new Error("JSON muss eine Liste sein (Array)!");
-                    db.ref('maintenanceState/cloudRawData').set(rawData)
-                        .then(() => showToast("✅ Daten importiert"))
-                        .catch((err) => showToast("❌ Cloud Fehler: " + err.message, true));
-                } catch (err) {
-                    alert("Import fehlgeschlagen!\nGrund: " + err.message);
-                }
+                db.ref('maintenanceState/cloudRawData').set(JSON.parse(ev.target.result)).then(() => showToast("✅ Importiert"));
             };
             reader.readAsText(e.target.files[0]);
-            e.target.value = ''; 
         };
 
-        function showToast(m, isError = false) {
-            const t = document.createElement('div'); 
-            t.className = "toast show"; 
-            if(isError) t.classList.add('toast-error');
+        function showToast(m, isErr = false) {
+            const t = document.createElement('div'); t.className = "toast show"; 
+            if(isErr) t.style.borderLeftColor = "red";
             t.innerText = m;
             document.getElementById('toastContainer').appendChild(t);
-            setTimeout(() => { t.classList.remove('show'); setTimeout(()=>t.remove(), 300); }, 2500);
+            setTimeout(() => { t.remove(); }, 2500);
         }
-
-        window.onload = () => setTimeout(() => document.getElementById('helpModal').style.display = 'flex', 1000);
     </script>
 </body>
 </html>
