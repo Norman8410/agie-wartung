@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V11.9 (Final History)</title>
+    <title>Agie Wartung - Bosch V12.0 (Secure History)</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -23,7 +23,7 @@
         .sidebar { flex: 1.5; background: white; border-top: 4px solid var(--bosch-light-blue); overflow-y: auto; padding: 10px; }
         
         .control-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; border-left: 5px solid #ccc; margin-bottom: 5px; gap: 8px; }
-        .nav-btn { padding: 6px 12px; cursor: pointer; border: 1px solid #ccc; background: white; font-weight: bold; color: var(--bosch-blue); font-size: 13px; }
+        .nav-btn { padding: 6px 12px; cursor: pointer; border: 1px solid #ccc; background: white; font-weight: bold; color: var(--bosch-blue); font-size: 13px; border-radius: 2px; }
         .nav-btn:disabled { opacity: 0.2; cursor: not-allowed; filter: grayscale(1); }
         .btn-primary { background: var(--bosch-blue); color: white; border: none; }
         .btn-wp { background: var(--bosch-red); color: white; border: none; font-size: 11px; }
@@ -61,11 +61,11 @@
         <div id="statusLabel" style="font-size: 12px; font-weight: bold;">Verbinde...</div>
     </div>
 
-    <div style="padding: 10px 20px; background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; gap: 10px;">
+    <div style="padding: 10px 20px; background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; gap: 10px; align-items: center;">
         <button id="authBtn" class="nav-btn" onclick="openModal('authModal')">🔑 Login</button>
-        <button id="importBtn" class="nav-btn btn-primary" onclick="triggerImport()" disabled>📥 JSON Import</button>
-        <button id="adminBtn" class="nav-btn" onclick="openAdmin()" disabled>⚙️ Admin</button>
-        <button id="exportBtn" class="nav-btn" onclick="exportCSV()">📊 CSV Protokoll</button>
+        <button id="importBtn" class="nav-btn btn-primary" onclick="triggerImport()" style="display:none">📥 JSON Import</button>
+        <button id="adminBtn" class="nav-btn" onclick="openAdmin()" style="display:none">⚙️ Admin</button>
+        <button id="exportBtn" class="nav-btn" onclick="exportCSVWithAuth()" style="display:none">📊 CSV Protokoll</button>
     </div>
 
     <div class="main-layout">
@@ -95,7 +95,7 @@
 
         db.ref('config').on('value', snap => {
             if(snap.exists()) cloudConfig = snap.val();
-            document.getElementById('statusLabel').innerText = "V11.9 | Online";
+            document.getElementById('statusLabel').innerText = "V12.0 | Online";
             document.getElementById('statusLabel').style.color = "green";
         });
 
@@ -110,10 +110,19 @@
 
         auth.onAuthStateChanged(user => {
             const btn = document.getElementById('authBtn');
+            const importBtn = document.getElementById('importBtn');
+            const adminBtn = document.getElementById('adminBtn');
+            const exportBtn = document.getElementById('exportBtn');
+
             btn.innerText = user ? "🔓 Logout (" + (user.displayName || "User") + ")" : "🔑 Login";
             btn.onclick = user ? () => auth.signOut() : () => openModal('authModal');
-            document.getElementById('importBtn').disabled = !user;
-            document.getElementById('adminBtn').disabled = !user;
+            
+            // Sichtbarkeit der Admin-Features
+            const displayStyle = user ? "inline-block" : "none";
+            importBtn.style.display = displayStyle;
+            adminBtn.style.display = displayStyle;
+            exportBtn.style.display = displayStyle;
+            
             updateUI();
         });
 
@@ -150,13 +159,12 @@
 
         async function changeCycle(id, val) {
             const current = state.extraCycles[id] || 0;
-            const user = auth.currentUser ? auth.currentUser.displayName : "Unbekannt";
-            const now = new Date().toLocaleString();
+            const user = auth.currentUser.displayName || "User";
             const action = val > 0 ? "Wartung durchgeführt (+16k)" : "Korrektur (-16k)";
             
             await db.ref(`maintenanceState/extraCycles/${id}`).set(Math.max(0, current + val));
             await db.ref('maintenanceState/history').push({
-                Zeit: now, Agie: "A"+id, Aktion: action, User: user, TS: Date.now()
+                Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: action, User: user, TS: Date.now()
             });
         }
 
@@ -172,12 +180,41 @@
                 };
                 await db.ref().update(updates);
                 alert("WP-Reset erfolgreich.");
-            } else { alert("Falsch!"); }
+            } else { alert("Passwort falsch!"); }
         }
 
         function openAdmin() {
-            if(prompt("Admin-Passwort:") === String(cloudConfig.AdminPW)) openModal('adminModal');
+            if(prompt("Admin-Passwort eingeben:") === String(cloudConfig.AdminPW)) openModal('adminModal');
             else alert("Verweigert.");
+        }
+
+        function exportCSVWithAuth() {
+            if(prompt("Admin-Bestätigung zum Export:") === String(cloudConfig.AdminPW)) {
+                if(state.history.length === 0) return alert("Keine Daten vorhanden.");
+                let csv = "\uFEFFDatum;Maschine;Aktion;Mitarbeiter\n";
+                state.history.sort((a,b) => b.TS - a.TS).forEach(h => {
+                    csv += `${h.Zeit};${h.Agie};${h.Aktion};${h.User}\n`;
+                });
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `Protokoll_Agie_${new Date().toLocaleDateString()}.csv`;
+                link.click();
+            } else {
+                alert("Falsches Passwort.");
+            }
+        }
+
+        function renderAdminList(data) {
+            const container = document.getElementById('adminActionsList');
+            container.innerHTML = data.map(d => `
+                <div class="admin-list-item">
+                    <span><b>A${d.id}</b></span>
+                    <div>
+                        <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('${d.id}', 'cycles')">Zyklen 0</button>
+                        <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('${d.id}', 'wp')">WP Weg</button>
+                    </div>
+                </div>`).join('');
         }
 
         async function clearPath(id, field) {
@@ -191,31 +228,6 @@
                     Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: label, User: user, TS: Date.now()
                 });
             }
-        }
-
-        function exportCSV() {
-            if(state.history.length === 0) return alert("Keine Daten.");
-            let csv = "\uFEFFDatum;Maschine;Aktion;Mitarbeiter\n";
-            state.history.sort((a,b) => b.TS - a.TS).forEach(h => {
-                csv += `${h.Zeit};${h.Agie};${h.Aktion};${h.User}\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `Protokoll_Agie_${new Date().toLocaleDateString()}.csv`;
-            link.click();
-        }
-
-        function renderAdminList(data) {
-            const container = document.getElementById('adminActionsList');
-            container.innerHTML = data.map(d => `
-                <div class="admin-list-item">
-                    <span><b>A${d.id}</b></span>
-                    <div>
-                        <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('${d.id}', 'cycles')">Zyklen 0</button>
-                        <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('${d.id}', 'wp')">WP Weg</button>
-                    </div>
-                </div>`).join('');
         }
 
         function renderChart(data) {
@@ -234,7 +246,7 @@
             try { await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value); closeModal('authModal'); } catch(e) { alert(e.message); }
         }
         async function performRegister() {
-            if(prompt("Code:") !== String(cloudConfig.inviteCode)) return alert("Falsch!");
+            if(prompt("Einladungscode:") !== String(cloudConfig.inviteCode)) return alert("Falsch!");
             const e = document.getElementById('email').value, p = document.getElementById('pass').value, n = prompt("Name:");
             try { const cred = await auth.createUserWithEmailAndPassword(e, p); await cred.user.updateProfile({ displayName: n }); closeModal('authModal'); } catch(e) { alert(e.message); }
         }
