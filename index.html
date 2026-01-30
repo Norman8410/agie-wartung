@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch V12.2 (Secure History)</title>
+    <title>Agie Wartung - Bosch V12.7</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
@@ -137,9 +137,9 @@
             background: white; 
             padding: 30px; 
             border-top: 8px solid var(--bosch-red); 
-            width: 450px; 
+            width: 500px; 
             text-align: center; 
-            max-height: 80vh; 
+            max-height: 85vh; 
             overflow-y: auto; 
         }
 
@@ -177,6 +177,7 @@
     <div id="adminModal" class="modal">
         <div class="modal-box">
             <h2 style="color:var(--bosch-red)">⚙️ Admin Korrektur</h2>
+            <p style="font-size: 11px;">Hier kann die Wartung korrigiert oder ein <b>WP-Reset verworfen</b> werden.</p>
             <div id="adminActionsList" style="text-align:left;"></div>
             <button class="nav-btn btn-primary" style="width:100%; margin-top:20px" onclick="closeModal('adminModal')">Schließen</button>
         </div>
@@ -194,16 +195,14 @@
         </div>
 
         <div id="helpLoggedOut" class="modal">
-            <div class="modal-box" style="text-align: left; width: 450px;">
+            <div class="modal-box" style="text-align: left;">
                 <h2 style="color:var(--bosch-blue)">Anleitung: Registrierung</h2>
                 <hr>
-                <p>Um Wartungen zu buchen, müssen Sie sich einmalig registrieren:</p>
+                <p><b>Login/Registrierung:</b></p>
                 <ol>
                     <li>Klicken Sie oben auf <b>🔑 Login</b>.</li>
-                    <li>Wählen Sie im Fenster <b>"Neu registrieren"</b>.</li>
-                    <li>Geben Sie Ihre E-Mail und ein Passwort ein.</li>
+                    <li>Wählen Sie <b>"Neu registrieren"</b>.</li>
                     <li><b>Den Einladungscode erhalten Sie von Ihrem TL, FK oder Admin.</b></li>
-                    <li>Geben Sie zum Abschluss Ihren <b>Namen</b> an.</li>
                 </ol>
                 <p>Verantwortlicher: Norman Schultheis</p>
                 <button class="nav-btn btn-primary" style="width:100%" onclick="closeModal('helpLoggedOut')">Verstanden</button>
@@ -211,13 +210,14 @@
         </div>
         
         <div id="helpLoggedIn" class="modal">
-            <div class="modal-box" style="text-align: left; width: 500px;">
-                <h2 style="color:var(--bosch-blue)">Steuerung & Funktionen</h2>
+            <div class="modal-box" style="text-align: left;">
+                <h2 style="color:var(--bosch-blue)">Funktionen & Diagramm</h2>
                 <hr>
-                <p><b>Wartung buchen (+):</b> Erscheint, wenn Rest < 2000. Setzt den Zähler auf 16.000 Stück.</p>
-                <p><b>Korrektur (-):</b> Zieht ein Paket ab, falls versehentlich falsch gebucht wurde.</p>
-                <p><b>WP-Reset:</b> Für die große Vollwartung (nach 216.000 Stück).</p>
-                <p><i>Hinweis: Nach 70 Sek. Inaktivität erfolgt ein automatischer Logout!</i></p>
+                <p><b>📊 Das Balkendiagramm:</b> Zeigt den verbleibenden Rest bis zur nächsten Wartung an. Je kleiner der Balken, desto dringender die Wartung.</p>
+                <p><b>🔘 Buttons (+ / -):</b> Diese können nur gedrückt werden, wenn die entsprechende Stückzahl erreicht ist (Rest < 2000).</p>
+                <p><b>⚙️ WP-Reset:</b> Bestätigt den Austausch des Wartungsplanes an der Maschine. Hierfür wird das <b>Master-Passwort</b> benötigt.</p>
+                <p><b>📊 CSV-Export:</b> Lädt das Protokoll herunter. Erfordert ein <b>Admin-Passwort</b>.</p>
+                <p><b>🛠️ Admin-Bereich:</b> Ermöglicht Korrekturen. Hier kann ein <b>WP-Reset verworfen</b> werden.</p>
                 <button class="nav-btn btn-primary" style="width:100%" onclick="closeModal('helpLoggedIn')">Schließen</button>
             </div>
         </div>
@@ -318,10 +318,8 @@
 
             list.innerHTML = data.map(d => {
                 const plusEnabled = isLogged && d.rest < 2000;
-                const tooltip = `Maschine: A${d.id}\nRest: ${d.rest.toLocaleString()}\nPaket ${d.pkg} offen`;
-
                 return `
-                <div class="control-row" style="border-left-color:${d.color}" title="${tooltip}">
+                <div class="control-row" style="border-left-color:${d.color}">
                     <div style="flex:1.5"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
                     <div style="flex:1; text-align:right; font-weight:bold; font-size:16px">${d.rest.toLocaleString()}</div>
                     <button class="nav-btn btn-wp" ${isLogged && d.ist > 210000 ? '' : 'disabled'} onclick="wpReset('${d.id}')">WP</button>
@@ -339,38 +337,30 @@
             const currentCycles = state.extraCycles[id] || 0;
             const item = state.cloudRawData.find(x => x.StationNo == id);
             const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
-            
             let newCycles = currentCycles;
             if (val > 0) {
                 const aktuellerRest = (16000 + (currentCycles * 16000)) - ist;
-                if (aktuellerRest > 0) {
-                    newCycles = (16000 + ist) / 16000 - 1;
-                } else {
-                    newCycles = currentCycles + 1;
-                }
+                newCycles = aktuellerRest > 0 ? (16000 + ist) / 16000 - 1 : currentCycles + 1;
             } else {
                 newCycles = Math.max(0, currentCycles - 1);
             }
-
-            const user = auth.currentUser ? auth.currentUser.displayName : "Unbekannt";
             await db.ref(`maintenanceState/extraCycles/${id}`).set(newCycles);
             await db.ref('maintenanceState/history').push({
-                Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: val > 0 ? "Wartung" : "Korrektur", User: user, TS: Date.now()
+                Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: val > 0 ? "Wartung" : "Korrektur", User: auth.currentUser.displayName, TS: Date.now()
             });
         }
 
         async function wpReset(id) {
-            const pwIn = prompt("Master-Passwort für WP-Reset A" + id + ":");
+            const pwIn = prompt("Master-Passwort für WP-Reset (Austausch Wartungsplan) A" + id + ":");
             if(pwIn === String(cloudConfig.masterPassword)) {
-                const user = auth.currentUser.displayName;
                 const updates = {};
                 updates[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 216000;
                 updates[`maintenanceState/extraCycles/${id}`] = 0;
                 updates[`maintenanceState/history/${db.ref().push().key}`] = {
-                    Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: "WP-Reset", User: user, TS: Date.now()
+                    Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: "WP-Reset", User: auth.currentUser.displayName, TS: Date.now()
                 };
                 await db.ref().update(updates);
-                alert("WP-Reset erfolgreich.");
+                alert("WP-Reset (Wartungsplan-Austausch) erfolgreich.");
             } else { alert("Passwort falsch!"); }
         }
 
@@ -380,11 +370,9 @@
         }
 
         function exportCSVWithAuth() {
-            if(prompt("Admin-Bestätigung:") === String(cloudConfig.AdminPW)) {
+            if(prompt("Admin-Passwort für Export:") === String(cloudConfig.AdminPW)) {
                 let csv = "\uFEFFDatum;Maschine;Aktion;Mitarbeiter\n";
-                state.history.sort((a,b) => b.TS - a.TS).forEach(h => {
-                    csv += `${h.Zeit};${h.Agie};${h.Aktion};${h.User}\n`;
-                });
+                state.history.sort((a,b) => b.TS - a.TS).forEach(h => { csv += `${h.Zeit};${h.Agie};${h.Aktion};${h.User}\n`; });
                 const link = document.createElement("a");
                 link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
                 link.download = `Protokoll_${new Date().toLocaleDateString()}.csv`;
@@ -399,13 +387,13 @@
                     <span><b>A${d.id}</b></span>
                     <div>
                         <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('${d.id}', 'cycles')">Zyklen 0</button>
-                        <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('${d.id}', 'wp')">WP Weg</button>
+                        <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearPath('${d.id}', 'wp')">WP verworfen</button>
                     </div>
                 </div>`).join('');
         }
 
         async function clearPath(id, field) {
-            if(confirm("Durchführen?")) {
+            if(confirm("Diesen Schritt wirklich verwerfen/löschen?")) {
                 const path = field === 'cycles' ? `extraCycles/${id}` : `agieOffsets/${id}`;
                 await db.ref(`maintenanceState/${path}`).remove();
             }
@@ -415,11 +403,10 @@
             const ctx = document.getElementById('mainChart').getContext('2d');
             if(chart) chart.destroy();
             chart = new Chart(ctx, {
-                type: 'bar',
-                plugins: [ChartDataLabels],
+                type: 'bar', plugins: [ChartDataLabels],
                 data: {
                     labels: data.map(d => "A" + d.id),
-                    datasets: [{ label: 'Rest', data: data.map(d => d.rest), backgroundColor: data.map(d => d.color) }]
+                    datasets: [{ label: 'Rest-Stückzahl', data: data.map(d => d.rest), backgroundColor: data.map(d => d.color) }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
@@ -427,7 +414,7 @@
                         legend: { display: false },
                         datalabels: { rotation: -90, anchor: 'end', align: 'top', font: { weight: 'bold' }, formatter: (v) => v.toLocaleString() }
                     },
-                    scales: { y: { beginAtZero: false } },
+                    scales: { y: { beginAtZero: false, title: { display: true, text: 'Verbleibende Stückzahl' } } },
                     layout: { padding: { top: 60 } }
                 }
             });
@@ -439,15 +426,12 @@
             let timeLeft = timeoutSeconds;
             const display = document.getElementById('timerDisplay');
             display.style.display = "block";
-            display.innerText = "Auto-Logout in: " + timeLeft + "s";
             countdownInterval = setInterval(() => {
                 timeLeft--;
-                display.innerText = "Auto-Logout in: " + timeLeft + "s";
+                display.innerText = "Auto-Logout: " + timeLeft + "s";
                 if (timeLeft <= 0) clearInterval(countdownInterval);
             }, 1000);
-            logoutTimer = setTimeout(() => {
-                auth.signOut().then(() => alert("Sitzung abgelaufen."));
-            }, timeoutSeconds * 1000);
+            logoutTimer = setTimeout(() => auth.signOut(), timeoutSeconds * 1000);
         }
 
         function stopLogoutTimer() {
@@ -459,31 +443,19 @@
         function toggleHelp() { auth.currentUser ? openModal('helpLoggedIn') : openModal('helpLoggedOut'); }
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        
-        async function performLogin() {
-            try { await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value); closeModal('authModal'); } catch(e) { alert(e.message); }
-        }
-
+        async function performLogin() { try { await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('pass').value); closeModal('authModal'); } catch(e) { alert(e.message); } }
         async function performRegister() {
             if(prompt("Einladungscode:") !== String(cloudConfig.inviteCode)) return alert("Falsch!");
             const e = document.getElementById('email').value, p = document.getElementById('pass').value, n = prompt("Name:");
-            try { 
-                const cred = await auth.createUserWithEmailAndPassword(e, p); 
-                await cred.user.updateProfile({ displayName: n }); 
-                closeModal('authModal'); 
-            } catch(e) { alert(e.message); }
+            try { const cred = await auth.createUserWithEmailAndPassword(e, p); await cred.user.updateProfile({ displayName: n }); closeModal('authModal'); } catch(e) { alert(e.message); }
         }
-
         function triggerImport() { document.getElementById('fileInput').click(); }
         document.getElementById('fileInput').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => { db.ref('maintenanceState/cloudRawData').set(JSON.parse(ev.target.result)); };
-            reader.readAsText(e.target.files[0]);
+            const r = new FileReader();
+            r.onload = (ev) => db.ref('maintenanceState/cloudRawData').set(JSON.parse(ev.target.result));
+            r.readAsText(e.target.files[0]);
         };
-
-        ['mousemove', 'mousedown', 'keypress', 'touchstart'].forEach(evt => {
-            document.addEventListener(evt, resetLogoutTimer);
-        });
+        ['mousemove', 'mousedown', 'keypress', 'touchstart'].forEach(evt => document.addEventListener(evt, resetLogoutTimer));
     </script>
 </body>
 </html>
