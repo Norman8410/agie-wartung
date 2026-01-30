@@ -141,7 +141,7 @@
             const isLogged = !!auth.currentUser;
 
             list.innerHTML = data.map(d => {
-                // LOGIK: Aktiv wenn eingeloggt UND Restwert < 2000 UND neue Buchung <= 16000
+                // LOGIK: Aktiv nur wenn eingeloggt UND Rest < 2000 UND Zielwert max. 16000
                 const plusEnabled = isLogged && d.rest < 2000 && (d.rest + 16000 <= 16000);
                 
                 return `
