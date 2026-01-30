@@ -141,11 +141,13 @@
             const isLogged = !!auth.currentUser;
 
             list.innerHTML = data.map(d => {
-                // Button aktiv, sobald Rest unter 2000
                 const plusEnabled = isLogged && d.rest < 2000;
                 
+                // Erstellung des Tooltips
+                const tooltip = `Maschine: A${d.id}\nReststückzahl bis Wartung: ${d.rest.toLocaleString()}\nGesamtstückzahl seit Reset: ${d.ist.toLocaleString()}\nPaket ${d.pkg} offen`;
+
                 return `
-                <div class="control-row" style="border-left-color:${d.color}">
+                <div class="control-row" style="border-left-color:${d.color}" title="${tooltip}">
                     <div style="flex:1.5"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
                     <div style="flex:1; text-align:right; font-weight:bold; font-size:16px">${d.rest.toLocaleString()}</div>
                     <button class="nav-btn btn-wp" ${isLogged && d.ist > 210000 ? '' : 'disabled'} onclick="wpReset('${d.id}')">WP</button>
