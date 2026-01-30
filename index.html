@@ -93,6 +93,7 @@
         let cloudConfig = { inviteCode: "", AdminPW: "", masterPassword: "" };
         let state = { cloudRawData: [], extraCycles: {}, agieOffsets: {}, history: [] };
         let chart = null;
+        let logoutTimer;
 
         db.ref('config').on('value', snap => {
             if(snap.exists()) cloudConfig = snap.val();
@@ -257,7 +258,7 @@
             }
         }
 
-function renderChart(data) {
+        function renderChart(data) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             if(chart) chart.destroy();
             
@@ -337,6 +338,37 @@ function renderChart(data) {
             reader.onload = (ev) => { db.ref('maintenanceState/cloudRawData').set(JSON.parse(ev.target.result)); };
             reader.readAsText(e.target.files[0]);
         };
+        function resetLogoutTimer() {
+            if (logoutTimer) clearTimeout(logoutTimer);
+            
+            // Der Timer läuft nur, wenn ein Benutzer eingeloggt ist
+            if (auth.currentUser) {
+                logoutTimer = setTimeout(() => {
+                    auth.signOut().then(() => {
+                        console.log("Benutzer wurde wegen Inaktivität abgemeldet.");
+                        // Optional: Hinweistext schließen oder Fenster neu laden
+                        alert("Sitzung abgelaufen: Automatischer Logout nach 70 Sekunden.");
+                    });
+                }, 70000); // 70 Sekunden
+            }
+        }
+
+        // Überwache alle relevanten Interaktionen am Bildschirm
+        document.addEventListener('mousemove', resetLogoutTimer);
+        document.addEventListener('mousedown', resetLogoutTimer);
+        document.addEventListener('keypress', resetLogoutTimer);
+        document.addEventListener('touchstart', resetLogoutTimer); // Für Mobilgeräte/Touch
+
+        // Den Timer sofort starten oder stoppen, wenn sich der Login-Status ändert
+        auth.onAuthStateChanged(user => {
+            // ... (Dein bestehender Code für die Button-Sichtbarkeit bleibt hier) ...
+            
+            if (user) {
+                resetLogoutTimer();
+            } else {
+                if (logoutTimer) clearTimeout(logoutTimer);
+            }
+        });
     </script>
 </body>
 </html>
