@@ -70,7 +70,6 @@
         .modal-box { background: white; padding: 30px; border-top: 8px solid var(--bosch-red); width: 450px; text-align: center; max-height: 85vh; overflow-y: auto; }
         input { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
         .switch-auth { font-size: 12px; color: var(--bosch-blue); cursor: pointer; text-decoration: underline; margin-top: 15px; display: block; }
-        .admin-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -131,7 +130,7 @@
         <div id="helpLoggedIn" class="modal">
             <div class="modal-box" style="text-align: left;">
                 <h2 style="color:var(--bosch-blue)">Hilfe & Funktionen</h2>
-                <hr><p><b>Zyklen-Limit:</b> Max. 13 Zyklen möglich.<br><b>Deckelung:</b> Anzeige max. 16.000 Rest.<br><b>WP-Reset:</b> Erst ab dem 13. Zyklus aktiv.</p>
+                <hr><p><b>Zyklen-Limit:</b> Max. 13 Zyklen.<br><b>Deckelung:</b> Anzeige max. 16.000 Rest.<br><b>WP-Reset:</b> Erst ab Zyklus 13 aktiv.</p>
                 <button class="nav-btn btn-primary" style="width:100%" onclick="closeModal('helpLoggedIn')">Schließen</button>
             </div>
         </div>
@@ -201,38 +200,26 @@
         }
 
         async function performLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const pass = document.getElementById('loginPass').value;
-            try { await auth.signInWithEmailAndPassword(email, pass); closeModal('authModal'); } 
-            catch(e) { alert("Fehler: " + e.message); }
+            const email = document.getElementById('loginEmail').value, pass = document.getElementById('loginPass').value;
+            try { await auth.signInWithEmailAndPassword(email, pass); closeModal('authModal'); } catch(e) { alert("Fehler: " + e.message); }
         }
 
         async function performRegister() {
-            const name = document.getElementById('regName').value;
-            const email = document.getElementById('regEmail').value.toLowerCase();
-            const pass = document.getElementById('regPass').value, passC = document.getElementById('regPassConfirm').value;
-            const invite = document.getElementById('regInvite').value;
+            const name = document.getElementById('regName').value, email = document.getElementById('regEmail').value.toLowerCase();
+            const pass = document.getElementById('regPass').value, passC = document.getElementById('regPassConfirm').value, invite = document.getElementById('regInvite').value;
             if(!name || !email || !pass || !invite) return alert("Alle Felder füllen!");
             if(pass !== passC) return alert("Passwörter ungleich!");
             if(invite !== String(cloudConfig.inviteCode)) return alert("Code falsch!");
             if(!email.endsWith("@de.bosch.com") && !email.endsWith("@bcn.bosch.com")) return alert("Nur Bosch-Emails!");
-            try { 
-                const cr = await auth.createUserWithEmailAndPassword(email, pass);
-                await cr.user.updateProfile({ displayName: name });
-                alert("Erfolgreich!"); closeModal('authModal');
-            } catch(e) { alert(e.message); }
+            try { const cr = await auth.createUserWithEmailAndPassword(email, pass); await cr.user.updateProfile({ displayName: name }); alert("Erfolgreich!"); closeModal('authModal'); } catch(e) { alert(e.message); }
         }
 
         function updateUI() {
             const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7"];
             const data = state.cloudRawData.map(item => {
-                const id = item.StationNo;
-                const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
-                const cycles = state.extraCycles[id] || 0;
-                
+                const id = item.StationNo, ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0), cycles = state.extraCycles[id] || 0;
                 let rest = (16000 + (cycles * 16000)) - ist;
-                if (rest > 16000) rest = 16000; // DECKELUNG BEI 16.000
-
+                if (rest > 16000) rest = 16000;
                 let color = "#008a4f"; 
                 if (rest <= 0) color = "#8b0000"; else if (rest < 500) color = "#ff4d4d"; else if (rest < 2000) color = "#ffa500";
                 return { id, rest, color, ist, cycles, pkg: packages[cycles % packages.length] };
@@ -240,10 +227,7 @@
 
             const list = document.getElementById('machineList'), isLogged = !!auth.currentUser;
             list.innerHTML = data.map(d => {
-                const isOverdue = d.rest <= 0;
-                const wpEnabled = isLogged && d.cycles >= 13; // WP AKTIV AB 13
-                const plusEnabled = isLogged && d.rest < 2000 && d.cycles < 13; // PLUS INAKTIV BEI 13
-
+                const isOverdue = d.rest <= 0, wpEnabled = isLogged && d.cycles >= 13, plusEnabled = isLogged && d.rest < 2000 && d.cycles < 13;
                 return `
                 <div class="control-row ${isOverdue ? 'pulse' : ''}" style="border-left-color:${d.color}">
                     <div style="flex:1.5"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
@@ -259,35 +243,61 @@
         }
 
         async function changeCycle(id, val) {
-            const cC = state.extraCycles[id] || 0, item = state.cloudRawData.find(x => x.StationNo == id);
+            const oldCycles = state.extraCycles[id] || 0;
+            const item = state.cloudRawData.find(x => x.StationNo == id);
             const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
+            const oldRest = Math.min(16000, (16000 + (oldCycles * 16000)) - ist);
+            
             let nC;
             if (val > 0) {
-                if (cC >= 13) return; // Limit 13
+                if (oldCycles >= 13) return;
                 const th = (ist / 16000);
-                if (((16000 + (cC * 16000)) - ist) <= 0) { nC = Math.floor(th) + 1; } else { nC = cC + 1; }
+                nC = (((16000 + (oldCycles * 16000)) - ist) <= 0) ? Math.floor(th) + 1 : oldCycles + 1;
                 if (nC > 13) nC = 13;
-            } else { nC = Math.max(0, cC - 1); }
+            } else { nC = Math.max(0, oldCycles - 1); }
             nC = Math.round(nC);
+            
+            const newRest = Math.min(16000, (16000 + (nC * 16000)) - ist);
+            
             await db.ref(`maintenanceState/extraCycles/${id}`).set(nC);
-            await db.ref('maintenanceState/history').push({ Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: val > 0 ? "Wartung" : "Korrektur", User: auth.currentUser.displayName, TS: Date.now() });
+            await db.ref('maintenanceState/history').push({ 
+                Zeit: new Date().toLocaleString(), Agie: "A"+id, User: auth.currentUser.displayName, TS: Date.now(),
+                Aktion: val > 0 ? "Wartung" : "Korrektur",
+                Details: `Zyklen: ${oldCycles} -> ${nC} | Rest: ${oldRest.toLocaleString()} -> ${newRest.toLocaleString()}`
+            });
         }
 
         async function wpReset(id) {
             if(prompt("Master-Passwort:") === String(cloudConfig.masterPassword)) {
-                const up = {}; up[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 224000; // 14 * 16000 = 224000
+                const item = state.cloudRawData.find(x => x.StationNo == id);
+                const oldCycles = state.extraCycles[id] || 0;
+                const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
+                const oldRest = Math.min(16000, (16000 + (oldCycles * 16000)) - ist);
+
+                const up = {}; 
+                up[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 224000;
                 up[`maintenanceState/extraCycles/${id}`] = 0;
+                
+                // Historie mit Vorher-Nachher Werten
+                const historyKey = db.ref('maintenanceState/history').push().key;
+                up[`maintenanceState/history/${historyKey}`] = { 
+                    Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: "WP-Reset", User: auth.currentUser.displayName, TS: Date.now(),
+                    Details: `Zyklen: ${oldCycles} -> 0 | Rest: ${oldRest.toLocaleString()} -> 16.000 (Reset)`
+                };
                 await db.ref().update(up); alert("WP-Reset erfolgreich!");
             } else alert("Falsch!");
         }
 
         function openAdmin() { if(prompt("Admin-Passwort:") === String(cloudConfig.AdminPW)) openModal('adminModal'); }
+        
         function exportCSVWithAuth() {
             if(prompt("Admin-Passwort:") === String(cloudConfig.AdminPW)) {
-                let csv = "\uFEFFDatum;Maschine;Aktion;Mitarbeiter\n";
-                state.history.sort((a,b) => b.TS - a.TS).forEach(h => { csv += `${h.Zeit};${h.Agie};${h.Aktion};${h.User}\n`; });
+                let csv = "\uFEFFDatum;Maschine;Mitarbeiter;Aktion;Details (Vorher -> Nachher)\n";
+                state.history.sort((a,b) => b.TS - a.TS).forEach(h => { 
+                    csv += `${h.Zeit};${h.Agie};${h.User};${h.Aktion};${h.Details || ""}\n`; 
+                });
                 const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-                link.download = `Protokoll.csv`; link.click();
+                link.download = `Protokoll_Detail.csv`; link.click();
             }
         }
 
@@ -304,18 +314,63 @@
         function renderChart(data) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             if(chart) chart.destroy();
+            
             chart = new Chart(ctx, {
-                type: 'bar', plugins: [ChartDataLabels],
-                data: { labels: data.map(d => "A" + d.id), datasets: [{ data: data.map(d => d.rest), backgroundColor: data.map(d => d.color) }] },
+                type: 'bar',
+                plugins: [ChartDataLabels], // Aktiviert die Beschriftung direkt am Balken
+                data: {
+                    labels: data.map(d => "A" + d.id),
+                    datasets: [{
+                        label: 'Reststückzahl',
+                        data: data.map(d => d.rest),
+                        backgroundColor: data.map(d => d.color),
+                        borderWidth: 1
+                    }]
+                },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: { callbacks: { label: (c) => { const d = data[c.dataIndex]; return [`Rest: ${d.rest.toLocaleString()}`, `Paket: ${d.pkg}`]; } } },
-                        datalabels: { anchor: 'end', align: 'top', offset: 5, rotation: -90, formatter: (v) => v.toLocaleString(), font: { weight: 'bold' }, color: '#003a6c' }
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { 
+                            beginAtZero: false,
+                            title: { display: true, text: 'Reststückzahl bis Wartung', font: { weight: 'bold' } }
+                        }
                     },
-                    scales: { y: { beginAtZero: false, max: 18000 } },
-                    layout: { padding: { top: 60 } }
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#d50000',
+                            bodyColor: '#333',
+                            borderColor: '#ccc',
+                            borderWidth: 1,
+                            padding: 10,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const d = data[context.dataIndex];
+                                    return [
+                                        `Maschine: A${d.id}`,
+                                        `Reststückzahl bis Wartung: ${d.rest.toLocaleString()}`,
+                                        `Gesamtstückzahl seit Reset: ${d.ist.toLocaleString()}`,
+                                        `Paket ${d.pkg} offen`
+                                    ];
+                                }
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 5,
+                            rotation: -90, // 90° Drehung der Zahl
+                            formatter: (value) => value.toLocaleString(),
+                            font: { weight: 'bold', size: 12 },
+                            color: '#003a6c'
+                        }
+                    },
+                    layout: {
+                        padding: { top: 60, bottom: 10 } // Mehr Platz oben für die gedrehten Zahlen
+                    }
                 }
             });
         }
