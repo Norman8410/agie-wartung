@@ -27,7 +27,6 @@
             height: 100vh; overflow: hidden; 
         }
 
-        /* Top-Bar Design */
         .top-bar { 
             height: 45px; width: 100%; 
             background: linear-gradient(90deg, #d50000 0%, #d50000 25%, #003a6c 25%, #003a6c 50%, #00b5e2 50%, #00b5e2 75%, #008a4f 75%, #008a4f 100%); 
@@ -45,24 +44,20 @@
         .bosch-text { color: #d50000; font-size: 30px; font-weight: 900; letter-spacing: -1.5px; font-family: 'Arial Black', sans-serif; line-height: 1; }
         .version-tag { color: #525f6b; font-size: 14px; font-weight: bold; }
         
-        /* Layout */
         .main-layout { display: flex; flex: 1; padding: 20px; gap: 20px; overflow: hidden; }
         .content { flex: 3; background: white; padding: 20px; border-top: 4px solid var(--bosch-blue); position: relative; }
         .sidebar { flex: 1.5; background: white; border-top: 4px solid var(--bosch-light-blue); overflow-y: auto; padding: 10px; }
 
         .footer { background: white; padding: 10px 30px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; }
         
-        /* Maschinen-Zeilen */
         .control-row { 
             display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; 
             border-left: 8px solid #ccc; margin-bottom: 5px; gap: 8px; 
         }
 
-        /* Pulsieren für Überfällige */
         @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
         .pulse { animation: pulse-red 1.5s infinite ease-in-out; }
 
-        /* Buttons & Inputs */
         .nav-btn { 
             padding: 6px 12px; cursor: pointer; border: 1px solid #ccc; background: white; 
             font-weight: bold; color: var(--bosch-blue); font-size: 13px; border-radius: 2px; 
@@ -106,7 +101,6 @@
     <div id="adminModal" class="modal">
         <div class="modal-box">
             <h2 style="color:var(--bosch-red)">⚙️ Admin Korrektur</h2>
-            <p style="font-size: 11px;">Korrekturen oder <b>WP-Reset verworfen</b> hier möglich.</p>
             <div id="adminActionsList" style="text-align:left;"></div>
             <button class="nav-btn btn-primary" style="width:100%; margin-top:20px" onclick="closeModal('adminModal')">Schließen</button>
         </div>
@@ -137,8 +131,7 @@
         <div id="helpLoggedIn" class="modal">
             <div class="modal-box" style="text-align: left;">
                 <h2 style="color:var(--bosch-blue)">Hilfe & Funktionen</h2>
-                <hr><p><b>📊 Balkendiagramm:</b><br>Dunkelrot: Überfällig<br>Hellrot: Rest < 500<br>Orange: Rest < 2000<br>Grün: Rest > 2000</p>
-                <p><b>⚙️ WP-Reset:</b> Setzt die Maschine auf das große Intervall zurück.</p>
+                <hr><p><b>Zyklen-Limit:</b> Max. 13 Zyklen möglich.<br><b>Deckelung:</b> Anzeige max. 16.000 Rest.<br><b>WP-Reset:</b> Erst ab dem 13. Zyklus aktiv.</p>
                 <button class="nav-btn btn-primary" style="width:100%" onclick="closeModal('helpLoggedIn')">Schließen</button>
             </div>
         </div>
@@ -177,7 +170,6 @@
         let chart = null, logoutTimer, countdownInterval;
         const timeoutSeconds = 70;
 
-        // Firebase Sync
         db.ref('config').on('value', snap => { if(snap.exists()) cloudConfig = snap.val(); });
         db.ref('maintenanceState').on('value', snap => {
             const val = snap.val() || {};
@@ -188,7 +180,6 @@
             updateUI();
         });
 
-        // Auth Listener
         auth.onAuthStateChanged(user => {
             const btn = document.getElementById('authBtn'), importBtn = document.getElementById('importBtn'),
                   adminBtn = document.getElementById('adminBtn'), exportBtn = document.getElementById('exportBtn'),
@@ -204,7 +195,7 @@
 
         function toggleAuthMode(mode) {
             const inputs = document.querySelectorAll('#authModal input');
-            inputs.forEach(i => i.value = ""); // Alle Felder leeren
+            inputs.forEach(i => i.value = "");
             document.getElementById('loginContainer').style.display = (mode === 'login') ? 'block' : 'none';
             document.getElementById('regContainer').style.display = (mode === 'reg') ? 'block' : 'none';
         }
@@ -224,7 +215,7 @@
             if(!name || !email || !pass || !invite) return alert("Alle Felder füllen!");
             if(pass !== passC) return alert("Passwörter ungleich!");
             if(invite !== String(cloudConfig.inviteCode)) return alert("Code falsch!");
-            if(!email.endsWith("@de.bosch.com") && !email.endsWith("@bcn.bosch.com")) return alert("Nur @de.bosch.com oder @bcn.bosch.com erlaubt!");
+            if(!email.endsWith("@de.bosch.com") && !email.endsWith("@bcn.bosch.com")) return alert("Nur Bosch-Emails!");
             try { 
                 const cr = await auth.createUserWithEmailAndPassword(email, pass);
                 await cr.user.updateProfile({ displayName: name });
@@ -238,7 +229,10 @@
                 const id = item.StationNo;
                 const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
                 const cycles = state.extraCycles[id] || 0;
-                const rest = (16000 + (cycles * 16000)) - ist;
+                
+                let rest = (16000 + (cycles * 16000)) - ist;
+                if (rest > 16000) rest = 16000; // DECKELUNG BEI 16.000
+
                 let color = "#008a4f"; 
                 if (rest <= 0) color = "#8b0000"; else if (rest < 500) color = "#ff4d4d"; else if (rest < 2000) color = "#ffa500";
                 return { id, rest, color, ist, cycles, pkg: packages[cycles % packages.length] };
@@ -247,14 +241,17 @@
             const list = document.getElementById('machineList'), isLogged = !!auth.currentUser;
             list.innerHTML = data.map(d => {
                 const isOverdue = d.rest <= 0;
+                const wpEnabled = isLogged && d.cycles >= 13; // WP AKTIV AB 13
+                const plusEnabled = isLogged && d.rest < 2000 && d.cycles < 13; // PLUS INAKTIV BEI 13
+
                 return `
                 <div class="control-row ${isOverdue ? 'pulse' : ''}" style="border-left-color:${d.color}">
                     <div style="flex:1.5"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
                     <div style="flex:1; text-align:right; font-weight:bold; font-size:16px; color:${isOverdue ? '#8b0000' : 'black'}">${d.rest.toLocaleString()}</div>
-                    <button class="nav-btn btn-wp" ${isLogged && d.ist > 210000 ? '' : 'disabled'} onclick="wpReset('${d.id}')">WP</button>
+                    <button class="nav-btn btn-wp" ${wpEnabled ? '' : 'disabled'} onclick="wpReset('${d.id}')">WP</button>
                     <button class="nav-btn" ${isLogged && d.cycles > 0 ? '' : 'disabled'} onclick="changeCycle('${d.id}', -1)">-</button>
                     <div style="width:20px; text-align:center; font-weight:bold">${d.cycles}</div>
-                    <button class="nav-btn" ${isLogged && d.rest < 2000 ? '' : 'disabled'} onclick="changeCycle('${d.id}', 1)">+</button>
+                    <button class="nav-btn" ${plusEnabled ? '' : 'disabled'} onclick="changeCycle('${d.id}', 1)">+</button>
                 </div>`;
             }).join('');
             renderChart(data);
@@ -262,30 +259,25 @@
         }
 
         async function changeCycle(id, val) {
-            const currentCycles = state.extraCycles[id] || 0;
-            const item = state.cloudRawData.find(x => x.StationNo == id);
+            const cC = state.extraCycles[id] || 0, item = state.cloudRawData.find(x => x.StationNo == id);
             const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
-            let newCycles;
+            let nC;
             if (val > 0) {
-                const theoretischBenoetigt = (ist / 16000);
-                if (((16000 + (currentCycles * 16000)) - ist) <= 0) {
-                    newCycles = Math.floor(theoretischBenoetigt) + 1;
-                } else {
-                    newCycles = currentCycles + 1;
-                }
-            } else {
-                newCycles = Math.max(0, currentCycles - 1);
-            }
-            newCycles = Math.round(newCycles); // Ganzzahl erzwingen
-            await db.ref(`maintenanceState/extraCycles/${id}`).set(newCycles);
+                if (cC >= 13) return; // Limit 13
+                const th = (ist / 16000);
+                if (((16000 + (cC * 16000)) - ist) <= 0) { nC = Math.floor(th) + 1; } else { nC = cC + 1; }
+                if (nC > 13) nC = 13;
+            } else { nC = Math.max(0, cC - 1); }
+            nC = Math.round(nC);
+            await db.ref(`maintenanceState/extraCycles/${id}`).set(nC);
             await db.ref('maintenanceState/history').push({ Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: val > 0 ? "Wartung" : "Korrektur", User: auth.currentUser.displayName, TS: Date.now() });
         }
 
         async function wpReset(id) {
-            if(prompt("Master-Passwort A" + id + ":") === String(cloudConfig.masterPassword)) {
-                const up = {}; up[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 216000; up[`maintenanceState/extraCycles/${id}`] = 0;
-                up[`maintenanceState/history/${db.ref().push().key}`] = { Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: "WP-Reset", User: auth.currentUser.displayName, TS: Date.now() };
-                await db.ref().update(up); alert("Erfolgreich!");
+            if(prompt("Master-Passwort:") === String(cloudConfig.masterPassword)) {
+                const up = {}; up[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 224000; // 14 * 16000 = 224000
+                up[`maintenanceState/extraCycles/${id}`] = 0;
+                await db.ref().update(up); alert("WP-Reset erfolgreich!");
             } else alert("Falsch!");
         }
 
@@ -307,7 +299,7 @@
                 </div></div>`).join('');
         }
 
-        async function clearP(id, f) { if(confirm("Aktion verwerfen?")) { const p = f === 'cycles' ? `extraCycles/${id}` : `agieOffsets/${id}`; await db.ref(`maintenanceState/${p}`).remove(); } }
+        async function clearP(id, f) { if(confirm("Löschen?")) { const p = f === 'cycles' ? `extraCycles/${id}` : `agieOffsets/${id}`; await db.ref(`maintenanceState/${p}`).remove(); } }
 
         function renderChart(data) {
             const ctx = document.getElementById('mainChart').getContext('2d');
@@ -319,10 +311,10 @@
                     responsive: true, maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
-                        tooltip: { callbacks: { label: (c) => { const d = data[c.dataIndex]; return [`Rest: ${d.rest.toLocaleString()}`, `Ist: ${d.ist.toLocaleString()}`, `Paket: ${d.pkg}`]; } } },
+                        tooltip: { callbacks: { label: (c) => { const d = data[c.dataIndex]; return [`Rest: ${d.rest.toLocaleString()}`, `Paket: ${d.pkg}`]; } } },
                         datalabels: { anchor: 'end', align: 'top', offset: 5, rotation: -90, formatter: (v) => v.toLocaleString(), font: { weight: 'bold' }, color: '#003a6c' }
                     },
-                    scales: { y: { beginAtZero: false } },
+                    scales: { y: { beginAtZero: false, max: 18000 } },
                     layout: { padding: { top: 60 } }
                 }
             });
