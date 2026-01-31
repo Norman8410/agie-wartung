@@ -95,21 +95,16 @@
         
         <div class="modal-box" id="regContainer" style="display:none">
             <h2 style="color:var(--bosch-red)">Registrierung</h2>
-            
-            <input type="text" id="regName" placeholder="Vollständiger Name" autocomplete="off">
-            
-            <input type="email" id="regEmail" placeholder="Bosch E-Mail (de oder bcn)" autocomplete="email">
-            
-            <input type="password" id="regPass" placeholder="Passwort" autocomplete="new-password">
-            <input type="password" id="regPassConfirm" placeholder="Passwort bestätigen" autocomplete="new-password">
-            
-            <input type="text" id="regInvite" placeholder="Einladungscode" autocomplete="off">
-            
-            <button class="nav-btn btn-primary" style="width:100%; background: var(--bosch-green); margin-top: 10px;" onclick="performRegister()">Konto erstellen</button>
-            
+            <input type="text" id="regName" placeholder="Vollständiger Name">
+            <input type="email" id="regEmail" placeholder="Bosch E-Mail (de oder bcn)">
+            <input type="password" id="regPass" placeholder="Passwort">
+            <input type="password" id="regPassConfirm" placeholder="Passwort bestätigen">
+            <input type="text" id="regInvite" placeholder="Einladungscode">
+            <button class="nav-btn btn-primary" style="width:100%; background: var(--bosch-green);" onclick="performRegister()">Konto erstellen</button>
             <span class="switch-auth" onclick="toggleAuthMode('login')">Zurück zum Login</span>
             <p onclick="closeModal('authModal')" style="cursor:pointer; font-size:12px; margin-top:15px; color:#666">Abbrechen</p>
         </div>
+    </div>
 
     <div id="adminModal" class="modal">
         <div class="modal-box">
