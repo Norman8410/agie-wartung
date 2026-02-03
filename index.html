@@ -67,14 +67,15 @@
         .btn-wp { background: var(--bosch-red); color: white; border: none; font-size: 11px; }
         
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-box { background: white; padding: 30px; border-top: 8px solid var(--bosch-red); width: 450px; text-align: center; max-height: 85vh; overflow-y: auto; }
+        .modal-box { background: white; padding: 30px; border-top: 8px solid var(--bosch-red); width: 480px; text-align: center; max-height: 85vh; overflow-y: auto; }
         input { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
         .switch-auth { font-size: 12px; color: var(--bosch-blue); cursor: pointer; text-decoration: underline; margin-top: 15px; display: block; }
         
         /* Hilfe Styling */
-        .help-list { text-align: left; font-size: 13px; line-height: 1.6; }
+        .help-list { text-align: left; font-size: 13px; line-height: 1.5; }
         .help-list b { color: var(--bosch-blue); }
-        .help-section { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .help-section { margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
     </style>
 </head>
 <body>
@@ -138,24 +139,25 @@
                 <h2 style="color:var(--bosch-blue); text-align: center;">Hilfe & Funktionen</h2>
                 <hr>
                 <div class="help-section">
-                    <b>Intervalle & Pakete:</b><br>
-                    • Start (0 Klicks): <b>P1/2</b><br>
-                    • 1. Wartung (+1): <b>P1/3</b><br>
-                    • Wechselnd P1/2, P1/4, P1/2/3, P1/5...<br>
-                    • 11. Wartung: <b>P1/6/7</b> (Große Wartung)<br>
-                    • 12. Wartung: <b>P1/2</b> (Letzte Stufe vor WP)
+                    <b>Farblegende (Status):</b><br>
+                    • <span class="color-dot" style="background:#008a4f"></span> <b>Grün:</b> Alles okay (Rest > 2000)<br>
+                    • <span class="color-dot" style="background:#ffa500"></span> <b>Orange:</b> Wartung bald fällig (Rest < 2000)<br>
+                    • <span class="color-dot" style="background:#ff4d4d"></span> <b>Hellrot:</b> Kritischer Bereich (Rest < 500)<br>
+                    • <span class="color-dot" style="background:#8b0000"></span> <b>Dunkelrot (Blinkend):</b> Wartung überfällig!
                 </div>
                 <div class="help-section">
-                    <b>Berechnung:</b><br>
-                    Jeder Klick erhöht das Soll um 16.000 Stück. Die Anzeige ist bei <b>16.000 Rest</b> gedeckelt. Ein Reset (+) ist erst ab einem Restwert unter 2.000 möglich.
+                    <b>Intervalle & Pakete:</b><br>
+                    • 0 Klicks: P1/2 | 1: P1/3 | 4: P1/2/3 | 11: P1/6/7 (Groß)<br>
+                    • Ein Klick (+) erhöht das Soll um 16.000 (Gedeckelt bei 16.000 Rest).
+                </div>
+                <div class="help-section">
+                    <b>Admin & Export:</b><br>
+                    • <b>⚙️ Admin:</b> Korrektur von Fehlklicks oder Zurücksetzen von Werten (Admin-PW nötig).<br>
+                    • <b>📊 CSV Protokoll:</b> Exportiert den gesamten Verlauf (Wer hat wann was gemacht?) als Excel-kompatible Datei.
                 </div>
                 <div class="help-section">
                     <b>WP-Reset:</b><br>
-                    Der WP-Button wird erst aktiv, wenn <b>Zyklus 12</b> erreicht wurde UND der <b>Restwert unter 2.000</b> liegt. Erfordert Master-Passwort.
-                </div>
-                <div class="help-section">
-                    <b>Sicherheit:</b><br>
-                    Automatischer Logout nach 25 Sek. Inaktivität.
+                    Wird erst nach <b>Zyklus 12</b> und bei <b>Rest < 2000</b> aktiv. Setzt die Maschine auf Grundzustand (0) und addiert 208.000 zum Offset.
                 </div>
                 <button class="nav-btn btn-primary" style="width:100%" onclick="closeModal('helpLoggedIn')">Schließen</button>
             </div>
