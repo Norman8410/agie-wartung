@@ -70,6 +70,11 @@
         .modal-box { background: white; padding: 30px; border-top: 8px solid var(--bosch-red); width: 450px; text-align: center; max-height: 85vh; overflow-y: auto; }
         input { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
         .switch-auth { font-size: 12px; color: var(--bosch-blue); cursor: pointer; text-decoration: underline; margin-top: 15px; display: block; }
+        
+        /* Hilfe Styling */
+        .help-list { text-align: left; font-size: 13px; line-height: 1.6; }
+        .help-list b { color: var(--bosch-blue); }
+        .help-section { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -129,9 +134,29 @@
         </div>
         
         <div id="helpLoggedIn" class="modal">
-            <div class="modal-box" style="text-align: left;">
-                <h2 style="color:var(--bosch-blue)">Hilfe & Funktionen</h2>
-                <hr><p><b>Zyklen-Limit:</b> Max. 12 Klicks.<br><b>Deckelung:</b> Anzeige max. 16.000 Rest.<br><b>WP-Reset:</b> Bei Zyklus 12 & Rest < 2000 aktiv.</p>
+            <div class="modal-box help-list">
+                <h2 style="color:var(--bosch-blue); text-align: center;">Hilfe & Funktionen</h2>
+                <hr>
+                <div class="help-section">
+                    <b>Intervalle & Pakete:</b><br>
+                    • Start (0 Klicks): <b>P1/2</b><br>
+                    • 1. Wartung (+1): <b>P1/3</b><br>
+                    • Wechselnd P1/2, P1/4, P1/2/3, P1/5...<br>
+                    • 11. Wartung: <b>P1/6/7</b> (Große Wartung)<br>
+                    • 12. Wartung: <b>P1/2</b> (Letzte Stufe vor WP)
+                </div>
+                <div class="help-section">
+                    <b>Berechnung:</b><br>
+                    Jeder Klick erhöht das Soll um 16.000 Stück. Die Anzeige ist bei <b>16.000 Rest</b> gedeckelt. Ein Reset (+) ist erst ab einem Restwert unter 2.000 möglich.
+                </div>
+                <div class="help-section">
+                    <b>WP-Reset:</b><br>
+                    Der WP-Button wird erst aktiv, wenn <b>Zyklus 12</b> erreicht wurde UND der <b>Restwert unter 2.000</b> liegt. Erfordert Master-Passwort.
+                </div>
+                <div class="help-section">
+                    <b>Sicherheit:</b><br>
+                    Automatischer Logout nach 25 Sek. Inaktivität.
+                </div>
                 <button class="nav-btn btn-primary" style="width:100%" onclick="closeModal('helpLoggedIn')">Schließen</button>
             </div>
         </div>
