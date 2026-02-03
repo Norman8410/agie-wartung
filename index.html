@@ -169,7 +169,7 @@
         let state = { cloudRawData: [], extraCycles: {}, agieOffsets: {}, history: [] };
         let chart = null, logoutTimer, countdownInterval;
         let isProcessing = false; // Sperre für Zähler
-        const timeoutSeconds = 70;
+        const timeoutSeconds = 25;
 
         db.ref('config').on('value', snap => { if(snap.exists()) cloudConfig = snap.val(); });
         db.ref('maintenanceState').on('value', snap => {
@@ -252,22 +252,41 @@
                 const item = state.cloudRawData.find(x => x.StationNo == id);
                 const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
                 const oldRest = Math.min(16000, (16000 + (oldCycles * 16000)) - ist);
-                let nC;
+                
+                let nC = oldCycles;
+
                 if (val > 0) {
-                    if (oldCycles >= 13) return;
-                    const th = (ist / 16000);
-                    nC = (((16000 + (oldCycles * 16000)) - ist) <= 0) ? Math.floor(th) + 1 : oldCycles + 1;
-                    if (nC > 13) nC = 13;
-                } else { nC = Math.max(0, oldCycles - 1); }
-                nC = Math.round(nC);
+                    // Striktes +1 bis maximal 13
+                    if (oldCycles < 13) {
+                        nC = oldCycles + 1;
+                    } else {
+                        isProcessing = false;
+                        return; 
+                    }
+                } else {
+                    // Striktes -1 bis minimal 0
+                    nC = Math.max(0, oldCycles - 1);
+                }
+
                 const newRest = Math.min(16000, (16000 + (nC * 16000)) - ist);
+                
+                // Speichern in Firebase
                 await db.ref(`maintenanceState/extraCycles/${id}`).set(nC);
+                
+                // Historie schreiben
                 await db.ref('maintenanceState/history').push({ 
-                    Zeit: new Date().toLocaleString(), Agie: "A"+id, User: auth.currentUser.displayName, TS: Date.now(),
+                    Zeit: new Date().toLocaleString(), 
+                    Agie: "A"+id, 
+                    User: auth.currentUser.displayName, 
+                    TS: Date.now(),
                     Aktion: val > 0 ? "Wartung" : "Korrektur",
                     Details: `Zyklen: ${oldCycles} -> ${nC} | Rest: ${oldRest.toLocaleString()} -> ${newRest.toLocaleString()}`
                 });
-            } finally { isProcessing = false; }
+            } catch (e) {
+                console.error("Fehler beim Speichern:", e);
+            } finally {
+                isProcessing = false;
+            }
         }
 
         async function wpReset(id) {
