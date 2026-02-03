@@ -16,6 +16,7 @@
             --bosch-light-blue: #00b5e2; 
             --bosch-green: #008a4f; 
             --bosch-gray: #eff1f2;
+            --critical-red: #8b0000;
         }
 
         body { 
@@ -121,66 +122,20 @@
             <div class="modal-box" style="text-align: left;">
                 <h2 style="color:var(--bosch-blue)">Anleitung: Registrierung</h2>
                 <hr>
-                <p>Willkommen beim Agie Wartungstool. Um Buchungen vorzunehmen, folgen Sie bitte diesen Schritten:</p>
-                <ol>
-                    <li>Klicken Sie oben auf die Schaltfläche <b>🔑 Login</b>.</li>
-                    <li>Wählen Sie im Fenster den Link <b>"Hier registrieren"</b>.</li>
-                    <li>Geben Sie Ihre Bosch E-Mail-Adresse und Ihren vollständigen Namen an.</li>
-                    <li><b>Einladungscode:</b> Diesen erhalten Sie ausschließlich persönlich von Ihrem <b>TL, FK oder Admin</b>. Er wird aus Sicherheitsgründen nicht digital im Hilfetext angezeigt.</li>
-                </ol>
-                <p style="border-left: 4px solid var(--bosch-red); padding-left: 10px; background: #fdf2f2;">
-                    <b>Verantwortlicher Administrator:</b><br>
-                    Norman Schultheis
-                </p>
-                <button class="nav-btn btn-primary" style="width:100%; margin-top:10px;" onclick="closeModal('helpLoggedOut')">Verstanden</button>
+                <p>1. Oben auf <b>🔑 Login</b> klicken.<br>2. <b>"Hier registrieren"</b> wählen.<br>3. <b>Den Einladungscode erhalten Sie von Ihrem TL, FK oder Admin.</b></p>
+                <p style="font-weight:bold; color:var(--bosch-blue);">Verantwortlich: Norman Schultheis</p>
+                <button class="nav-btn btn-primary" style="width:100%" onclick="closeModal('helpLoggedOut')">Verstanden</button>
             </div>
         </div>
         
         <div id="helpLoggedIn" class="modal">
-            <div class="modal-box" style="text-align: left; width: 600px; max-height: 90vh;">
-                <h2 style="color:var(--bosch-blue)">📊 System-Dokumentation & Legende</h2>
-                <hr>
-        
-                <h3 style="font-size: 16px; margin-bottom: 8px;">🎨 Farb-Legende (Status-Anzeige)</h3>
-                <table style="width: 100%; font-size: 13px; border-collapse: collapse; margin-bottom: 20px;">
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 8px;"><span style="display:inline-block; width:15px; height:15px; background:#008a4f; border-radius:50%; vertical-align:middle;"></span></td>
-                        <td style="padding: 8px;"><b>Grün (> 2.000):</b> Betriebsbereit. Keine sofortige Wartung nötig.</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 8px;"><span style="display:inline-block; width:15px; height:15px; background:#ffa500; border-radius:50%; vertical-align:middle;"></span></td>
-                        <td style="padding: 8px;"><b>Orange (< 2.000):</b> Vorbereitung. Wartung einplanen, Buchungs-Buttons werden aktiv.</td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 8px;"><span style="display:inline-block; width:15px; height:15px; background:#ff4d4d; border-radius:50%; vertical-align:middle;"></span></td>
-                        <td style="padding: 8px;"><b>Hellrot (< 500):</b> Dringend. Wartung muss zeitnah durchgeführt werden.</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px;"><span style="display:inline-block; width:15px; height:15px; background:#8b0000; border-radius:50%; vertical-align:middle;" class="pulse"></span></td>
-                        <td style="padding: 8px;"><b>Dunkelrot (≤ 0):</b> ÜBERFÄLLIG. Die Maschine blinkt (Pulse-Effekt).</td>
-                    </tr>
-                </table>
-        
-                <h3 style="font-size: 16px; margin-bottom: 8px;">⚙️ Wartungs-Logik</h3>
-                <ul style="font-size: 13px; line-height: 1.5; padding-left: 20px;">
-                    <li><b>Intervall:</b> Ein Zyklus entspricht 16.000 gefertigten Teilen.</li>
-                    <li><b>Zyklen-Limit:</b> Es sind maximal 12 Wartungen möglich (Zähler 0 bis 12).</li>
-                    <li><b>Paket-Abfolge:</b> Das System zeigt automatisch das korrekte Paket (z.B. P1/2, P1/6/7) laut Wartungsplan an.</li>
-                    <li><b>Sperre:</b> Der <b>+ Button</b> ist erst ab einem Restwert von unter 2.000 Teilen freigeschaltet.</li>
-                </ul>
-        
-                <h3 style="font-size: 16px; margin-bottom: 8px;">🚨 WP-Reset (Große Wartung)</h3>
-                <p style="font-size: 13px; background: #fff5f5; padding: 10px; border: 1px solid #ffcccc;">
-                    Der <b>WP-Button</b> wird erst aktiv, wenn <b>Zyklus 12</b> erreicht ist UND der Restwert <b>unter 2.000</b> liegt. Er setzt das gesamte System zurück und addiert ein neues Groß-Intervall (208.000 Teile). <i>Erfordert Admin-Passwort!</i>
-                </p>
-        
-                <p style="font-size: 12px; color: #666; font-style: italic;">
-                    Alle Aktionen werden mit Name und Zeitstempel protokolliert. Support: Norman Schultheis.
-                </p>
-        
-                <button class="nav-btn btn-primary" style="width:100%; margin-top:10px" onclick="closeModal('helpLoggedIn')">Hilfe schließen</button>
+            <div class="modal-box" style="text-align: left;">
+                <h2 style="color:var(--bosch-blue)">Hilfe & Funktionen</h2>
+                <hr><p><b>Zyklen-Limit:</b> Max. 13 Zyklen.<br><b>Deckelung:</b> Anzeige max. 16.000 Rest.<br><b>WP-Reset:</b> Erst ab Zyklus 13 aktiv.</p>
+                <button class="nav-btn btn-primary" style="width:100%" onclick="closeModal('helpLoggedIn')">Schließen</button>
             </div>
         </div>
+    </div>
 
     <div style="padding: 10px 20px; background: #f8f9fa; border-bottom: 1px solid #ddd; display: flex; gap: 10px; align-items: center;">
         <button id="authBtn" class="nav-btn" onclick="openModal('authModal')">🔑 Login</button>
@@ -213,7 +168,7 @@
         let cloudConfig = { inviteCode: "", AdminPW: "", masterPassword: "" };
         let state = { cloudRawData: [], extraCycles: {}, agieOffsets: {}, history: [] };
         let chart = null, logoutTimer, countdownInterval;
-        let isProcessing = false;
+        let isProcessing = false; // Sperre für Zähler
         const timeoutSeconds = 70;
 
         db.ref('config').on('value', snap => { if(snap.exists()) cloudConfig = snap.val(); });
@@ -239,37 +194,42 @@
             updateUI();
         });
 
-        function updateUI() {
-            // Liste mit 13 Einträgen (0 bis 12)
-            const packages = [
-                "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", 
-                "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2 (WP fällig)"
-            ];
+        function toggleAuthMode(mode) {
+            const inputs = document.querySelectorAll('#authModal input');
+            inputs.forEach(i => i.value = "");
+            document.getElementById('loginContainer').style.display = (mode === 'login') ? 'block' : 'none';
+            document.getElementById('regContainer').style.display = (mode === 'reg') ? 'block' : 'none';
+        }
 
+        async function performLogin() {
+            const email = document.getElementById('loginEmail').value, pass = document.getElementById('loginPass').value;
+            try { await auth.signInWithEmailAndPassword(email, pass); closeModal('authModal'); } catch(e) { alert("Fehler: " + e.message); }
+        }
+
+        async function performRegister() {
+            const name = document.getElementById('regName').value, email = document.getElementById('regEmail').value.toLowerCase();
+            const pass = document.getElementById('regPass').value, passC = document.getElementById('regPassConfirm').value, invite = document.getElementById('regInvite').value;
+            if(!name || !email || !pass || !invite) return alert("Alle Felder füllen!");
+            if(pass !== passC) return alert("Passwörter ungleich!");
+            if(invite !== String(cloudConfig.inviteCode)) return alert("Code falsch!");
+            if(!email.endsWith("@de.bosch.com") && !email.endsWith("@bcn.bosch.com")) return alert("Nur Bosch-Emails!");
+            try { const cr = await auth.createUserWithEmailAndPassword(email, pass); await cr.user.updateProfile({ displayName: name }); alert("Erfolgreich!"); closeModal('authModal'); } catch(e) { alert(e.message); }
+        }
+
+        function updateUI() {
+            const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7"];
             const data = state.cloudRawData.map(item => {
-                const id = item.StationNo, 
-                      ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0), 
-                      cycles = state.extraCycles[id] || 0;
-                
+                const id = item.StationNo, ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0), cycles = state.extraCycles[id] || 0;
                 let rest = (16000 + (cycles * 16000)) - ist;
                 if (rest > 16000) rest = 16000;
-                
                 let color = "#008a4f"; 
-                if (rest <= 0) color = "#8b0000"; 
-                else if (rest < 500) color = "#ff4d4d"; 
-                else if (rest < 2000) color = "#ffa500";
-                
-                return { id, rest, color, ist, cycles, pkg: packages[cycles] || "P1/2" };
+                if (rest <= 0) color = "#8b0000"; else if (rest < 500) color = "#ff4d4d"; else if (rest < 2000) color = "#ffa500";
+                return { id, rest, color, ist, cycles, pkg: packages[cycles % packages.length] };
             }).sort((a,b) => a.rest - b.rest);
 
             const list = document.getElementById('machineList'), isLogged = !!auth.currentUser;
             list.innerHTML = data.map(d => {
-                const isOverdue = d.rest <= 0;
-                // WP-Reset aktiv bei Zyklus 12 UND Rest < 2000
-                const wpEnabled = isLogged && d.cycles >= 12 && d.rest < 2000;
-                // Plus-Button aktiv wenn Rest < 2000 und noch nicht bei Zyklus 12
-                const plusEnabled = isLogged && d.rest < 2000 && d.cycles < 12;
-                
+                const isOverdue = d.rest <= 0, wpEnabled = isLogged && d.cycles >= 13, plusEnabled = isLogged && d.rest < 2000 && d.cycles < 13;
                 return `
                 <div class="control-row ${isOverdue ? 'pulse' : ''}" style="border-left-color:${d.color}">
                     <div style="flex:1.5"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
@@ -289,15 +249,23 @@
             isProcessing = true;
             try {
                 const oldCycles = state.extraCycles[id] || 0;
-                let nC = oldCycles + val;
-                if (nC > 12) nC = 12;
-                if (nC < 0) nC = 0;
-                
+                const item = state.cloudRawData.find(x => x.StationNo == id);
+                const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
+                const oldRest = Math.min(16000, (16000 + (oldCycles * 16000)) - ist);
+                let nC;
+                if (val > 0) {
+                    if (oldCycles >= 13) return;
+                    const th = (ist / 16000);
+                    nC = (((16000 + (oldCycles * 16000)) - ist) <= 0) ? Math.floor(th) + 1 : oldCycles + 1;
+                    if (nC > 13) nC = 13;
+                } else { nC = Math.max(0, oldCycles - 1); }
+                nC = Math.round(nC);
+                const newRest = Math.min(16000, (16000 + (nC * 16000)) - ist);
                 await db.ref(`maintenanceState/extraCycles/${id}`).set(nC);
                 await db.ref('maintenanceState/history').push({ 
                     Zeit: new Date().toLocaleString(), Agie: "A"+id, User: auth.currentUser.displayName, TS: Date.now(),
                     Aktion: val > 0 ? "Wartung" : "Korrektur",
-                    Details: `Zyklus ${oldCycles} -> ${nC}`
+                    Details: `Zyklen: ${oldCycles} -> ${nC} | Rest: ${oldRest.toLocaleString()} -> ${newRest.toLocaleString()}`
                 });
             } finally { isProcessing = false; }
         }
@@ -307,72 +275,91 @@
             if(prompt("Master-Passwort:") === String(cloudConfig.masterPassword)) {
                 isProcessing = true;
                 try {
+                    const item = state.cloudRawData.find(x => x.StationNo == id);
+                    const oldCycles = state.extraCycles[id] || 0;
+                    const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
+                    const oldRest = Math.min(16000, (16000 + (oldCycles * 16000)) - ist);
                     const up = {}; 
-                    up[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 208000;
+                    up[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 224000;
                     up[`maintenanceState/extraCycles/${id}`] = 0;
-                    await db.ref().update(up); 
-                    alert("WP-Reset erfolgreich!");
+                    const historyKey = db.ref('maintenanceState/history').push().key;
+                    up[`maintenanceState/history/${historyKey}`] = { 
+                        Zeit: new Date().toLocaleString(), Agie: "A"+id, Aktion: "WP-Reset", User: auth.currentUser.displayName, TS: Date.now(),
+                        Details: `Zyklen: ${oldCycles} -> 0 | Rest: ${oldRest.toLocaleString()} -> 16.000 (Reset)`
+                    };
+                    await db.ref().update(up); alert("WP-Reset erfolgreich!");
                 } finally { isProcessing = false; }
             } else alert("Falsch!");
         }
 
-        // Hilfsfunktionen
-        function toggleAuthMode(mode) {
-            document.getElementById('loginContainer').style.display = (mode === 'login') ? 'block' : 'none';
-            document.getElementById('regContainer').style.display = (mode === 'reg') ? 'block' : 'none';
-        }
-        async function performLogin() {
-            const email = document.getElementById('loginEmail').value, pass = document.getElementById('loginPass').value;
-            try { await auth.signInWithEmailAndPassword(email, pass); closeModal('authModal'); } catch(e) { alert(e.message); }
-        }
-        async function performRegister() {
-            const name = document.getElementById('regName').value, email = document.getElementById('regEmail').value.toLowerCase();
-            const pass = document.getElementById('regPass').value, invite = document.getElementById('regInvite').value;
-            if(invite !== String(cloudConfig.inviteCode)) return alert("Code falsch!");
-            try { const cr = await auth.createUserWithEmailAndPassword(email, pass); await cr.user.updateProfile({ displayName: name }); closeModal('authModal'); } catch(e) { alert(e.message); }
-        }
         function openAdmin() { if(prompt("Admin-Passwort:") === String(cloudConfig.AdminPW)) openModal('adminModal'); }
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function toggleHelp() { auth.currentUser ? openModal('helpLoggedIn') : openModal('helpLoggedOut'); }
-        function triggerImport() { document.getElementById('fileInput').click(); }
-        document.getElementById('fileInput').onchange = (e) => { const r = new FileReader(); r.onload = (ev) => db.ref('maintenanceState/cloudRawData').set(JSON.parse(ev.target.result)); r.readAsText(e.target.files[0]); };
+        
+        function exportCSVWithAuth() {
+            if(prompt("Admin-Passwort:") === String(cloudConfig.AdminPW)) {
+                let csv = "\uFEFFDatum;Maschine;Mitarbeiter;Aktion;Details (Vorher -> Nachher)\n";
+                state.history.sort((a,b) => b.TS - a.TS).forEach(h => { 
+                    csv += `${h.Zeit};${h.Agie};${h.User};${h.Aktion};${h.Details || ""}\n`; 
+                });
+                const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+                link.download = `Protokoll_Detail.csv`; link.click();
+            }
+        }
+
+        function renderAdminList(data) {
+            document.getElementById('adminActionsList').innerHTML = data.map(d => `
+                <div class="admin-list-item"><span><b>A${d.id}</b></span><div>
+                    <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearP('${d.id}', 'cycles')">Zyklen 0</button>
+                    <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearP('${d.id}', 'wp')">WP weg</button>
+                </div></div>`).join('');
+        }
+
+        async function clearP(id, f) { if(confirm("Löschen?")) { const p = f === 'cycles' ? `extraCycles/${id}` : `agieOffsets/${id}`; await db.ref(`maintenanceState/${p}`).remove(); } }
 
         function renderChart(data) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             if(chart) chart.destroy();
             chart = new Chart(ctx, {
-                type: 'bar', plugins: [ChartDataLabels],
+                type: 'bar',
+                plugins: [ChartDataLabels],
                 data: {
                     labels: data.map(d => "A" + d.id),
-                    datasets: [{ data: data.map(d => d.rest), backgroundColor: data.map(d => d.color) }]
+                    datasets: [{
+                        label: 'Reststückzahl',
+                        data: data.map(d => d.rest),
+                        backgroundColor: data.map(d => d.color),
+                        borderWidth: 1
+                    }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, datalabels: { anchor: 'end', align: 'top', rotation: -90, formatter: (v) => v.toLocaleString() } }
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: false, title: { display: true, text: 'Reststückzahl bis Wartung', font: { weight: 'bold' } } } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#d50000', bodyColor: '#333', borderColor: '#ccc', borderWidth: 1, padding: 10, displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const d = data[context.dataIndex];
+                                    return [`Maschine: A${d.id}`, `Rest: ${d.rest.toLocaleString()}`, `Gesamt: ${d.ist.toLocaleString()}`, `Paket ${d.pkg}`];
+                                }
+                            }
+                        },
+                        datalabels: { anchor: 'end', align: 'top', offset: 5, rotation: -90, formatter: (value) => value.toLocaleString(), font: { weight: 'bold', size: 12 }, color: '#003a6c' }
+                    },
+                    layout: { padding: { top: 60, bottom: 10 } }
                 }
             });
         }
 
-        function renderAdminList(data) {
-            document.getElementById('adminActionsList').innerHTML = data.map(d => `
-                <div style="margin-bottom:10px"><b>A${d.id}</b> 
-                <button onclick="clearP('${d.id}', 'cycles')">Zyklen 0</button>
-                <button onclick="clearP('${d.id}', 'wp')">Offset 0</button></div>`).join('');
-        }
-        async function clearP(id, f) { if(confirm("Löschen?")) { const p = f === 'cycles' ? `extraCycles/${id}` : `agieOffsets/${id}`; await db.ref(`maintenanceState/${p}`).remove(); } }
-
-        function exportCSVWithAuth() {
-            if(prompt("Admin-Passwort:") === String(cloudConfig.AdminPW)) {
-                let csv = "\uFEFFDatum;Maschine;User;Aktion;Details\n";
-                state.history.forEach(h => { csv += `${h.Zeit};${h.Agie};${h.User};${h.Aktion};${h.Details}\n`; });
-                const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-                link.download = `Protokoll.csv`; link.click();
-            }
-        }
-
-        function resetLogoutTimer() { stopLogoutTimer(); if (!auth.currentUser) return; let tL = timeoutSeconds; document.getElementById('timerDisplay').style.display = "block"; countdownInterval = setInterval(() => { tL--; document.getElementById('timerDisplay').innerText = "Logout in: " + tL + "s"; }, 1000); logoutTimer = setTimeout(() => auth.signOut(), timeoutSeconds * 1000); }
-        function stopLogoutTimer() { if (logoutTimer) clearTimeout(logoutTimer); if (countdownInterval) clearInterval(countdownInterval); document.getElementById('timerDisplay').style.display = "none"; }
+        function resetLogoutTimer() { stopLogoutTimer(); if (!auth.currentUser) return; let tL = timeoutSeconds; const disp = document.getElementById('timerDisplay'); disp.style.display = "block"; countdownInterval = setInterval(() => { tL--; disp.innerText = "Auto-Logout: " + tL + "s"; if (tL <= 0) clearInterval(countdownInterval); }, 1000); logoutTimer = setTimeout(() => auth.signOut(), timeoutSeconds * 1000); }
+        function stopLogoutTimer() { if (logoutTimer) clearTimeout(logoutTimer); if (countdownInterval) clearInterval(countdownInterval); if (document.getElementById('timerDisplay')) document.getElementById('timerDisplay').style.display = "none"; }
+        function toggleHelp() { auth.currentUser ? openModal('helpLoggedIn') : openModal('helpLoggedOut'); }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function triggerImport() { document.getElementById('fileInput').click(); }
+        document.getElementById('fileInput').onchange = (e) => { const r = new FileReader(); r.onload = (ev) => db.ref('maintenanceState/cloudRawData').set(JSON.parse(ev.target.result)); r.readAsText(e.target.files[0]); };
         ['mousemove', 'mousedown', 'keypress', 'touchstart'].forEach(evt => document.addEventListener(evt, resetLogoutTimer));
     </script>
 </body>
