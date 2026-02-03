@@ -319,23 +319,36 @@
             const ctx = document.getElementById('mainChart').getContext('2d');
             if(chart) chart.destroy();
             chart = new Chart(ctx, {
-                type: 'bar', plugins: [ChartDataLabels],
+                type: 'bar',
+                plugins: [ChartDataLabels],
                 data: {
                     labels: data.map(d => "A" + d.id),
-                    datasets: [{ label: 'Reststückzahl', data: data.map(d => d.rest), backgroundColor: data.map(d => d.color), borderWidth: 1 }]
+                    datasets: [{
+                        label: 'Reststückzahl',
+                        data: data.map(d => d.rest),
+                        backgroundColor: data.map(d => d.color),
+                        borderWidth: 1
+                    }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: false, title: { display: true, text: 'Reststückzahl' } } },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: false, title: { display: true, text: 'Reststückzahl bis Wartung', font: { weight: 'bold' } } } },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: 'white', titleColor: '#d50000', bodyColor: '#333', borderColor: '#ccc', borderWidth: 1,
-                            callbacks: { label: (ctx) => { const d = data[ctx.dataIndex]; return [`Rest: ${d.rest.toLocaleString()}`, `Paket: ${d.pkg}`]; } }
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#d50000', bodyColor: '#333', borderColor: '#ccc', borderWidth: 1, padding: 10, displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const d = data[context.dataIndex];
+                                    return [`Maschine: A${d.id}`, `Rest: ${d.rest.toLocaleString()}`, `Gesamt: ${d.ist.toLocaleString()}`, `Paket ${d.pkg}`];
+                                }
+                            }
                         },
-                        datalabels: { anchor: 'end', align: 'top', offset: 5, rotation: -90, formatter: (v) => v.toLocaleString(), font: { weight: 'bold' }, color: '#003a6c' }
+                        datalabels: { anchor: 'end', align: 'top', offset: 5, rotation: -90, formatter: (value) => value.toLocaleString(), font: { weight: 'bold', size: 12 }, color: '#003a6c' }
                     },
-                    layout: { padding: { top: 60 } }
+                    layout: { padding: { top: 60, bottom: 10 } }
                 }
             });
         }
