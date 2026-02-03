@@ -282,7 +282,7 @@
                     const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
                     const oldRest = Math.min(16000, (16000 + (oldCycles * 16000)) - ist);
                     const up = {}; 
-                    up[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 208000; // 13 * 16000
+                    up[`maintenanceState/agieOffsets/${id}`] = (state.agieOffsets[id] || 0) + 208000;
                     up[`maintenanceState/extraCycles/${id}`] = 0;
                     const historyKey = db.ref('maintenanceState/history').push().key;
                     up[`maintenanceState/history/${historyKey}`] = { 
@@ -319,20 +319,13 @@
             const ctx = document.getElementById('mainChart').getContext('2d');
             if(chart) chart.destroy();
             chart = new Chart(ctx, {
-                type: 'bar',
-                plugins: [ChartDataLabels],
+                type: 'bar', plugins: [ChartDataLabels],
                 data: {
                     labels: data.map(d => "A" + d.id),
-                    datasets: [{
-                        label: 'Reststückzahl',
-                        data: data.map(d => d.rest),
-                        backgroundColor: data.map(d => d.color),
-                        borderWidth: 1
-                    }]
+                    datasets: [{ label: 'Reststückzahl', data: data.map(d => d.rest), backgroundColor: data.map(d => d.color), borderWidth: 1 }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     scales: { y: { beginAtZero: false, title: { display: true, text: 'Reststückzahl bis Wartung', font: { weight: 'bold' } } } },
                     plugins: {
                         legend: { display: false },
@@ -346,7 +339,7 @@
                                 }
                             }
                         },
-                        datalabels: { anchor: 'end', align: 'top', offset: 5, rotation: -90, formatter: (value) => value.toLocaleString(), font: { weight: 'bold', size: 12 }, color: '#003a6c' }
+                        datalabels: { anchor: 'end', align: 'top', offset: 5, rotation: -90, formatter: (v) => v.toLocaleString(), font: { weight: 'bold', size: 12 }, color: '#003a6c' }
                     },
                     layout: { padding: { top: 60, bottom: 10 } }
                 }
