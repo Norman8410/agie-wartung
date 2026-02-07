@@ -94,9 +94,9 @@
         <div class="drawer-header">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Bosch-logo.svg/1024px-Bosch-logo.svg.png" width="120" alt="Bosch">
         </div>
-        <a href="#" class="nav-item active">⚡ Agie Wartung (Aktiv)</a>
-        <a href="https://norman8410.github.io/Unotron/" class="nav-item">🧪 Unotron</a>
-        <a href="https://norman8410.github.io/Bosch-Wartung-HE/" class="nav-item">⚙️ HE Wartung</a>
+        <a href="https://norman8410.github.io/agie-wartung/" class="nav-item active">⚡ Agie Wartung (Aktiv)</a>
+        <a href="https://norman8410.github.io/unotron_wartung/" class="nav-item">🧪 Unotron</a>
+        <a href="https://norman8410.github.io/HE-Wartung/" class="nav-item">⚙️ HE Wartung</a>
         <div style="position: absolute; bottom: 20px; left: 25px; font-size: 11px; color: #999;">
             Verantwortlich: Norman Schultheis
         </div>
@@ -175,7 +175,7 @@
                 <div class="help-section">
                     <b>Admin & Export:</b><br>
                     • <b>⚙️ Admin:</b> Korrektur von Fehlklicks oder Zurücksetzen von Werten (Admin-PW nötig).<br>
-                    • <b>📊 CSV Protokoll:</b> Exportiert den gesamten Verlauf (Wer hat wann was gemacht?) als Excel-kompatible Datei.
+                    • <b>📊 CSV Protokoll:</b> Exportiert den gesamten Verlauf als Datei.
                 </div>
                 <div class="help-section">
                     <b>WP-Reset:</b><br>
@@ -274,7 +274,6 @@
 
         function updateUI() {
             const packages = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
-
             const data = state.cloudRawData.map(item => {
                 const id = item.StationNo;
                 const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
@@ -293,7 +292,6 @@
                 const isOverdue = d.rest <= 0;
                 const wpEnabled = isLogged && d.cycles >= 12 && d.rest < 2000; 
                 const plusEnabled = isLogged && d.rest < 2000 && d.cycles < 12;
-
                 return `
                 <div class="control-row ${isOverdue ? 'pulse' : ''}" style="border-left-color:${d.color}">
                     <div style="flex:1.5"><b>A${d.id}</b><br><small>${d.pkg}</small></div>
@@ -354,16 +352,16 @@
         
         function exportCSVWithAuth() {
             if(prompt("Admin-Passwort:") === String(cloudConfig.AdminPW)) {
-                let csv = "\uFEFFDatum;Maschine;Mitarbeiter;Aktion;Details (Vorher -> Nachher)\n";
+                let csv = "\uFEFFDatum;Maschine;Mitarbeiter;Aktion;Details\n";
                 state.history.sort((a,b) => b.TS - a.TS).forEach(h => { csv += `${h.Zeit};${h.Agie};${h.User};${h.Aktion};${h.Details || ""}\n`; });
                 const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-                link.download = `Protokoll_Detail.csv`; link.click();
+                link.download = `Protokoll.csv`; link.click();
             }
         }
 
         function renderAdminList(data) {
             document.getElementById('adminActionsList').innerHTML = data.map(d => `
-                <div class="admin-list-item" style="display:flex; justify-content:space-between; margin-bottom:5px;"><span><b>A${d.id}</b></span><div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span><b>A${d.id}</b></span><div>
                     <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearP('${d.id}', 'cycles')">Zyklen 0</button>
                     <button class="nav-btn" style="padding:2px 5px; font-size:10px" onclick="clearP('${d.id}', 'wp')">WP weg</button>
                 </div></div>`).join('');
@@ -382,30 +380,21 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: false, title: { display: true, text: 'Reststückzahl bis Wartung', font: { weight: 'bold' } } } },
+                    scales: { y: { beginAtZero: false, title: { display: true, text: 'Reststückzahl', font: { weight: 'bold' } } } },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            titleColor: '#d50000', bodyColor: '#333', borderColor: '#ccc', borderWidth: 1, padding: 12, displayColors: false, cornerRadius: 4,
-                            titleFont: { size: 14, weight: 'bold' }, bodyFont: { size: 13 },
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', titleColor: '#d50000', bodyColor: '#333', borderColor: '#ccc', borderWidth: 1, padding: 12, displayColors: false,
                             callbacks: {
-                                title: (context) => "Maschine: " + context[0].label,
-                                label: function(context) {
+                                label: (context) => {
                                     const d = data[context.dataIndex];
-                                    return [
-                                        "----------------------------",
-                                        "Rest: " + d.rest.toLocaleString() + " Stk",
-                                        "Ist-Zähler: " + d.ist.toLocaleString(),
-                                        "Zyklus: " + d.cycles,
-                                        "Wartung: " + d.pkg
-                                    ];
+                                    return ["Rest: " + d.rest.toLocaleString(), "Ist: " + d.ist.toLocaleString(), "Zyklus: " + d.cycles, "Wartung: " + d.pkg];
                                 }
                             }
                         },
                         datalabels: { anchor: 'end', align: 'top', offset: 5, rotation: -90, formatter: (v) => v.toLocaleString(), font: { weight: 'bold', size: 12 }, color: '#003a6c' }
                     },
-                    layout: { padding: { top: 60, bottom: 10 } }
+                    layout: { padding: { top: 60 } }
                 }
             });
         }
