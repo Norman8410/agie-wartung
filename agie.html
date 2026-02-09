@@ -147,57 +147,57 @@
         }
 
         function renderChart(data) {
-    const ctx = document.getElementById('mainChart').getContext('2d');
-    if(chart) chart.destroy();
-    chart = new Chart(ctx, {
-        type: 'bar', 
-        plugins: [ChartDataLabels],
-        data: { 
-            labels: data.map(d => (d.id.includes('-') ? d.id : "M-" + d.id)), 
-            datasets: [{ 
-                data: data.map(d => d.rest), 
-                backgroundColor: data.map(d => d.color) 
-            }] 
-        },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            plugins: { 
-                legend: { display: false },
-                // --- NEUER TOOLTIP BEREICH ---
-                tooltip: {
-                    enabled: true,
-                    backgroundColor: 'rgba(0, 58, 108, 0.9)', // Bosch-Blau
-                    titleFont: { size: 18, weight: 'bold' },
-                    bodyFont: { size: 16, weight: 'bold' },
-                    padding: 15,
-                    displayColors: false,
-                    callbacks: {
-                        label: function(context) {
-                            const d = data[context.dataIndex];
-                            // Hier wird dein Wunschtext zusammengebaut
-                            return [
-                                `${d.rest.toLocaleString()} Teile bis Wartung ${d.pkg}`,
-                                `${d.ist.toLocaleString()} Gesamtstückzahl seit Wartungsplan Wechsel`
-                            ];
-                        }
-                    }
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'bar', 
+                plugins: [ChartDataLabels],
+                data: { 
+                    labels: data.map(d => (d.id.includes('-') ? d.id : "M-" + d.id)), 
+                    datasets: [{ 
+                        data: data.map(d => d.rest), 
+                        backgroundColor: data.map(d => d.color) 
+                    }] 
                 },
-                // ------------------------------
-                datalabels: { 
-                    anchor: 'end', 
-                    align: 'top', 
-                    rotation: -90, 
-                    formatter: v => v.toLocaleString(), 
-                    font: { weight: 'bold' } 
-                } 
-            },
-            scales: {
-                y: { beginAtZero: true }
-            }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false },
+                        // --- NEUER TOOLTIP BEREICH ---
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: 'rgba(0, 58, 108, 0.9)', // Bosch-Blau
+                            titleFont: { size: 18, weight: 'bold' },
+                            bodyFont: { size: 16, weight: 'bold' },
+                            padding: 15,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    const d = data[context.dataIndex];
+                                    // Hier wird dein Wunschtext zusammengebaut
+                                    return [
+                                        `${d.rest.toLocaleString()} Teile bis Wartung ${d.pkg}`,
+                                        `${d.ist.toLocaleString()} Gesamtstückzahl seit Wartungsplan Wechsel`
+                                    ];
+                                }
+                            }
+                        },
+                        // ------------------------------
+                        datalabels: { 
+                            anchor: 'end', 
+                            align: 'top', 
+                            rotation: -90, 
+                            formatter: v => v.toLocaleString(), 
+                            font: { weight: 'bold' } 
+                        } 
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
         }
-    });
-}
 
     </script>
 </body>
