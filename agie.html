@@ -153,7 +153,8 @@
                 type: 'bar', 
                 plugins: [ChartDataLabels],
                 data: { 
-                    labels: data.map(d => (d.id.includes('-') ? d.id : "M-" + d.id)), 
+                    // Sicherstellen, dass die ID als String behandelt wird
+                    labels: data.map(d => "A-" + String(d.id)), 
                     datasets: [{ 
                         data: data.map(d => d.rest), 
                         backgroundColor: data.map(d => d.color) 
@@ -164,10 +165,9 @@
                     maintainAspectRatio: false, 
                     plugins: { 
                         legend: { display: false },
-                        // --- NEUER TOOLTIP BEREICH ---
                         tooltip: {
                             enabled: true,
-                            backgroundColor: 'rgba(0, 58, 108, 0.9)', // Bosch-Blau
+                            backgroundColor: 'rgba(0, 58, 108, 0.9)',
                             titleFont: { size: 18, weight: 'bold' },
                             bodyFont: { size: 16, weight: 'bold' },
                             padding: 15,
@@ -175,26 +175,24 @@
                             callbacks: {
                                 label: function(context) {
                                     const d = data[context.dataIndex];
-                                    // Hier wird dein Wunschtext zusammengebaut
+                                    // Prüfung ob Daten vorhanden sind, um Absturz zu vermeiden
+                                    const restText = (d.rest || 0).toLocaleString();
+                                    const istText = (d.ist || 0).toLocaleString();
+                                    const pkgText = d.pkg || "Unbekannt";
                                     return [
-                                        `${d.rest.toLocaleString()} Teile bis Wartung ${d.pkg}`,
-                                        `${d.ist.toLocaleString()} Gesamtstückzahl seit Wartungsplan Wechsel`
+                                        `${restText} Teile bis Wartung ${pkgText}`,
+                                        `${istText} Gesamtstückzahl seit Wartungsplan Wechsel`
                                     ];
                                 }
                             }
                         },
-                        // ------------------------------
                         datalabels: { 
-                            anchor: 'end', 
-                            align: 'top', 
-                            rotation: -90, 
+                            anchor: 'end', align: 'top', rotation: -90, 
                             formatter: v => v.toLocaleString(), 
                             font: { weight: 'bold' } 
                         } 
                     },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
+                    scales: { y: { beginAtZero: true } }
                 }
             });
         }
