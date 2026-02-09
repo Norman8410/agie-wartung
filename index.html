@@ -2,114 +2,288 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Agie Wartung - Bosch</title>
+    <title>Zentrales Wartungs Dashboard W430</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
-        :root { --bosch-red: #d50000; --bosch-blue: #003a6c; --bosch-green: #008a4f; --bosch-gray: #eff1f2; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bosch-gray); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        header { background: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; }
-        .bosch-logo { color: var(--bosch-red); font-weight: 900; font-size: 24px; }
-        .main-container { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 320px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; overflow-y: auto; }
-        .card { background: white; border: 1px solid #eee; border-left: 6px solid #ccc; margin: 10px; padding: 12px; border-radius: 4px; }
-        .content { flex: 1; padding: 20px; position: relative; }
-        .nav-btn { padding: 6px 12px; cursor: pointer; border: 1px solid #ccc; background: white; border-radius: 3px; font-weight: bold; color: var(--bosch-blue); }
+        :root { 
+            --bosch-red: #d50000; --bosch-blue: #003a6c; --bosch-light-blue: #00b5e2; 
+            --bosch-green: #008a4f; --bosch-gray: #eff1f2; --bosch-dark-red: #8b0000;
+            --bosch-work-yellow: #fff3cd; 
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bosch-gray); margin: 0; padding: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        .top-bar { height: 45px; width: 100%; background: linear-gradient(90deg, #d50000 0%, #003a6c 50%, #008a4f 100%); display: flex; align-items: center; padding: 0 15px; color: white; font-weight: bold; box-sizing: border-box; }
+        .header { background: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; padding: 20px; flex: 1; overflow: hidden; }
+        .column { background: white; border-top: 5px solid var(--bosch-blue); display: flex; flex-direction: column; overflow: hidden; border-radius: 4px; }
+        .col-header { padding: 15px; background: #f8f9fa; border-bottom: 1px solid #ddd; font-weight: bold; font-size: 1.2em; display: flex; justify-content: space-between; align-items: center; }
+        .col-header a { text-decoration: none; color: inherit; cursor: pointer; }
+        .col-header a:hover { text-decoration: underline; color: var(--bosch-blue); }
+        .machine-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .card { padding: 12px; border-bottom: 1px solid #eee; border-left: 8px solid #ccc; margin-bottom: 8px; background: #fff; position: relative; }
+        .card.warning { border-left-color: #ffa500; }
+        .card.critical { border-left-color: var(--bosch-red); }
+        .card.overdue { border-left-color: var(--bosch-dark-red); }
+        .card.in-progress { background: var(--bosch-work-yellow) !important; border-left-style: dashed; }
+        @keyframes blink-red { 0% { background: #fff; } 50% { background: #ffcccc; } 100% { background: #fff; } }
+        .blink { animation: blink-red 1s infinite; }
+        .card-info { display: flex; justify-content: space-between; align-items: flex-start; }
+        .m-id { font-weight: bold; font-size: 1.1em; }
+        .m-rest { font-weight: bold; font-size: 1.1em; }
+        .m-paket { font-size: 0.85em; color: var(--bosch-red); font-weight: bold; margin-top: 2px; }
+        select { width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 2px; margin-top: 8px; }
+        .nav-btn { padding: 8px 15px; cursor: pointer; border: 1px solid #ccc; background: white; font-weight: bold; color: var(--bosch-blue); border-radius: 2px; margin-left: 5px; }
+        .btn-primary { background: var(--bosch-blue); color: white; border: none; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 4000; }
+        .modal-box { background: white; padding: 30px; border-top: 8px solid var(--bosch-red); width: 450px; border-radius: 4px; }
+        #timeout-bar-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: #ddd; }
+        #timeout-bar { height: 100%; width: 0%; background: var(--bosch-red); transition: width 0.5s linear; }
     </style>
 </head>
-<body onmousedown="if(window.opener && window.opener.resetInactivityTimer) window.opener.resetInactivityTimer()" 
-      onkeydown="if(window.opener && window.opener.resetInactivityTimer) window.opener.resetInactivityTimer()">
+<body onmousedown="resetInactivityTimer()" onkeydown="resetInactivityTimer()">
 
-<header>
-    <div style="display:flex; align-items:center; gap:15px;">
-        <div class="bosch-logo">BOSCH</div>
-        <div style="font-weight:bold; color:#555;">Agie Wartung</div>
+<div class="top-bar">Zentrales Wartungs Dashboard W430</div>
+<div class="header">
+    <div><span style="color:var(--bosch-red);font-weight:900;font-size:24px;">BOSCH</span> <span style="font-weight:bold;margin-left:10px;color:#555;">Statusübersicht</span></div>
+    <div>
+        <button class="nav-btn" onclick="document.getElementById('helpModal').style.display='flex'">ℹ️ Hilfe</button>
+        <button class="nav-btn" onclick="exportAuditLog()">📊 CSV Export</button>
+        <button id="authBtn" class="nav-btn" onclick="handleLoginClick()">🔑 Login</button>
+        <button class="nav-btn" onclick="openAdminModal()">⚙️ Einsteller</button>
     </div>
-    <button class="nav-btn" onclick="window.close()">❌ Fenster schließen</button>
-</header>
-
-<div class="main-container">
-    <div class="sidebar" id="machineList"></div>
-    <div class="content"><canvas id="mainChart"></canvas></div>
 </div>
+
+<div class="dashboard-grid">
+    <div class="column">
+        <div class="col-header"><a onclick="window.open('agie.html','_blank')">⚡ Agie ➔</a> <span id="count-agie">0</span></div>
+        <div class="machine-list" id="list-agie"></div>
+    </div>
+    <div class="column" style="border-top-color: var(--bosch-green);">
+        <div class="col-header"><a onclick="window.open('unotron.html','_blank')">🧪 Unotron ➔</a> <span id="count-uno">0</span></div>
+        <div class="machine-list" id="list-uno"></div>
+    </div>
+    <div class="column" style="border-top-color: var(--bosch-light-blue);">
+        <div class="col-header"><a onclick="window.open('he.html','_blank')">⚙️ HE ➔</a> <span id="count-he">0</span></div>
+        <div class="machine-list" id="list-he"></div>
+    </div>
+</div>
+
+<div id="timeout-bar-container"><div id="timeout-bar"></div></div>
+
+<div id="loginModal" class="modal"><div class="modal-box" style="text-align: center;">
+    <h3 id="modalTitle">Login</h3>
+    <input type="email" id="mEmail" placeholder="E-Mail" style="width:100%; padding:10px; margin-bottom:5px; box-sizing: border-box;">
+    <input type="password" id="mPass" placeholder="Passwort" style="width:100%; padding:10px; margin-bottom:10px; box-sizing: border-box;">
+    <div id="regExtra" style="display:none;">
+        <input type="text" id="mInvite" placeholder="Einladungscode" style="width:100%; padding:10px; margin-bottom:5px; box-sizing: border-box;">
+        <p style="font-size:11px;color:#666;">Den Einladungscode erhalten Sie von Ihrem TL, FK oder Admin.</p>
+    </div>
+    <button class="nav-btn btn-primary" style="width:100%;margin-top:10px; margin-left:0;" onclick="handleAuthAction()">Bestätigen</button>
+    <p id="toggleT" style="cursor:pointer;color:var(--bosch-blue);font-size:12px;margin-top:10px;" onclick="toggleM()">Konto erstellen?</p>
+    <button class="nav-btn" style="width:100%;margin-top:5px; margin-left:0;" onclick="closeModals()">Abbrechen</button>
+</div></div>
+
+<div id="adminModal" class="modal"><div class="modal-box">
+    <h3>Einsteller-Liste bearbeiten</h3>
+    <p style="font-size:12px; color:#666;">Namen bitte mit Komma trennen.</p>
+    <textarea id="einstellerTextarea" rows="6" style="width:100%; box-sizing:border-box; padding:10px;"></textarea>
+    <button class="nav-btn btn-primary" style="width:100%; margin-top:10px; margin-left:0;" onclick="saveEinstellerList()">Liste speichern</button>
+    <button class="nav-btn" style="width:100%; margin-top:5px; margin-left:0;" onclick="closeModals()">Abbrechen</button>
+</div></div>
+
+<div id="helpModal" class="modal"><div class="modal-box">
+    <h2 style="color:var(--bosch-blue); border-bottom: 2px solid var(--bosch-red); padding-bottom: 10px;">System-Hilfe</h2>
+    <p><strong>Auto-Logout:</strong> Erfolgt nach 70s Inaktivität.</p>
+    <p>Den Einladungscode erhalten Sie von Ihrem TL, FK oder Admin.</p>
+    <p><strong>Verantwortlich: Norman Schultheis</strong></p>
+    <button class="nav-btn btn-primary" style="width:100%; margin-top:20px; margin-left:0;" onclick="closeModals()">Schließen</button>
+</div></div>
 
 <script>
     const firebaseConfig = { apiKey: "AIzaSyD6xGCtU-felOyO_BRsFnVlB4yhC46FgYg", authDomain: "bosch-agie-wartung.firebaseapp.com", databaseURL: "https://bosch-agie-wartung-default-rtdb.europe-west1.firebasedatabase.app", projectId: "bosch-agie-wartung" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database(), auth = firebase.auth();
-    const AGIE_PKGS = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
-    let state = { cloudRawData: [], extraCycles: {}, agieOffsets: {} };
 
-    async function writeLog(action, machine, detail) {
-        const user = auth.currentUser ? auth.currentUser.email : "Unbekannt";
-        await db.ref('auditLog').push({ timestamp: new Date().toISOString(), user, action, machine, detail });
+    // Zentrale Definition der Wartungspakete
+    const AGIE_PKGS = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
+    const UNO_STEPS = [{total:2000, pkg:"P1, P2"}, {total:4000, pkg:"P3"}, {total:10000, pkg:"P1"}, {total:14000, pkg:"P5"}, {total:18000, pkg:"P1, P2"}, {total:26000, pkg:"P1"}, {total:28000, pkg:"P6, P7"}, {total:30000, pkg:"P3"}, {total:34000, pkg:"P1, P2"}, {total:42000, pkg:"P1"}, {total:50000, pkg:"P1, P2"}, {total:56000, pkg:"P3"}, {total:58000, pkg:"P1"}, {total:66000, pkg:"P1, P2"}, {total:74000, pkg:"P1"}, {total:82000, pkg:"P1, P2"}, {total:90000, pkg:"P3"}, {total:98000, pkg:"P1"}, {total:104000, pkg:"WP RESET"}];
+    const HE_PKGS = ["P 6/7/9/12", "P 1/2/3/4/5/6/7/8/10/11/12", "P 6/7/9/12/13", "P 1/3/4/5/6/7/8/10/11/12"];
+
+    let state = { config:{}, assignments:{}, agie:{}, uno:{}, he:{} };
+    let inactivityTimer, startTime, isReg = false;
+
+    // --- Timer Logik ---
+    window.resetInactivityTimer = function() {
+        clearTimeout(inactivityTimer);
+        if (auth.currentUser) {
+            startTime = Date.now();
+            inactivityTimer = setTimeout(() => { auth.signOut(); alert("Logout wegen Inaktivität."); }, 70000);
+            updateBar();
+        }
+    }
+    function updateBar() {
+        if (!auth.currentUser) return;
+        const pct = Math.min(100, ((Date.now() - startTime) / 70000) * 100);
+        document.getElementById('timeout-bar').style.width = pct + "%";
+        if (pct < 100) requestAnimationFrame(updateBar);
     }
 
-    // Schließt das Fenster NUR, wenn das Dashboard ausloggt
-    auth.onAuthStateChanged(user => { if(!user) window.close(); });
+    // --- Firebase Listener ---
+    db.ref('config').on('value', s => { state.config = s.val() || {}; updateUI(); });
+    db.ref('dashboardAssignments').on('value', s => { state.assignments = s.val() || {}; updateUI(); });
+    db.ref('maintenanceState').on('value', s => { state.agie = s.val() || {}; updateUI(); });
+    db.ref('maintenanceStateUnotron').on('value', s => { state.uno = s.val() || {}; updateUI(); });
+    db.ref('maintenanceStateHE').on('value', s => { state.he = s.val() || {}; updateUI(); });
 
-    db.ref('maintenanceState').on('value', s => {
-        const val = s.val() || {};
-        state.cloudRawData = val.cloudRawData || [];
-        state.extraCycles = val.extraCycles || {};
-        state.agieOffsets = val.agieOffsets || {};
+    auth.onAuthStateChanged(user => {
+        document.getElementById('authBtn').innerText = user ? "🔓 Logout" : "🔑 Login";
+        if(user) resetInactivityTimer();
+        else { clearTimeout(inactivityTimer); document.getElementById('timeout-bar').style.width = "0%"; }
         updateUI();
     });
 
-    function updateUI() {
-        if (!state.cloudRawData.length) return;
-        const data = state.cloudRawData.map(item => {
-            const id = item.StationNo;
-            const ist = (parseInt(item.Parts) || 0) - (state.agieOffsets[id] || 0);
-            const cIdx = state.extraCycles[id] || 0;
-            const target = 16000 + (cIdx * 16000);
-            const rest = target - ist;
-            const color = rest <= 0 ? "#8b0000" : (rest < 500 ? "#d50000" : (rest < 2000 ? "#ffa500" : "#008a4f"));
-            return { id, ist, target, rest, color, cIdx };
-        }).sort((a,b) => a.rest - b.rest);
-
-        document.getElementById('machineList').innerHTML = data.map(d => `
-            <div class="card" style="border-left-color:${d.color}">
-                <div style="display:flex; justify-content:space-between; font-weight:bold;"><span>A${d.id}</span><span style="color:${d.color}">${d.rest.toLocaleString()}</span></div>
-                <small style="color:var(--bosch-red); font-weight:bold;">Paket: ${AGIE_PKGS[Math.min(d.cIdx, AGIE_PKGS.length-1)]}</small>
-                <div style="display:flex; align-items:center; gap:10px; margin-top:5px;">
-                    <button class="nav-btn" onclick="changeCycle('${d.id}', -1)">-</button>
-                    <b>${d.cIdx}</b>
-                    <button class="nav-btn" onclick="changeCycle('${d.id}', 1)">+</button>
-                    <button class="nav-btn" style="margin-left:auto; font-size:0.7em;" onclick="wpReset('${d.id}')">🔄 Reset</button>
-                </div>
-            </div>`).join('');
-        renderChart(data);
+    // --- Helper Funktionen ---
+    async function writeLog(action, machine, detail) {
+        if(!auth.currentUser) return;
+        await db.ref('auditLog').push({
+            Datum: new Date().toLocaleDateString('de-DE'), 
+            Uhrzeit: new Date().toLocaleTimeString('de-DE'),
+            Benutzer: auth.currentUser.email, 
+            Aktion: action, Maschine: machine, Details: detail
+        });
     }
 
-    async function changeCycle(id, val) {
-        const newVal = Math.max(0, (state.extraCycles[id] || 0) + val);
-        await db.ref(`maintenanceState/extraCycles/${id}`).set(newVal);
-        writeLog("Zyklus Änderung", "A"+id, `Auf ${newVal}`);
+    async function exportAuditLog() {
+        if(prompt("Admin Passwort:") !== state.config.AdminPW) return;
+        const logs = (await db.ref('auditLog').once('value')).val();
+        if(!logs) return alert("Keine Daten.");
+        let csv = "\ufeffDatum;Uhrzeit;Benutzer;Aktion;Maschine;Details\n";
+        Object.values(logs).forEach(l => csv += `${l.Datum};${l.Uhrzeit};${l.Benutzer};${l.Aktion};${l.Maschine};${l.Details}\n`);
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        link.download = `Wartungs_Log_${new Date().toLocaleDateString()}.csv`;
+        link.click();
     }
 
-    async function wpReset(id) {
-        const configSnap = await db.ref('config').once('value');
-        if(prompt("Admin PW:") === configSnap.val()?.AdminPW) {
-            const newOffset = (state.agieOffsets[id] || 0) + 208000;
-            await db.ref(`maintenanceState/agieOffsets/${id}`).set(newOffset);
-            await db.ref(`maintenanceState/extraCycles/${id}`).set(0);
-            writeLog("Full Reset", "A"+id, `Neu: ${newOffset}`);
-            alert("Reset ok!");
+    // --- Modal & Auth Logic ---
+    function handleLoginClick() { if(auth.currentUser) auth.signOut(); else document.getElementById('loginModal').style.display='flex'; }
+    function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display='none'); }
+    function toggleM() { isReg=!isReg; document.getElementById('regExtra').style.display=isReg?'block':'none'; }
+
+    async function handleAuthAction() {
+        const e = document.getElementById('mEmail').value, p = document.getElementById('mPass').value;
+        try {
+            if(isReg) {
+                // Einladungscode prüfen (Fallback auf bosch2026, falls DB leer)
+                const code = state.config.inviteCode || "bosch2026"; 
+                if(document.getElementById('mInvite').value !== code) return alert("Einladungscode ungültig!");
+                await auth.createUserWithEmailAndPassword(e, p);
+            } else await auth.signInWithEmailAndPassword(e, p);
+            closeModals();
+        } catch(err) { alert(err.message); }
+    }
+
+    // --- Admin Einsteller Liste ---
+    function openAdminModal() { 
+        if(prompt("Admin PW:") === state.config.AdminPW) {
+            // FIX: Lade aktuelle Liste aus State in die Textarea
+            const currentList = state.config.einstellerListe || [];
+            document.getElementById('einstellerTextarea').value = currentList.join(', ');
+            document.getElementById('adminModal').style.display='flex'; 
         }
     }
 
-    function renderChart(data) {
-        const ctx = document.getElementById('mainChart').getContext('2d');
-        if(window.myChart) window.myChart.destroy();
-        window.myChart = new Chart(ctx, {
-            type: 'bar', plugins: [ChartDataLabels],
-            data: { labels: data.map(d => "A"+d.id), datasets: [{ data: data.map(d => d.rest), backgroundColor: data.map(d => d.color) }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels: {anchor:'end', align:'top', formatter:v=>v.toLocaleString()} } }
-        });
+    async function saveEinstellerList() {
+        const raw = document.getElementById('einstellerTextarea').value;
+        // Konvertiere String zu Array, entferne Leerzeichen
+        const list = raw.split(',').map(s=>s.trim()).filter(s=>s!=="");
+        await db.ref('config/einstellerListe').set(list);
+        writeLog("Einsteller Liste geändert", "System", "Neue Liste gespeichert");
+        closeModals();
+    }
+
+    // --- Zuweisung Speichern ---
+    async function safeSave(key, val) {
+        if(!auth.currentUser) return alert("Bitte einloggen!");
+        // Optional: Hier könnte man noch eine Sicherheitsabfrage einbauen, wenn gewünscht.
+        await db.ref(`dashboardAssignments/${key}`).set(val);
+        // Log schreiben
+        writeLog(val === "" ? "Zuweisung entfernt" : "Maschine zugewiesen", key, val);
+        resetInactivityTimer();
+    }
+
+    // --- Rendering Logic ---
+    function updateUI() {
+        renderCol('list-agie', 'count-agie', state.agie, 'A', 16000);
+        renderCol('list-uno', 'count-uno', state.uno, 'U', 2000);
+        renderCol('list-he', 'count-he', state.he, 'H', 156000);
+    }
+
+    function renderCol(id, cId, raw, pre, interval) {
+        if(!raw || !raw.cloudRawData) return;
+        
+        // Warn-Grenzen
+        const warnLimit = pre === 'H' ? 19500 : interval * 0.125;
+        const critLimit = pre === 'H' ? 4800 : interval * 0.03125;
+        
+        const data = raw.cloudRawData.map(item => {
+            const sId = item.StationNo || item.STATIONNO;
+            if(!sId) return null;
+            
+            // Zyklus auslesen
+            const cIdx = (raw.extraCycles && raw.extraCycles[sId]) || 0;
+            let ist, target, pkg;
+            
+            // Maschinenspezifische Berechnung
+            if(pre==='A') {
+                ist = (parseInt(item.Parts)||0) - ((raw.agieOffsets && raw.agieOffsets[sId])||0);
+                target = 16000 + (cIdx * 16000);
+                pkg = AGIE_PKGS[Math.min(cIdx, AGIE_PKGS.length-1)];
+            } else if(pre==='U') {
+                ist = parseInt(item["COUNT(*)"]||0);
+                const tObj = UNO_STEPS[cIdx] || { total: 104000+((cIdx-18)*5000), pkg: "Folge" };
+                target = tObj.total; 
+                pkg = tObj.pkg;
+            } else { // HE
+                const off = (raw.heOffsets && raw.heOffsets[sId]) || (raw.manualOffsets && raw.manualOffsets[sId]) || 0;
+                ist = (parseInt(item.Parts)||0) - off;
+                target = 156000 + (cIdx * 156000);
+                pkg = "Wartung " + HE_PKGS[cIdx % 4];
+            }
+            
+            return { id:pre+"-"+sId, rest:target-ist, key:pre+sId, pkg };
+        }).filter(m => m && m.rest < warnLimit).sort((a,b) => a.rest - b.rest);
+
+        document.getElementById(cId).innerText = data.length;
+        
+        // HTML Generierung
+        const einstellerOptions = (state.config.einstellerListe||[]).map(e => `<option value="${e}">${e}</option>`).join('');
+
+        document.getElementById(id).innerHTML = data.map(m => {
+            const assigned = state.assignments[m.key] || "";
+            const isWorking = assigned !== "";
+            // Status Bestimmung
+            const status = (m.rest <= 0 && !isWorking) ? 'blink overdue' : 
+                           (m.rest <= 0 ? 'overdue' : 
+                           (m.rest < critLimit ? 'critical' : 'warning'));
+                           
+            // Dropdown vorselektieren
+            const dropdown = `
+                <select ${!auth.currentUser?'disabled':''} onchange="safeSave('${m.key}', this.value)" style="background:${assigned?'#e8f0fe':'#fff'}">
+                    <option value="">-- Einsteller wählen --</option>
+                    ${(state.config.einstellerListe||[]).map(e => `<option value="${e}" ${assigned===e?'selected':''}>${e}</option>`).join('')}
+                </select>`;
+
+            return `
+            <div class="card ${status} ${isWorking?'in-progress':''}">
+                <div class="card-info">
+                    <div><div class="m-id">${m.id}</div><div class="m-paket">${m.pkg}</div></div>
+                    <div class="m-rest" style="color:${m.rest<=0?'var(--bosch-dark-red)':'inherit'}">${m.rest.toLocaleString()}</div>
+                </div>
+                ${dropdown}
+            </div>`;
+        }).join('');
     }
 </script>
 </body>
