@@ -19,7 +19,6 @@
         .column { background: white; border-top: 5px solid var(--bosch-blue); display: flex; flex-direction: column; overflow: hidden; border-radius: 4px; }
         .col-header { padding: 15px; background: #f8f9fa; border-bottom: 1px solid #ddd; font-weight: bold; font-size: 1.2em; display: flex; justify-content: space-between; align-items: center; }
         .col-header a { text-decoration: none; color: inherit; cursor: pointer; }
-        .col-header a:hover { text-decoration: underline; color: var(--bosch-blue); }
         .machine-list { flex: 1; overflow-y: auto; padding: 10px; }
         .card { padding: 12px; border-bottom: 1px solid #eee; border-left: 8px solid #ccc; margin-bottom: 8px; background: #fff; position: relative; }
         .card.warning { border-left-color: #ffa500; }
@@ -33,12 +32,12 @@
         .m-rest { font-weight: bold; font-size: 1.1em; }
         .m-paket { font-size: 0.85em; color: var(--bosch-red); font-weight: bold; margin-top: 2px; }
         select { width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 2px; margin-top: 8px; }
-        .nav-btn { padding: 8px 15px; cursor: pointer; border: 1px solid #ccc; background: white; font-weight: bold; color: var(--bosch-blue); border-radius: 2px; margin-left: 5px; }
+        .nav-btn { padding: 8px 15px; cursor: pointer; border: 1px solid #ccc; background: white; font-weight: bold; color: var(--bosch-blue); border-radius: 2px; }
         .btn-primary { background: var(--bosch-blue); color: white; border: none; }
         .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 4000; }
         .modal-box { background: white; padding: 30px; border-top: 8px solid var(--bosch-red); width: 450px; border-radius: 4px; }
         #timeout-bar-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: #ddd; }
-        #timeout-bar { height: 100%; width: 0%; background: var(--bosch-red); transition: width 0.5s linear; }
+        #timeout-bar { height: 100%; width: 0%; background: var(--bosch-red); }
     </style>
 </head>
 <body onmousedown="resetInactivityTimer()" onkeydown="resetInactivityTimer()">
@@ -46,50 +45,37 @@
 <div class="top-bar">Zentrales Wartungs Dashboard W430</div>
 <div class="header">
     <div><span style="color:var(--bosch-red);font-weight:900;font-size:24px;">BOSCH</span> <span style="font-weight:bold;margin-left:10px;color:#555;">Statusübersicht</span></div>
-    <div>
+    <div style="display:flex; gap:10px;">
         <button class="nav-btn" onclick="document.getElementById('helpModal').style.display='flex'">ℹ️ Hilfe</button>
-        <button class="nav-btn" onclick="exportAuditLog()">📊 CSV Export</button>
         <button id="authBtn" class="nav-btn" onclick="handleLoginClick()">🔑 Login</button>
         <button class="nav-btn" onclick="openAdminModal()">⚙️ Einsteller</button>
     </div>
 </div>
 
 <div class="dashboard-grid">
-    <div class="column">
-        <div class="col-header"><a onclick="window.open('agie.html','_blank')">⚡ Agie ➔</a> <span id="count-agie">0</span></div>
-        <div class="machine-list" id="list-agie"></div>
-    </div>
-    <div class="column" style="border-top-color: var(--bosch-green);">
-        <div class="col-header"><a onclick="window.open('unotron.html','_blank')">🧪 Unotron ➔</a> <span id="count-uno">0</span></div>
-        <div class="machine-list" id="list-uno"></div>
-    </div>
-    <div class="column" style="border-top-color: var(--bosch-light-blue);">
-        <div class="col-header"><a onclick="window.open('he.html','_blank')">⚙️ HE ➔</a> <span id="count-he">0</span></div>
-        <div class="machine-list" id="list-he"></div>
-    </div>
+    <div class="column"><div class="col-header"><a onclick="window.open('https://norman8410.github.io/Agie-Wartung/','_blank')">⚡ Agie ➔</a> <span id="count-agie">0</span></div><div class="machine-list" id="list-agie"></div></div>
+    <div class="column" style="border-top-color: var(--bosch-green);"><div class="col-header"><a onclick="window.open('https://norman8410.github.io/unotron-wartung/','_blank')">🧪 Unotron ➔</a> <span id="count-uno">0</span></div><div class="machine-list" id="list-uno"></div></div>
+    <div class="column" style="border-top-color: var(--bosch-light-blue);"><div class="col-header"><a onclick="window.open('https://norman8410.github.io/HE-Wartung/','_blank')">⚙️ HE ➔</a> <span id="count-he">0</span></div><div class="machine-list" id="list-he"></div></div>
 </div>
 
 <div id="timeout-bar-container"><div id="timeout-bar"></div></div>
 
 <div id="loginModal" class="modal"><div class="modal-box" style="text-align: center;">
     <h3 id="modalTitle">Login</h3>
-    <input type="email" id="mEmail" placeholder="E-Mail" style="width:100%; padding:10px; margin-bottom:5px; box-sizing: border-box;">
-    <input type="password" id="mPass" placeholder="Passwort" style="width:100%; padding:10px; margin-bottom:10px; box-sizing: border-box;">
-    <div id="regExtra" style="display:none;">
-        <input type="text" id="mInvite" placeholder="Einladungscode" style="width:100%; padding:10px; margin-bottom:5px; box-sizing: border-box;">
-        <p style="font-size:11px;color:#666;">Den Einladungscode erhalten Sie von Ihrem TL, FK oder Admin.</p>
-    </div>
-    <button class="nav-btn btn-primary" style="width:100%;margin-top:10px; margin-left:0;" onclick="handleAuthAction()">Bestätigen</button>
+    <input type="email" id="mEmail" placeholder="E-Mail" style="width:100%; padding:10px; margin-bottom:5px;">
+    <input type="password" id="mPass" placeholder="Passwort" style="width:100%; padding:10px; margin-bottom:10px;">
+    <div id="regExtra" style="display:none;"><input type="text" id="mInvite" placeholder="Einladungscode" style="width:100%; padding:10px; margin-bottom:5px;">
+    <p style="font-size:11px;color:#666;">Den Einladungscode erhalten Sie von Ihrem TL, FK oder Admin.</p></div>
+    <button class="nav-btn btn-primary" style="width:100%;margin-top:10px;" onclick="handleAuthAction()">Bestätigen</button>
     <p id="toggleT" style="cursor:pointer;color:var(--bosch-blue);font-size:12px;margin-top:10px;" onclick="toggleM()">Konto erstellen?</p>
-    <button class="nav-btn" style="width:100%;margin-top:5px; margin-left:0;" onclick="closeModals()">Abbrechen</button>
+    <button class="nav-btn" style="width:100%;margin-top:5px;" onclick="closeModals()">Abbrechen</button>
 </div></div>
 
 <div id="adminModal" class="modal"><div class="modal-box">
     <h3>Einsteller-Liste bearbeiten</h3>
-    <p style="font-size:12px; color:#666;">Namen bitte mit Komma trennen.</p>
     <textarea id="einstellerTextarea" rows="6" style="width:100%; box-sizing:border-box; padding:10px;"></textarea>
-    <button class="nav-btn btn-primary" style="width:100%; margin-top:10px; margin-left:0;" onclick="saveEinstellerList()">Liste speichern</button>
-    <button class="nav-btn" style="width:100%; margin-top:5px; margin-left:0;" onclick="closeModals()">Abbrechen</button>
+    <button class="nav-btn btn-primary" style="width:100%; margin-top:10px;" onclick="saveEinstellerList()">Liste speichern</button>
+    <button class="nav-btn" style="width:100%; margin-top:5px;" onclick="closeModals()">Abbrechen</button>
 </div></div>
 
 <div id="helpModal" class="modal"><div class="modal-box">
@@ -97,7 +83,7 @@
     <p><strong>Auto-Logout:</strong> Erfolgt nach 70s Inaktivität.</p>
     <p>Den Einladungscode erhalten Sie von Ihrem TL, FK oder Admin.</p>
     <p><strong>Verantwortlich: Norman Schultheis</strong></p>
-    <button class="nav-btn btn-primary" style="width:100%; margin-top:20px; margin-left:0;" onclick="closeModals()">Schließen</button>
+    <button class="nav-btn btn-primary" style="width:100%; margin-top:20px;" onclick="closeModals()">Schließen</button>
 </div></div>
 
 <script>
@@ -105,31 +91,27 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database(), auth = firebase.auth();
 
-    // Zentrale Definition der Wartungspakete
-    const AGIE_PKGS = ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"];
+    // Master-Paketlisten
+    const PKGS = {
+        'A': ["P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/5", "P1/2", "P1/3", "P1/2", "P1/4", "P1/2/3", "P1/6/7", "P1/2"],
+        'H': ["P 6/7/9/12", "P 1/2/3/4/5/6/7/8/10/11/12", "P 6/7/9/12/13", "P 1/3/4/5/6/7/8/10/11/12"]
+    };
     const UNO_STEPS = [{total:2000, pkg:"P1, P2"}, {total:4000, pkg:"P3"}, {total:10000, pkg:"P1"}, {total:14000, pkg:"P5"}, {total:18000, pkg:"P1, P2"}, {total:26000, pkg:"P1"}, {total:28000, pkg:"P6, P7"}, {total:30000, pkg:"P3"}, {total:34000, pkg:"P1, P2"}, {total:42000, pkg:"P1"}, {total:50000, pkg:"P1, P2"}, {total:56000, pkg:"P3"}, {total:58000, pkg:"P1"}, {total:66000, pkg:"P1, P2"}, {total:74000, pkg:"P1"}, {total:82000, pkg:"P1, P2"}, {total:90000, pkg:"P3"}, {total:98000, pkg:"P1"}, {total:104000, pkg:"WP RESET"}];
-    const HE_PKGS = ["P 6/7/9/12", "P 1/2/3/4/5/6/7/8/10/11/12", "P 6/7/9/12/13", "P 1/3/4/5/6/7/8/10/11/12"];
 
     let state = { config:{}, assignments:{}, agie:{}, uno:{}, he:{} };
     let inactivityTimer, startTime, isReg = false;
 
-    // --- Timer Logik ---
+    // Timer & Auth wie gehabt...
     window.resetInactivityTimer = function() {
         clearTimeout(inactivityTimer);
         if (auth.currentUser) {
             startTime = Date.now();
-            inactivityTimer = setTimeout(() => { auth.signOut(); alert("Logout wegen Inaktivität."); }, 70000);
+            inactivityTimer = setTimeout(() => { auth.signOut(); }, 70000);
             updateBar();
         }
     }
-    function updateBar() {
-        if (!auth.currentUser) return;
-        const pct = Math.min(100, ((Date.now() - startTime) / 70000) * 100);
-        document.getElementById('timeout-bar').style.width = pct + "%";
-        if (pct < 100) requestAnimationFrame(updateBar);
-    }
+    function updateBar() { if (!auth.currentUser) return; const pct = Math.min(100, ((Date.now() - startTime) / 70000) * 100); document.getElementById('timeout-bar').style.width = pct + "%"; if (pct < 100) requestAnimationFrame(updateBar); }
 
-    // --- Firebase Listener ---
     db.ref('config').on('value', s => { state.config = s.val() || {}; updateUI(); });
     db.ref('dashboardAssignments').on('value', s => { state.assignments = s.val() || {}; updateUI(); });
     db.ref('maintenanceState').on('value', s => { state.agie = s.val() || {}; updateUI(); });
@@ -138,150 +120,72 @@
 
     auth.onAuthStateChanged(user => {
         document.getElementById('authBtn').innerText = user ? "🔓 Logout" : "🔑 Login";
-        if(user) resetInactivityTimer();
-        else { clearTimeout(inactivityTimer); document.getElementById('timeout-bar').style.width = "0%"; }
+        if(user) resetInactivityTimer(); else { clearTimeout(inactivityTimer); document.getElementById('timeout-bar').style.width = "0%"; }
         updateUI();
     });
 
-    // --- Helper Funktionen ---
-    async function writeLog(action, machine, detail) {
-        if(!auth.currentUser) return;
-        await db.ref('auditLog').push({
-            Datum: new Date().toLocaleDateString('de-DE'), 
-            Uhrzeit: new Date().toLocaleTimeString('de-DE'),
-            Benutzer: auth.currentUser.email, 
-            Aktion: action, Maschine: machine, Details: detail
-        });
-    }
-
-    async function exportAuditLog() {
-        if(prompt("Admin Passwort:") !== state.config.AdminPW) return;
-        const logs = (await db.ref('auditLog').once('value')).val();
-        if(!logs) return alert("Keine Daten.");
-        let csv = "\ufeffDatum;Uhrzeit;Benutzer;Aktion;Maschine;Details\n";
-        Object.values(logs).forEach(l => csv += `${l.Datum};${l.Uhrzeit};${l.Benutzer};${l.Aktion};${l.Maschine};${l.Details}\n`);
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-        link.download = `Wartungs_Log_${new Date().toLocaleDateString()}.csv`;
-        link.click();
-    }
-
-    // --- Modal & Auth Logic ---
     function handleLoginClick() { if(auth.currentUser) auth.signOut(); else document.getElementById('loginModal').style.display='flex'; }
     function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display='none'); }
     function toggleM() { isReg=!isReg; document.getElementById('regExtra').style.display=isReg?'block':'none'; }
-
     async function handleAuthAction() {
         const e = document.getElementById('mEmail').value, p = document.getElementById('mPass').value;
-        try {
-            if(isReg) {
-                // Einladungscode prüfen (Fallback auf bosch2026, falls DB leer)
-                const code = state.config.inviteCode || "bosch2026"; 
-                if(document.getElementById('mInvite').value !== code) return alert("Einladungscode ungültig!");
-                await auth.createUserWithEmailAndPassword(e, p);
-            } else await auth.signInWithEmailAndPassword(e, p);
-            closeModals();
-        } catch(err) { alert(err.message); }
+        try { if(isReg) { if(document.getElementById('mInvite').value !== "bosch2026") return alert("Code falsch!"); await auth.createUserWithEmailAndPassword(e, p); } else await auth.signInWithEmailAndPassword(e, p); closeModals(); } catch(err) { alert(err.message); }
     }
-
-    // --- Admin Einsteller Liste ---
-    function openAdminModal() { 
-        if(prompt("Admin PW:") === state.config.AdminPW) {
-            // FIX: Lade aktuelle Liste aus State in die Textarea
-            const currentList = state.config.einstellerListe || [];
-            document.getElementById('einstellerTextarea').value = currentList.join(', ');
-            document.getElementById('adminModal').style.display='flex'; 
-        }
-    }
-
+    function openAdminModal() { if(prompt("Admin PW:") === state.config.AdminPW) document.getElementById('adminModal').style.display='flex'; }
     async function saveEinstellerList() {
-        const raw = document.getElementById('einstellerTextarea').value;
-        // Konvertiere String zu Array, entferne Leerzeichen
-        const list = raw.split(',').map(s=>s.trim()).filter(s=>s!=="");
-        await db.ref('config/einstellerListe').set(list);
-        writeLog("Einsteller Liste geändert", "System", "Neue Liste gespeichert");
-        closeModals();
+        const list = document.getElementById('einstellerTextarea').value.split(',').map(s=>s.trim()).filter(s=>s!=="");
+        await db.ref('config/einstellerListe').set(list); closeModals();
     }
-
-    // --- Zuweisung Speichern ---
     async function safeSave(key, val) {
         if(!auth.currentUser) return alert("Bitte einloggen!");
-        // Optional: Hier könnte man noch eine Sicherheitsabfrage einbauen, wenn gewünscht.
-        await db.ref(`dashboardAssignments/${key}`).set(val);
-        // Log schreiben
-        writeLog(val === "" ? "Zuweisung entfernt" : "Maschine zugewiesen", key, val);
-        resetInactivityTimer();
+        await db.ref(`dashboardAssignments/${key}`).set(val); resetInactivityTimer();
     }
 
-    // --- Rendering Logic ---
     function updateUI() {
-        renderCol('list-agie', 'count-agie', state.agie, 'A', 16000);
-        renderCol('list-uno', 'count-uno', state.uno, 'U', 2000);
-        renderCol('list-he', 'count-he', state.he, 'H', 156000);
+        renderCol('list-agie', 'count-agie', state.agie, 'A', 16000, 220000, 2000, 500);
+        renderCol('list-uno', 'count-uno', state.uno, 'U', 0, 104000, 250, 60);
+        renderCol('list-he', 'count-he', state.he, 'H', 156000, 624000, 19500, 4800);
     }
 
-    function renderCol(id, cId, raw, pre, interval) {
+    function renderCol(id, cId, raw, pre, interval, max, warn, crit) {
         if(!raw || !raw.cloudRawData) return;
-        
-        // Warn-Grenzen
-        const warnLimit = pre === 'H' ? 19500 : interval * 0.125;
-        const critLimit = pre === 'H' ? 4800 : interval * 0.03125;
         
         const data = raw.cloudRawData.map(item => {
             const sId = item.StationNo || item.STATIONNO;
             if(!sId) return null;
-            
-            // Zyklus auslesen
             const cIdx = (raw.extraCycles && raw.extraCycles[sId]) || 0;
             let ist, target, pkg;
-            
-            // Maschinenspezifische Berechnung
-            if(pre==='A') {
-                ist = (parseInt(item.Parts)||0) - ((raw.agieOffsets && raw.agieOffsets[sId])||0);
-                target = 16000 + (cIdx * 16000);
-                pkg = AGIE_PKGS[Math.min(cIdx, AGIE_PKGS.length-1)];
-            } else if(pre==='U') {
+
+            if(pre==='U') {
                 ist = parseInt(item["COUNT(*)"]||0);
                 const tObj = UNO_STEPS[cIdx] || { total: 104000+((cIdx-18)*5000), pkg: "Folge" };
-                target = tObj.total; 
-                pkg = tObj.pkg;
-            } else { // HE
-                const off = (raw.heOffsets && raw.heOffsets[sId]) || (raw.manualOffsets && raw.manualOffsets[sId]) || 0;
+                target = tObj.total; pkg = "Wartung " + tObj.pkg;
+            } else {
+                const off = (pre==='A' ? (raw.agieOffsets && raw.agieOffsets[sId]) : (raw.heOffsets && raw.heOffsets[sId])) || 0;
                 ist = (parseInt(item.Parts)||0) - off;
-                target = 156000 + (cIdx * 156000);
-                pkg = "Wartung " + HE_PKGS[cIdx % 4];
+                target = interval + (cIdx * interval);
+                let pkgName = PKGS[pre][cIdx % PKGS[pre].length];
+                if (target > max) { pkgName = "WP RESET"; target = max; }
+                pkg = "Wartung " + pkgName;
             }
-            
-            return { id:pre+"-"+sId, rest:target-ist, key:pre+sId, pkg };
-        }).filter(m => m && m.rest < warnLimit).sort((a,b) => a.rest - b.rest);
+            return { id:pre+"-"+sId, rest: target-ist, key:pre+sId, pkg, warn, crit };
+        }).filter(m => m && m.rest < m.warn).sort((a,b) => a.rest - b.rest);
 
         document.getElementById(cId).innerText = data.length;
-        
-        // HTML Generierung
-        const einstellerOptions = (state.config.einstellerListe||[]).map(e => `<option value="${e}">${e}</option>`).join('');
-
         document.getElementById(id).innerHTML = data.map(m => {
             const assigned = state.assignments[m.key] || "";
             const isWorking = assigned !== "";
-            // Status Bestimmung
-            const status = (m.rest <= 0 && !isWorking) ? 'blink overdue' : 
-                           (m.rest <= 0 ? 'overdue' : 
-                           (m.rest < critLimit ? 'critical' : 'warning'));
-                           
-            // Dropdown vorselektieren
-            const dropdown = `
-                <select ${!auth.currentUser?'disabled':''} onchange="safeSave('${m.key}', this.value)" style="background:${assigned?'#e8f0fe':'#fff'}">
-                    <option value="">-- Einsteller wählen --</option>
-                    ${(state.config.einstellerListe||[]).map(e => `<option value="${e}" ${assigned===e?'selected':''}>${e}</option>`).join('')}
-                </select>`;
-
+            const status = (m.rest <= 0 && !isWorking) ? 'blink overdue' : (m.rest <= 0 ? 'overdue' : (m.rest < m.crit ? 'critical' : 'warning'));
             return `
             <div class="card ${status} ${isWorking?'in-progress':''}">
                 <div class="card-info">
                     <div><div class="m-id">${m.id}</div><div class="m-paket">${m.pkg}</div></div>
-                    <div class="m-rest" style="color:${m.rest<=0?'var(--bosch-dark-red)':'inherit'}">${m.rest.toLocaleString()}</div>
+                    <div class="m-rest">${m.rest.toLocaleString()}</div>
                 </div>
-                ${dropdown}
+                <select ${!auth.currentUser?'disabled':''} onchange="safeSave('${m.key}', this.value)">
+                    <option value="">-- Einsteller wählen --</option>
+                    ${(state.config.einstellerListe||[]).map(e => `<option value="${e}" ${assigned===e?'selected':''}>${e}</option>`).join('')}
+                </select>
             </div>`;
         }).join('');
     }
